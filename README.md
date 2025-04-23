@@ -20,7 +20,7 @@ git clone https://github.com/HikariTakahashi/simple-calendar-frontend.git
 // フロントエンドのプロジェクトに移動(個人のいつもの開き方でOK)
 cd simple-calendar-frontend
 
-//
+// Node.jsのパッケージ管理システムをインストール
 npm install
 ```
 
