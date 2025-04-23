@@ -1,75 +1,58 @@
-# Nuxt Minimal Starter
+## 前提
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+動作には以上の二つのレポジトリのインストールが必要です
+**フロントエンド**:https://github.com/HikariTakahashi/simple-calendar-frontend ← いまここ
+**バックエンド**:https://github.com/HikariTakahashi/simple-calendar-backend
 
-## Setup
+## 起動準備(フロントエンド)
 
-Make sure to install dependencies:
+1. レポジトリのクローン
 
 ```bash
-# npm
+git clone https://github.com/HikariTakahashi/simple-calendar-frontend.git
+```
+
+2. 必要なもののインストール
+
+```bash
+// フロントエンドのプロジェクトに移動(個人のいつもの開き方でOK)
+cd simple-calendar-frontend
+
+//
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
 
-## Development Server
+## 起動準備(バックエンド)
 
-Start the development server on `http://localhost:3000`:
+1. レポジトリのクローン
 
 ```bash
-# npm
+git clone https://github.com/HikariTakahashi/simple-calendar-backend.git
+```
+
+2. バックエンドのプロジェクトに移動(個人のいつもの開き方で OK)
+
+```bash
+cd simple-calendar-backend
+```
+
+## 開発サーバーの起動
+
+1. GoLang を実行する
+
+```bash
+// バックエンドのターミナルで実行
+go run main.go
+```
+
+2. 開発用のサーバーを起動し、サーバーを起動する
+
+```bash
+// フロントエンドのターミナルで実行
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+3. 開発用のサーバーにアクセス
+   基本的には http://localhost:3000: にあります。npm run dev を実行した powershell にリンクが出るのでそっちを見てください。
 
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+バックエンドは基本的に http://localhost:8080/api/calendar にあります。フロントエンドはここからデータを取得しているのでデバックの際にどうぞ。
