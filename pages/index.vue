@@ -6,7 +6,11 @@
       @next-month="nextMonth"
       @prev-month="prevMonth"
     />
-    <Calendar :calendar-days="calendarDays" />
+    <Calendar
+      :calendar-days="calendarDays"
+      :month="currentMonth"
+      :year="currentYear"
+    />
   </div>
 </template>
 
