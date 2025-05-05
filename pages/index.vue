@@ -6,6 +6,7 @@
       @next-month="nextMonth"
       @prev-month="prevMonth"
     />
+    <CalendarWeek />
     <Calendar
       :calendar-days="calendarDays"
       :month="currentMonth"
