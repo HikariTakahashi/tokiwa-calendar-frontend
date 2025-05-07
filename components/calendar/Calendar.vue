@@ -1,5 +1,8 @@
 <template>
-  <div class="flex-1 grid grid-cols-7 grid-rows-6 gap-2 h-screen">
+  <!-- たぶんもっと良いclassの記述がある -->
+  <div
+    class="grid grid-cols-7 pb-2 gap-2 flex-1 overflow-y-auto [grid-auto-rows:minmax(7.9rem,_1fr)]"
+  >
     <div
       v-for="date in calendarDays"
       :key="date.date"
