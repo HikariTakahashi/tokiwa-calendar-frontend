@@ -1,18 +1,41 @@
 <template>
-  <div class="flex-1 grid grid-cols-7 grid-rows-6 gap-2 h-screen">
+  <!-- たぶんもっと良いclassの記述がある -->
+  <div
+    class="grid grid-cols-7 pb-2 gap-2 flex-1 overflow-y-auto [grid-auto-rows:minmax(7.9rem,_1fr)]"
+  >
     <div
-      v-for="day in calendarDays"
-      :key="day.date"
-      class="flex flex-col items-center border rounded transition-transform duration-200 relative shadow-md"
+      v-for="date in calendarDays"
+      :key="date.date"
+      :class="[
+        'flex flex-col items-center border rounded transition-transform duration-200 relative shadow-md',
+        isCurrentMonth(date.date) ? '' : 'bg-gray-200',
+      ]"
     >
       <div class="flex items-center justify-center pt-3">
-        {{ day.day }}
+        {{ new Date(date.date).getDate() }}
       </div>
     </div>
   </div>
 </template>
+
 <script setup>
-defineProps({
-  calendarDays: Array,
+const props = defineProps({
+  calendarDays: {
+    type: Array,
+    required: true,
+  },
+  year: {
+    type: Number,
+    required: true,
+  },
+  month: {
+    type: Number,
+    required: true,
+  },
 });
+
+const isCurrentMonth = (dateString) => {
+  const d = new Date(dateString);
+  return d.getFullYear() === props.year && d.getMonth() + 1 === props.month;
+};
 </script>
