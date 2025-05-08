@@ -13,6 +13,8 @@
       :calendar-days="calendarDays"
       :month="currentMonth"
       :year="currentYear"
+      @save="saveTime"
+      @delete="deleteTime"
     />
   </div>
 </template>
@@ -50,6 +52,30 @@ const fetchCalendar = async (move = "") => {
 
 const nextMonth = () => fetchCalendar("next");
 const prevMonth = () => fetchCalendar("prev");
+
+const saveTime = async ({ date, start, end }) => {
+  try {
+    await $fetch("http://localhost:8080/api/calendar", {
+      method: "POST",
+      body: { date, start, end },
+    });
+    await fetchCalendar();
+  } catch (error) {
+    console.error("保存エラー:", error);
+  }
+};
+
+const deleteTime = async (date) => {
+  try {
+    await $fetch("http://localhost:8080/api/calendar", {
+      method: "DELETE",
+      body: { date },
+    });
+    await fetchCalendar();
+  } catch (error) {
+    console.error("削除エラー:", error);
+  }
+};
 
 fetchCalendar();
 </script>

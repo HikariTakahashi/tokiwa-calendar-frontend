@@ -1,0 +1,82 @@
+<template>
+  <div
+    class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border bg-white rounded shadow-lg"
+  >
+    <div class="p-5 rounded-lg w-90 shadow-lg relative">
+      <h2 class="text-xl font-bold">日の時間設定</h2>
+      <h5 class="pl-2 text-xs mb-2">
+        「終日」と表記する場合は00:00に設定してください
+      </h5>
+      <div class="flex justify-center items-center gap-x-2">
+        <label>開始時刻</label>
+        <date-time-picker
+          v-model="startTime"
+          type="time"
+          minute-interval="5"
+          @change="validateTime"
+          class="border p-2 rounded"
+        />
+        <date-time-picker
+          v-model="endTime"
+          type="time"
+          minute-interval="5"
+          @change="validateTime"
+          class="border p-2 rounded"
+        />
+        <label>終了時刻</label>
+        <div class="flex justify-between mt-4"></div>
+      </div>
+      <div class="pr-3 mt-3 flex justify-end gap-x-2">
+        <buttons-square @click="save" label="保存" color="bg-blue-200" />
+        <buttons-square @click="deleteTime" label="削除" color="bg-red-200" />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, onBeforeUnmount } from "vue";
+import { DateTimePicker } from "vue-drumroll-datetime-picker";
+import "vue-drumroll-datetime-picker/dist/style.css";
+
+const props = defineProps({
+  close: Function,
+  selectedDate: String,
+});
+
+const emit = defineEmits(["save, delete"]);
+
+const startTime = ref("");
+const endTime = ref("");
+
+const save = () => {
+  if (!startTime.value || !endTime.value) {
+    alert("開始時刻と終了時刻を入力してください");
+    return;
+  }
+
+  emit("save", {
+    date: props.selectedDate,
+    start: startTime.value,
+    end: endTime.value,
+  });
+
+  props.close();
+};
+
+const deleteTime = () => {
+  emit("delete", {
+    date: props.selectedDate,
+  });
+  props.close();
+};
+
+const onKeyDown = (e) => {
+  if (e.key === "Escape") {
+    props.close();
+  }
+};
+
+onMounted(() => window.addEventListener("keydown", onKeyDown));
+onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown));
+</script>
