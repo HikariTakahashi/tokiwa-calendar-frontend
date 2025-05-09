@@ -11,8 +11,8 @@
     <CalendarWeek />
     <Calendar
       :calendar-days="calendarDays"
-      :month="currentMonth"
       :year="currentYear"
+      :month="currentMonth"
       @save="saveTime"
       @delete="deleteTime"
     />

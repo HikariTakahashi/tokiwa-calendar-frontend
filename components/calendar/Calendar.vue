@@ -21,6 +21,8 @@
     v-if="showModal"
     :close="closeForm"
     :selectedDate="selectedDate"
+    :year="year"
+    :month="month"
     @save="onSave"
     @delete="onDelete"
   />
