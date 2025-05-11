@@ -1,18 +1,22 @@
 <template>
   <div
-    class="grid grid-cols-7 py-2 gap-2 flex-1 overflow-y-auto [grid-auto-rows:minmax(7.5rem,_1fr)]"
+    class="grid grid-cols-7 py-1 gap-2 flex-1 overflow-y-auto [grid-auto-rows:minmax(7.5rem,_1fr)]"
   >
     <div
       v-for="date in calendarDays"
       :key="date.date"
-      :class="[
-        'flex flex-col items-center border rounded transition-transform duration-200 hover:-translate-y-1 relative shadow-md',
-        isCurrentMonth(date.date) ? '' : 'bg-gray-200',
-      ]"
+      class="flex flex-col items-center border rounded transition-transform duration-200 hover:-translate-y-1 relative shadow-md"
+      :class="[isCurrentMonth(date.date) ? '' : 'bg-gray-100']"
       @click="openForm(date.date)"
     >
-      <div class="flex items-center justify-center pt-3">
+      <div
+        class="flex items-center justify-center pt-3"
+        :class="[isCurrentMonth(date.date) ? 'text-black' : 'text-gray-500']"
+      >
         {{ new Date(date.date).getDate() }}
+      </div>
+      <div v-if="timeData[date.date]" class="font-bold text-blue-500">
+        {{ timeData[date.date].start }} ~ {{ timeData[date.date].end }}
       </div>
     </div>
   </div>
@@ -23,6 +27,7 @@
     :selectedDate="selectedDate"
     :year="year"
     :month="month"
+    :existingTime="timeData[selectedDate] || {}"
     @save="onSave"
     @delete="onDelete"
   />
@@ -30,6 +35,7 @@
 
 <script setup>
 import TimeForm from "@/components/forms/TimeForm.vue";
+import { ref } from "vue";
 
 const props = defineProps({
   calendarDays: Array,
@@ -37,14 +43,21 @@ const props = defineProps({
   month: Number,
 });
 
-const emit = defineEmits(["save, delete"]);
+const emit = defineEmits(["save", "delete"]);
+
+const timeData = ref({});
 
 const onSave = (data) => {
-  emit("save", data);
+  timeData.value[data.date] = {
+    start: data.start,
+    end: data.end,
+  };
+  localStorage.setItem("timeData", JSON.stringify(timeData.value));
 };
 
 const onDelete = (data) => {
-  emit("delete", data);
+  delete timeData.value[data.date];
+  localStorage.setItem("timeData", JSON.stringify(timeData.value));
 };
 
 const isCurrentMonth = (dateString) => {

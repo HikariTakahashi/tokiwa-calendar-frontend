@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen p-4">
+  <div class="h-screen p-1">
     <CalendarHeader
       :current-year="currentYear"
       :current-month="currentMonth"
@@ -8,7 +8,7 @@
       @next-month="nextMonth"
       @prev-month="prevMonth"
     />
-    <CalendarWeek />
+    <CalendarWeeks />
     <Calendar
       :calendar-days="calendarDays"
       :year="currentYear"
@@ -55,10 +55,13 @@ const prevMonth = () => fetchCalendar("prev");
 
 const saveTime = async ({ date, start, end }) => {
   try {
+    // 個別送信をコメントアウト
+    /*
     await $fetch("http://localhost:8080/api/calendar", {
       method: "POST",
       body: { date, start, end },
     });
+    */
     await fetchCalendar();
   } catch (error) {
     console.error("保存エラー:", error);
@@ -67,10 +70,13 @@ const saveTime = async ({ date, start, end }) => {
 
 const deleteTime = async (date) => {
   try {
+    // 個別送信をコメントアウト
+    /*
     await $fetch("http://localhost:8080/api/calendar", {
       method: "DELETE",
       body: { date },
     });
+    */
     await fetchCalendar();
   } catch (error) {
     console.error("削除エラー:", error);
