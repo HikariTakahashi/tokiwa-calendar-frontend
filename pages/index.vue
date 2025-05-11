@@ -55,7 +55,7 @@ const prevMonth = () => fetchCalendar("prev");
 
 const saveTime = async ({ date, start, end }) => {
   try {
-    // 個別送信をコメントアウト
+    // 同期後の個別送信機能
     /*
     await $fetch("http://localhost:8080/api/calendar", {
       method: "POST",
@@ -70,7 +70,7 @@ const saveTime = async ({ date, start, end }) => {
 
 const deleteTime = async (date) => {
   try {
-    // 個別送信をコメントアウト
+    // 同期後の個別送信機能
     /*
     await $fetch("http://localhost:8080/api/calendar", {
       method: "DELETE",
