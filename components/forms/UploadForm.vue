@@ -25,18 +25,12 @@
       </div>
 
       <div class="mt-6 flex justify-end gap-4">
-        <button
+        <buttons-square
           @click="copyToClipboard"
-          class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-        >
-          コピーする
-        </button>
-        <button
-          @click="syncData"
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          同期する
-        </button>
+          label="コピー"
+          color="bg-gray-300"
+        />
+        <buttons-square @click="syncData" label="同期" color="bg-blue-300" />
       </div>
     </div>
   </div>
