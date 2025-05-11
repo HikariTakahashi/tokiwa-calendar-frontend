@@ -52,36 +52,33 @@ const fetchCalendar = async (move = "") => {
 
 const nextMonth = () => fetchCalendar("next");
 const prevMonth = () => fetchCalendar("prev");
+// 同期後の個別送信機能
+// const saveTime = async ({ date, start, end }) => {
+//   try {
 
-const saveTime = async ({ date, start, end }) => {
-  try {
-    // 同期後の個別送信機能
-    /*
-    await $fetch("http://localhost:8080/api/calendar", {
-      method: "POST",
-      body: { date, start, end },
-    });
-    */
-    await fetchCalendar();
-  } catch (error) {
-    console.error("保存エラー:", error);
-  }
-};
+//     await $fetch("http://localhost:8080/api/calendar", {
+//       method: "POST",
+//       body: { date, start, end },
+//     });
 
-const deleteTime = async (date) => {
-  try {
-    // 同期後の個別送信機能
-    /*
-    await $fetch("http://localhost:8080/api/calendar", {
-      method: "DELETE",
-      body: { date },
-    });
-    */
-    await fetchCalendar();
-  } catch (error) {
-    console.error("削除エラー:", error);
-  }
-};
+//     await fetchCalendar();
+//   } catch (error) {
+//     console.error("送信エラー:", error);
+//   }
+// };
+// 同期後の個別送信機能
+// const deleteTime = async (date) => {
+//   try {
+
+//     await $fetch("http://localhost:8080/api/calendar", {
+//       method: "DELETE",
+//       body: { date },
+//     });
+//     await fetchCalendar();
+//   } catch (error) {
+//     console.error("削除エラー:", error);
+//   }
+// };
 
 fetchCalendar();
 </script>
