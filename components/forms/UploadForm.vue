@@ -2,9 +2,13 @@
   <div
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
   >
-    <div class="bg-white p-6 rounded-lg w-3/4 max-h-[80vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold">時間データ一覧</h2>
+    <div class="bg-white px-6 rounded-lg w-3/4 max-h-[80vh] overflow-y-auto">
+      <div
+        class="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pt-6"
+      >
+        <h2 class="text-xl font-bold border-b-2 border-gray-200">
+          時間データ一覧
+        </h2>
         <button
           @click="emit('close')"
           class="text-gray-500 hover:text-gray-700"
@@ -24,7 +28,9 @@
         </div>
       </div>
 
-      <div class="mt-6 flex justify-end gap-4">
+      <div
+        class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white z-10 pb-6"
+      >
         <buttons-square
           @click="copyToClipboard"
           label="コピー"
