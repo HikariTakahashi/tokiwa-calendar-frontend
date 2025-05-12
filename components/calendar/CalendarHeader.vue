@@ -24,7 +24,7 @@
   </div>
 
   <Teleport to="body">
-    <UploadForm v-if="showModal" @close="closeForm" />
+    <UploadForm v-if="showModal" @close="closeForm" :time-data="timeData" />
   </Teleport>
 </template>
 
@@ -37,6 +37,10 @@ defineProps({
   currentMonth: Number,
   currentDay: Number,
   currentWeek: Number,
+  timeData: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
 defineEmits(["next-month", "prev-month"]);

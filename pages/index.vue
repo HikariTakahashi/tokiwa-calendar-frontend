@@ -5,6 +5,7 @@
       :current-month="currentMonth"
       :current-day="currentDay"
       :current-week="currentWeek"
+      :time-data="timeData"
       @next-month="nextMonth"
       @prev-month="prevMonth"
     />
@@ -15,6 +16,7 @@
       :month="currentMonth"
       @save="saveTime"
       @delete="deleteTime"
+      @update:time-data="updateTimeData"
     />
   </div>
 </template>
@@ -28,8 +30,13 @@ const currentYear = ref(0);
 const currentMonth = ref(0);
 const currentDay = ref(0); // 現時点では無使用
 const currentWeek = ref(0); // 現時点では無使用
+const timeData = ref({});
 
 const calendarDays = ref([]);
+
+const updateTimeData = (newTimeData) => {
+  timeData.value = newTimeData;
+};
 
 const fetchCalendar = async (move = "") => {
   const res = await $fetch("http://localhost:8080/api/calendar", {
@@ -52,33 +59,14 @@ const fetchCalendar = async (move = "") => {
 
 const nextMonth = () => fetchCalendar("next");
 const prevMonth = () => fetchCalendar("prev");
-// 同期後の個別送信機能
-// const saveTime = async ({ date, start, end }) => {
-//   try {
 
-//     await $fetch("http://localhost:8080/api/calendar", {
-//       method: "POST",
-//       body: { date, start, end },
-//     });
+const saveTime = ({ date, start, end }) => {
+  timeData.value[date] = { start, end };
+};
 
-//     await fetchCalendar();
-//   } catch (error) {
-//     console.error("送信エラー:", error);
-//   }
-// };
-// 同期後の個別送信機能
-// const deleteTime = async (date) => {
-//   try {
-
-//     await $fetch("http://localhost:8080/api/calendar", {
-//       method: "DELETE",
-//       body: { date },
-//     });
-//     await fetchCalendar();
-//   } catch (error) {
-//     console.error("削除エラー:", error);
-//   }
-// };
+const deleteTime = (date) => {
+  delete timeData.value[date];
+};
 
 fetchCalendar();
 </script>

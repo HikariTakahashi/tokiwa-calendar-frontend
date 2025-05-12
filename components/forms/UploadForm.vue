@@ -19,7 +19,14 @@
 
       <div class="space-y-4">
         <div
-          v-for="(time, date) in timeData"
+          v-if="Object.keys(displayData).length === 0"
+          class="text-center py-4"
+        >
+          データがありません
+        </div>
+        <div
+          v-else
+          v-for="(time, date) in displayData"
           :key="date"
           class="border p-4 rounded"
         >
@@ -43,10 +50,25 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from "vue";
+import { onMounted, onUnmounted, ref, watch } from "vue";
+
+const props = defineProps({
+  timeData: {
+    type: Object,
+    default: () => ({}),
+  },
+});
 
 const emit = defineEmits(["close"]);
-const timeData = ref({});
+const displayData = ref({});
+
+watch(
+  () => props.timeData,
+  (newValue) => {
+    displayData.value = { ...newValue };
+  },
+  { immediate: true }
+);
 
 const handleEscKey = (event) => {
   if (event.key === "Escape") {
@@ -60,7 +82,12 @@ const formatDate = (dateString) => {
 };
 
 const copyToClipboard = () => {
-  const text = Object.entries(timeData.value)
+  if (Object.keys(displayData.value).length === 0) {
+    alert("コピーするデータがありません");
+    return;
+  }
+
+  const text = Object.entries(displayData.value)
     .map(([date, time]) => `${formatDate(date)}: ${time.start} ~ ${time.end}`)
     .join("\n");
 
@@ -72,12 +99,17 @@ const copyToClipboard = () => {
 
 const syncData = async () => {
   try {
-    await $fetch("http://localhost:8080/api/calendar/sync", {
+    if (Object.keys(displayData.value).length === 0) {
+      alert("同期するデータがありません");
+      return;
+    }
+
+    const response = await $fetch("http://localhost:8080/api/calendar/sync", {
       method: "POST",
-      body: timeData.value,
+      body: displayData.value,
     });
+    displayData.value = response;
     alert("同期が完了しました");
-    emit("close");
   } catch (error) {
     console.error("同期エラー:", error);
     alert("同期に失敗しました");
@@ -86,8 +118,6 @@ const syncData = async () => {
 
 onMounted(() => {
   window.addEventListener("keydown", handleEscKey);
-  // 時間データを取得
-  timeData.value = JSON.parse(localStorage.getItem("timeData") || "{}");
 });
 
 onUnmounted(() => {

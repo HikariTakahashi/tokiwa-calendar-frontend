@@ -43,7 +43,7 @@ const props = defineProps({
   month: Number,
 });
 
-const emit = defineEmits(["save", "delete"]);
+const emit = defineEmits(["save", "delete", "update:time-data"]);
 
 const timeData = ref({});
 
@@ -52,12 +52,12 @@ const onSave = (data) => {
     start: data.start,
     end: data.end,
   };
-  localStorage.setItem("timeData", JSON.stringify(timeData.value));
+  emit("update:time-data", timeData.value);
 };
 
 const onDelete = (data) => {
   delete timeData.value[data.date];
-  localStorage.setItem("timeData", JSON.stringify(timeData.value));
+  emit("update:time-data", timeData.value);
 };
 
 const isCurrentMonth = (dateString) => {
