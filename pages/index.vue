@@ -61,10 +61,23 @@ const nextMonth = () => fetchCalendar("next");
 const prevMonth = () => fetchCalendar("prev");
 
 const saveTime = ({ date, start, end }) => {
+  // try{
+  //   同期後の個別送信機能
+  //   await $fetch("http://localhost:8080/api/calendar", {
+  //     method: "POST",
+  // };
   timeData.value[date] = { start, end };
 };
 
 const deleteTime = (date) => {
+  // try{
+  //   同期後の個別送信機能
+  //   await $fetch("http://localhost:8080/api/calendar", {
+  //     method: "DELETE",
+  //     body: { date },
+  //   });
+    
+  // };
   delete timeData.value[date];
 };
 
