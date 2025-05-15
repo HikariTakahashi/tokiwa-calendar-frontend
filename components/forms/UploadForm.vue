@@ -104,7 +104,7 @@ const syncData = async () => {
       return;
     }
 
-    const response = await $fetch("http://localhost:8080/api/calendar/sync", {
+    const response = await $fetch("http://localhost:8080/api/time", {
       method: "POST",
       body: displayData.value,
     });
