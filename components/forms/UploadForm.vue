@@ -43,7 +43,12 @@
           label="コピー"
           color="bg-gray-300"
         />
-        <buttons-square @click="syncData" label="同期" color="bg-blue-300" />
+        <buttons-square
+          @click="syncData"
+          label="同期"
+          color="bg-blue-300"
+          :isUse="false"
+        />
       </div>
     </div>
   </div>
