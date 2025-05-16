@@ -1,8 +1,11 @@
 <template>
   <div class="flex justify-between items-center py-1 px-2">
-    <h1 class="flex justify-center items-center text-2xl font-bold">
-      予定組みカレンダー(仮名)
-    </h1>
+    <div class="flex items-center text-2xl font-bold">
+      <h1 class="text-blue-500 font-mono">Toki</h1>
+      <h1 class="text-green-500 font-mono">Wa</h1>
+      <h1 class="pl-1 font-mono">Calendar</h1>
+      <h1 class="pl-3 text-xl font-mono">予定調整モード</h1>
+    </div>
 
     <div class="flex items-center gap-x-4">
       <div class="border-r border-gray-400 pr-4">
