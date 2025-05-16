@@ -1,9 +1,14 @@
 <template>
   <button
     @click="$emit('click')"
-    :class="[baseClass, isHovered ? color : '']"
+    :class="[
+      baseClass,
+      isHovered ? color : '',
+      !isUse ? 'opacity-50 cursor-not-allowed bg-gray-500 text-white' : '',
+    ]"
     @mouseover="isHovered = true"
     @mouseleave="isHovered = false"
+    :disabled="!isUse"
   >
     {{ label }}
   </button>
@@ -18,6 +23,10 @@ const props = defineProps({
   color: {
     type: String,
     required: false,
+  },
+  isUse: {
+    type: Boolean,
+    default: true,
   },
 });
 
