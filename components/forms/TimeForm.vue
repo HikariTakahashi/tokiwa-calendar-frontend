@@ -2,7 +2,7 @@
   <div
     class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border bg-white rounded shadow-lg"
   >
-    <div class="pl-5 pr-2 pb-5 rounded-lg w-90 shadow-lg relative">
+    <div class="pl-5 pr-2 pb-5 rounded-lg w-96 shadow-lg relative">
       <div class="flex justify-between items-center">
         <h2 class="pt-5 text-xl font-bold">
           {{ isCurrentYear ? "" : dateComponents.year + "年" }}

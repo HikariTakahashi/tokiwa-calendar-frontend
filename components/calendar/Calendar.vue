@@ -15,7 +15,10 @@
       >
         {{ new Date(date.date).getDate() }}
       </div>
-      <div v-if="timeData[date.date]" class="font-bold text-blue-500">
+      <div
+        v-if="timeData[date.date]"
+        class="text-center font-bold text-blue-500"
+      >
         {{ timeData[date.date].start }} ~ {{ timeData[date.date].end }}
       </div>
     </div>
