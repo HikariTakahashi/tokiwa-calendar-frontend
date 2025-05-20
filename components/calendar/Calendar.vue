@@ -1,6 +1,6 @@
 <template>
   <div
-    class="grid grid-cols-7 py-1 gap-2 flex-1 overflow-y-auto [grid-auto-rows:minmax(7.5rem,_1fr)]"
+    class="grid grid-cols-7 py-1 gap-0.5 sm:gap-2 flex-1 overflow-y-auto [grid-auto-rows:minmax(7.5rem,_1fr)]"
   >
     <div
       v-for="date in calendarDays"
