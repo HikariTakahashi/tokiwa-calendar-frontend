@@ -43,12 +43,7 @@
           label="コピー"
           color="bg-gray-300"
         />
-        <buttons-square
-          @click="syncData"
-          label="同期"
-          color="bg-blue-300"
-          :isUse="false"
-        />
+        <buttons-square @click="syncData" label="同期" color="bg-blue-300" />
       </div>
     </div>
   </div>
@@ -56,6 +51,7 @@
 
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
 const props = defineProps({
   timeData: {
@@ -102,6 +98,16 @@ const copyToClipboard = () => {
     .catch((err) => console.error("コピーに失敗しました:", err));
 };
 
+const generateRandomString = (length = 8) => {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
 const syncData = async () => {
   try {
     if (Object.keys(displayData.value).length === 0) {
@@ -109,11 +115,26 @@ const syncData = async () => {
       return;
     }
 
+    // ランダムなURLを生成
+    const randomId = generateRandomString();
+
     const response = await $fetch("http://localhost:8080/api/time", {
       method: "POST",
-      body: displayData.value,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: {
+        ...displayData.value,
+        spaceId: randomId,
+      },
     });
+
     displayData.value = response;
+
+    // 生成したランダムIDでURLに遷移
+    await navigateTo(`/space/${randomId}`);
+
     alert("同期が完了しました");
   } catch (error) {
     console.error("同期エラー:", error);
