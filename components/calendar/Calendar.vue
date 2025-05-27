@@ -15,9 +15,11 @@
       </div>
       <div
         v-if="timeData[date.date]"
-        class="text-center font-bold text-blue-500 flex-1 flex justify-center"
+        class="text-center text-xs sm:text-sm font-bold text-blue-500 flex flex-col justify-center"
       >
-        {{ timeData[date.date].start }} ~ {{ timeData[date.date].end }}
+        <div v-for="(timeSlot, index) in timeData[date.date]" :key="index">
+          {{ timeSlot.start }} ~ {{ timeSlot.end }}
+        </div>
       </div>
       <div v-else class="flex-1"></div>
     </div>
@@ -50,10 +52,7 @@ const emit = defineEmits(["save", "delete", "update:time-data"]);
 const timeData = ref({});
 
 const onSave = (data) => {
-  timeData.value[data.date] = {
-    start: data.start,
-    end: data.end,
-  };
+  timeData.value[data.date] = data.timeSlots;
   emit("update:time-data", timeData.value);
 };
 

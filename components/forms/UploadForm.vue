@@ -26,29 +26,28 @@
         </div>
         <div
           v-else
-          v-for="(time, date) in displayData"
+          v-for="(timeSlots, date) in displayData"
           :key="date"
           class="border p-4 rounded"
         >
           <div class="font-bold">{{ formatDate(date) }}</div>
-          <div class="text-blue-500">{{ time.start }} ~ {{ time.end }}</div>
+          <div
+            v-for="(timeSlot, index) in timeSlots"
+            :key="index"
+            class="text-blue-500"
+          >
+            {{ timeSlot.start }} ~ {{ timeSlot.end }}
+          </div>
         </div>
       </div>
 
-      <div
-        class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white z-10 pb-6"
-      >
+      <div class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white pb-6">
         <buttons-square
           @click="copyToClipboard"
           label="コピー"
           color="bg-gray-300"
         />
-        <buttons-square
-          @click="syncData"
-          label="同期"
-          color="bg-blue-300"
-          :isUse="false"
-        />
+        <buttons-square @click="syncData" label="同期" color="bg-blue-300" />
       </div>
     </div>
   </div>
@@ -83,7 +82,10 @@ const handleEscKey = (event) => {
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
-  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日(${
+    weekdays[date.getDay()]
+  })`;
 };
 
 const copyToClipboard = () => {
@@ -93,7 +95,12 @@ const copyToClipboard = () => {
   }
 
   const text = Object.entries(displayData.value)
-    .map(([date, time]) => `${formatDate(date)}: ${time.start} ~ ${time.end}`)
+    .map(([date, timeSlots]) => {
+      const timeStrings = timeSlots
+        .map((time) => `${time.start} ~ ${time.end}`)
+        .join(",");
+      return `${formatDate(date)}:  ${timeStrings}`;
+    })
     .join("\n");
 
   navigator.clipboard
