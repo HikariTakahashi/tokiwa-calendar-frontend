@@ -10,7 +10,7 @@
       @prev-month="handlePrevMonth"
     />
     <CalendarWeeks />
-    <div class="flex-1 overflow-auto">
+    <div class="flex-1 overflow-auto pt-1.5">
       <Calendar
         :calendar-days="calendarDays"
         :year="currentYear"
