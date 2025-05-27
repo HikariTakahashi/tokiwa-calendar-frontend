@@ -57,8 +57,8 @@ const handlePrevMonth = () => {
   calendarDays.value = getCalendarDays(currentYear.value, currentMonth.value);
 };
 
-const saveTime = ({ date, start, end }) => {
-  timeData.value[date] = { start, end };
+const saveTime = ({ date, timeSlots }) => {
+  timeData.value[date] = timeSlots;
 };
 
 const deleteTime = (date) => {
