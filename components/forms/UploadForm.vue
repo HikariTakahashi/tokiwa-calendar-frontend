@@ -47,7 +47,13 @@
           label="コピー"
           color="bg-gray-300"
         />
-        <buttons-square @click="syncData" label="同期" color="bg-blue-300" />
+        <buttons-square
+          @click="syncData"
+          label="同期"
+          color="bg-blue-300"
+          icon="ic:sharp-upload"
+          :isUse="false"
+        />
       </div>
     </div>
   </div>
