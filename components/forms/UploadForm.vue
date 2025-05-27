@@ -1,6 +1,6 @@
 <template>
   <div
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
   >
     <div class="bg-white px-6 rounded-lg w-3/4 max-h-[80vh] overflow-y-auto">
       <div
@@ -35,9 +35,7 @@
         </div>
       </div>
 
-      <div
-        class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white z-10 pb-6"
-      >
+      <div class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white pb-6">
         <buttons-square
           @click="copyToClipboard"
           label="コピー"
