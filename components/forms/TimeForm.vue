@@ -16,26 +16,46 @@
       <h5 class="pl-2 text-xs mb-2">
         「終日」と表記する場合は00:00に設定してください
       </h5>
-      <div class="flex pr-3 justify-center items-center gap-x-2">
-        <label>開始時刻</label>
-        <div class="border-r border-gray-400 pr-2">
-          <date-time-picker
-            v-model="startTime"
-            type="time"
-            minute-interval="5"
-            @change="validateTime"
-            class="border p-2 rounded"
-          />
-        </div>
-        <date-time-picker
-          v-model="endTime"
-          type="time"
-          minute-interval="5"
-          @change="validateTime"
-          class="border p-2 rounded"
-        />
+      <div class="max-h-[30vh] overflow-y-auto pr-2">
+        <div v-for="(timeSlot, index) in timeSlots" :key="index">
+          <div class="flex pr-3 justify-center items-center gap-x-2 mb-2">
+            <label>開始時刻</label>
+            <div class="border-r border-gray-400 pr-2">
+              <date-time-picker
+                v-model="timeSlot.start"
+                type="time"
+                minute-interval="5"
+                @change="validateTime"
+                class="border p-2 rounded"
+              />
+            </div>
+            <date-time-picker
+              v-model="timeSlot.end"
+              type="time"
+              minute-interval="5"
+              @change="validateTime"
+              class="border p-2 rounded"
+            />
+            <label>終了時刻</label>
+          </div>
 
-        <label>終了時刻</label>
+          <div class="flex items-center gap-x-5">
+            <button
+              type="button"
+              @click="addTimeSlot"
+              class="text-blue-500 pb-2 hover:underline"
+            >
+              複数時間を入力
+            </button>
+            <button
+              v-if="index > 0"
+              @click="removeTimeSlot(index)"
+              class="text-red-500"
+            >
+              <UIcon name="ic:sharp-delete" class="size-5 hover:bg-red-800" />
+            </button>
+          </div>
+        </div>
       </div>
       <div class="mt-3 flex justify-end gap-x-2">
         <buttons-square @click="save" label="保存" color="bg-blue-200" />
@@ -46,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed, nextTick } from "vue";
 import { DateTimePicker } from "vue-drumroll-datetime-picker";
 import "vue-drumroll-datetime-picker/dist/style.css";
 
@@ -64,8 +84,29 @@ const props = defineProps({
 
 const emit = defineEmits(["save", "delete"]);
 
-const startTime = ref(props.existingTime.start || "");
-const endTime = ref(props.existingTime.end || "");
+const timeSlots = ref([
+  {
+    start: props.existingTime.start || "",
+    end: props.existingTime.end || "",
+  },
+]);
+
+const addTimeSlot = () => {
+  timeSlots.value.push({
+    start: "",
+    end: "",
+  });
+  nextTick(() => {
+    const container = document.querySelector(".max-h-\\[30vh\\]");
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  });
+};
+
+const removeTimeSlot = (index) => {
+  timeSlots.value.splice(index, 1);
+};
 
 const dateComponents = computed(() => {
   const parts = props.selectedDate.split("-");
@@ -92,15 +133,18 @@ const isCurrentMonth = computed(() => {
 });
 
 const save = () => {
-  if (!startTime.value || !endTime.value) {
+  const hasEmptySlots = timeSlots.value.some(
+    (slot) => !slot.start || !slot.end
+  );
+
+  if (hasEmptySlots) {
     alert("開始時刻と終了時刻を入力してください");
     return;
   }
 
   emit("save", {
     date: props.selectedDate,
-    start: startTime.value,
-    end: endTime.value,
+    timeSlots: timeSlots.value,
   });
 
   props.close();
