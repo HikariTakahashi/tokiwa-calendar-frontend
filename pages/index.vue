@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen p-1">
+  <div class="h-screen flex flex-col p-1">
     <CalendarHeader
       :current-year="currentYear"
       :current-month="currentMonth"
@@ -10,14 +10,16 @@
       @prev-month="handlePrevMonth"
     />
     <CalendarWeeks />
-    <Calendar
-      :calendar-days="calendarDays"
-      :year="currentYear"
-      :month="currentMonth"
-      @save="saveTime"
-      @delete="deleteTime"
-      @update:time-data="updateTimeData"
-    />
+    <div class="flex-1 overflow-auto">
+      <Calendar
+        :calendar-days="calendarDays"
+        :year="currentYear"
+        :month="currentMonth"
+        @save="saveTime"
+        @delete="deleteTime"
+        @update:time-data="updateTimeData"
+      />
+    </div>
   </div>
 </template>
 

@@ -1,11 +1,9 @@
 <template>
-  <div
-    class="grid grid-cols-7 py-1 gap-0.5 sm:gap-2 flex-1 overflow-y-auto [grid-auto-rows:minmax(7.5rem,_1fr)]"
-  >
+  <div class="grid grid-cols-7 gap-0.5 sm:gap-2 h-full">
     <div
       v-for="date in calendarDays"
       :key="date.date"
-      class="flex flex-col items-center border rounded transition-transform duration-200 hover:-translate-y-1 relative shadow-md"
+      class="flex flex-col items-center border rounded transition-transform duration-200 hover:-translate-y-1 relative shadow-md min-h-full"
       :class="[isCurrentMonth(date.date) ? '' : 'bg-gray-100']"
       @click="openForm(date.date)"
     >
