@@ -8,17 +8,18 @@
       @click="openForm(date.date)"
     >
       <div
-        class="flex items-center justify-center pt-3"
+        class="flex items-center justify-center pt-3 h-8"
         :class="[isCurrentMonth(date.date) ? 'text-black' : 'text-gray-500']"
       >
         {{ new Date(date.date).getDate() }}
       </div>
       <div
         v-if="timeData[date.date]"
-        class="text-center font-bold text-blue-500"
+        class="text-center font-bold text-blue-500 flex-1 flex justify-center"
       >
         {{ timeData[date.date].start }} ~ {{ timeData[date.date].end }}
       </div>
+      <div v-else class="flex-1"></div>
     </div>
   </div>
 
