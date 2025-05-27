@@ -3,7 +3,7 @@
     <div
       v-for="date in calendarDays"
       :key="date.date"
-      class="flex flex-col items-center border rounded transition-transform duration-200 hover:-translate-y-1 relative shadow-md min-h-full"
+      class="flex flex-col items-center border rounded transition-transform duration-200 hover:-translate-y-1 relative shadow-md min-h-[100px]"
       :class="[isCurrentMonth(date.date) ? '' : 'bg-gray-100']"
       @click="openForm(date.date)"
     >
