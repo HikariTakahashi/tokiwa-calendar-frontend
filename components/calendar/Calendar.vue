@@ -15,13 +15,14 @@
       </div>
       <div
         v-if="timeData[date.date]"
-        class="text-center text-xs sm:text-sm font-bold text-blue-500 flex flex-col justify-center"
+        class="text-center text-xs sm:text-sm font-bold text-blue-500 flex flex-col w-full max-h-[80px]"
       >
-        <div v-for="(timeSlot, index) in timeData[date.date]" :key="index">
-          {{ timeSlot.start }} ~ {{ timeSlot.end }}
+        <div class="overflow-y-auto">
+          <div v-for="(timeSlot, index) in timeData[date.date]" :key="index">
+            {{ timeSlot.start }} ~ {{ timeSlot.end }}
+          </div>
         </div>
       </div>
-      <div v-else class="flex-1"></div>
     </div>
   </div>
 
