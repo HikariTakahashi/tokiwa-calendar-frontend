@@ -17,7 +17,7 @@
         </button>
       </div>
 
-      <div class="space-y-4">
+      <div class="grid sm:grid-cols-5 gap-2">
         <div
           v-if="Object.keys(displayData).length === 0"
           class="text-center py-4"
