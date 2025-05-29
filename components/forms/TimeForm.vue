@@ -69,6 +69,7 @@
 import { ref, onMounted, onBeforeUnmount, computed, nextTick } from "vue";
 import { DateTimePicker } from "vue-drumroll-datetime-picker";
 import "vue-drumroll-datetime-picker/dist/style.css";
+import { useTimeUtils } from "@/utils/TimeUtils";
 
 const props = defineProps({
   close: Function,
@@ -84,29 +85,16 @@ const props = defineProps({
 
 const emit = defineEmits(["save", "delete"]);
 
-const timeSlots = ref([
-  {
-    start: props.existingTime.start || "",
-    end: props.existingTime.end || "",
-  },
-]);
+const { timeSlots, addTimeSlot, removeTimeSlot, validateTime } = useTimeUtils();
 
-const addTimeSlot = () => {
-  timeSlots.value.push({
-    start: "",
-    end: "",
-  });
-  nextTick(() => {
-    const container = document.querySelector(".max-h-\\[30vh\\]");
-    if (container) {
-      container.scrollTop = container.scrollHeight;
-    }
-  });
-};
-
-const removeTimeSlot = (index) => {
-  timeSlots.value.splice(index, 1);
-};
+if (props.existingTime.start && props.existingTime.end) {
+  timeSlots.value = [
+    {
+      start: props.existingTime.start,
+      end: props.existingTime.end,
+    },
+  ];
+}
 
 const dateComponents = computed(() => {
   const parts = props.selectedDate.split("-");
@@ -133,11 +121,7 @@ const isCurrentMonth = computed(() => {
 });
 
 const save = () => {
-  const hasEmptySlots = timeSlots.value.some(
-    (slot) => !slot.start || !slot.end
-  );
-
-  if (hasEmptySlots) {
+  if (!validateTime(timeSlots.value)) {
     alert("開始時刻と終了時刻を入力してください");
     return;
   }

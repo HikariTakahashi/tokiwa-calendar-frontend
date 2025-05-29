@@ -18,10 +18,10 @@
         class="text-center text-xs sm:text-sm font-bold text-blue-500 flex flex-col w-full"
       >
         <!--この世の終わりみたいなスクロール実装してるのでそのうち解決する-->
-        <div class="overflow-y-auto max-h-[65px] sm:max-h-[100px] mt-[-10px]">
-          <div v-for="(timeSlot, index) in timeData[date.date]" :key="index">
-            {{ timeSlot.start }} ~ {{ timeSlot.end }}
-          </div>
+        <div
+          class="overflow-y-auto max-h-[65px] sm:max-h-[100px] mt-[-10px] whitespace-pre-line"
+        >
+          {{ formatTimeForDisplay(timeData[date.date]) }}
         </div>
       </div>
     </div>
@@ -42,6 +42,7 @@
 <script setup>
 import TimeForm from "@/components/forms/TimeForm.vue";
 import { ref } from "vue";
+import { useTimeUtils } from "@/utils/TimeUtils";
 
 const props = defineProps({
   calendarDays: Array,
@@ -52,6 +53,7 @@ const props = defineProps({
 const emit = defineEmits(["save", "delete", "update:time-data"]);
 
 const timeData = ref({});
+const { formatTimeForDisplay } = useTimeUtils();
 
 const onSave = (data) => {
   timeData.value[data.date] = data.timeSlots;
