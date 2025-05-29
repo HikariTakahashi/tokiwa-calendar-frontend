@@ -1,23 +1,24 @@
 <template>
-  <div class="grid grid-cols-7 gap-0.5 sm:gap-2 h-full">
+  <div class="grid grid-cols-7 grid-rows-6 gap-0.5 sm:gap-2 h-full">
     <div
       v-for="date in calendarDays"
       :key="date.date"
-      class="flex flex-col items-center border rounded transition-transform duration-200 hover:-translate-y-1 relative shadow-md min-h-[100px]"
+      class="flex flex-col items-center border rounded transition-transform duration-200 hover:-translate-y-1 shadow-md"
       :class="[isCurrentMonth(date.date) ? '' : 'bg-gray-100']"
       @click="openForm(date.date)"
     >
       <div
-        class="flex items-center justify-center pt-3 h-8"
+        class="flex items-center justify-center py-0.5 sm:py-2"
         :class="[isCurrentMonth(date.date) ? 'text-black' : 'text-gray-500']"
       >
         {{ new Date(date.date).getDate() }}
       </div>
       <div
         v-if="timeData[date.date]"
-        class="text-center text-xs sm:text-sm font-bold text-blue-500 flex flex-col w-full max-h-[80px]"
+        class="text-center text-xs sm:text-sm font-bold text-blue-500 flex flex-col w-full"
       >
-        <div class="overflow-y-auto">
+        <!--この世の終わりみたいなスクロール実装してるのでそのうち解決する-->
+        <div class="overflow-y-auto max-h-[65px] sm:max-h-[100px] mt-[-10px]">
           <div v-for="(timeSlot, index) in timeData[date.date]" :key="index">
             {{ timeSlot.start }} ~ {{ timeSlot.end }}
           </div>
