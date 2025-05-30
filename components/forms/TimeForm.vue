@@ -82,9 +82,13 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  isCopyMode: {
+    type: Boolean,
+    default: false
+  }
 });
 
-const emit = defineEmits(["save", "delete"]);
+const emit = defineEmits(["save", "delete", "copy"]);
 
 const {
   timeSlots,
@@ -159,6 +163,10 @@ const deleteTime = () => {
   props.close();
 };
 
+const copy = () => {
+  emit("copy");
+};
+
 const onKeyDown = (e) => {
   if (e.key === "Escape") {
     props.close();
@@ -167,4 +175,16 @@ const onKeyDown = (e) => {
 
 onMounted(() => window.addEventListener("keydown", onKeyDown));
 onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown));
+
+// デバック用コード
+// isCopyModeがtrueのとき、console.logを出力
+if (props.isCopyMode) {
+  console.log("isCopyMode true");
+}
+
+// isCopyModeがfalseのとき、console.logを出力
+if (!props.isCopyMode) {
+  console.log("isCopyMode false");
+}
+
 </script>
