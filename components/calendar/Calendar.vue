@@ -50,6 +50,7 @@
 import TimeForm from "@/components/forms/TimeForm.vue";
 import { ref } from "vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
+import { useCopyLogic } from "@/utils/CopyLogicUtils";
 
 const props = defineProps({
   calendarDays: Array,
@@ -67,7 +68,14 @@ const timeData = ref({});
 const { formatTimeForDisplay } = useTimeUtils();
 const showModal = ref(false);
 const selectedDate = ref(null);
-const copiedTimeData = ref(null);
+
+const {
+  copiedTimeData,
+  handleCopy: copyLogic,
+  handlePaste,
+  handleCancelCopyMode: cancelCopyLogic,
+  closeCopyMode
+} = useCopyLogic();
 
 const onSave = (data) => {
   timeData.value[data.date] = data.timeSlots;
@@ -84,16 +92,11 @@ const isCurrentMonth = (dateString) => {
   return d.getFullYear() === props.year && d.getMonth() + 1 === props.month;
 };
 
-const closeCopyMode = () => {
-  isCopyMode.value = false;
-  copiedTimeData.value = null;
-  emit("update:is-copy-mode", false);
-};
-
 const openForm = (date) => {
   if (props.isCopyMode) {
-    if (copiedTimeData.value) {
-      timeData.value[date] = copiedTimeData.value;
+    const result = handlePaste(date, timeData.value);
+    if (result.isPasted) {
+      timeData.value = result.timeData;
       emit("update:time-data", timeData.value);
     }
   } else {
@@ -107,24 +110,16 @@ const closeForm = () => {
 };
 
 const handleCopy = () => {
-  if (selectedDate.value) {
-    copiedTimeData.value = timeData.value[selectedDate.value] || null;
-  }
-  emit("update:is-copy-mode", true);
+  const result = copyLogic(selectedDate.value, timeData.value);
+  emit("update:is-copy-mode", result.isCopyMode);
   showModal.value = false;
   console.log("isCopyMode true");
 };
 
 const handleCancelCopyMode = () => {
-  if (copiedTimeData.value) {
-    Object.keys(timeData.value).forEach(date => {
-      if (timeData.value[date] === copiedTimeData.value) {
-        delete timeData.value[date];
-      }
-    });
-    emit("update:time-data", timeData.value);
-  }
-  copiedTimeData.value = null;
-  emit("update:is-copy-mode", false);
+  const result = cancelCopyLogic(timeData.value);
+  timeData.value = result.timeData;
+  emit("update:time-data", timeData.value);
+  emit("update:is-copy-mode", result.isCopyMode);
 };
 </script>
