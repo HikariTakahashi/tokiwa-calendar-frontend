@@ -176,15 +176,4 @@ const onKeyDown = (e) => {
 onMounted(() => window.addEventListener("keydown", onKeyDown));
 onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown));
 
-// デバック用コード
-// isCopyModeがtrueのとき、console.logを出力
-if (props.isCopyMode) {
-  console.log("isCopyMode true");
-}
-
-// isCopyModeがfalseのとき、console.logを出力
-if (!props.isCopyMode) {
-  console.log("isCopyMode false");
-}
-
 </script>
