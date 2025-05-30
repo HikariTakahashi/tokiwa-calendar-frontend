@@ -16,7 +16,7 @@
       <h5 class="pl-2 text-xs mb-2">
         「終日」と表記する場合は00:00に設定してください
       </h5>
-      <div class="max-h-[30vh] overflow-y-auto pr-2" ref="timeSlotsContainer">
+      <div class="max-h-[40vh] overflow-y-auto pr-2" ref="timeSlotsContainer">
         <div v-for="(timeSlot, index) in timeSlots" :key="index">
           <div class="flex pr-3 justify-center items-center gap-x-2 mb-2">
             <label>開始時刻</label>
@@ -58,6 +58,7 @@
         </div>
       </div>
       <div class="mt-3 flex justify-end gap-x-2">
+        <buttons-square @click="copy" label="コピー" color="bg-green-200" />
         <buttons-square @click="save" label="保存" color="bg-blue-200" />
         <buttons-square @click="deleteTime" label="削除" color="bg-red-200" />
       </div>
@@ -81,9 +82,13 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  isCopyMode: {
+    type: Boolean,
+    default: false
+  }
 });
 
-const emit = defineEmits(["save", "delete"]);
+const emit = defineEmits(["save", "delete", "copy"]);
 
 const {
   timeSlots,
@@ -158,6 +163,10 @@ const deleteTime = () => {
   props.close();
 };
 
+const copy = () => {
+  emit("copy");
+};
+
 const onKeyDown = (e) => {
   if (e.key === "Escape") {
     props.close();
@@ -166,4 +175,5 @@ const onKeyDown = (e) => {
 
 onMounted(() => window.addEventListener("keydown", onKeyDown));
 onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown));
+
 </script>
