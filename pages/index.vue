@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen flex flex-col p-1">
+  <div class="h-screen flex flex-col">
     <CalendarHeader
       :current-year="currentYear"
       :current-month="currentMonth"
@@ -10,7 +10,7 @@
       @prev-month="handlePrevMonth"
     />
     <CalendarWeeks />
-    <div class="flex-1 overflow-auto pt-1.5">
+    <div class="flex-1 overflow-auto sx:py-1">
       <Calendar
         :calendar-days="calendarDays"
         :year="currentYear"
