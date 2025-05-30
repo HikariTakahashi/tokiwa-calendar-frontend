@@ -2,11 +2,14 @@
   <div
     class="flex flex-col sm:flex-row justify-between items-center py-2 sx:py-1 px-2"
   >
-    <div class="flex items-center text-2xl font-bold mb-2 sm:mb-0 gap-x-5">
-      <buttons-circle @click="closeForm">
+    <div class="flex items-center text-2xl font-bold mb-2 sm:mb-0 gap-x-5 ">
+      <buttons-circle @click="CloseCopyMode">
         <UIcon name="ic:sharp-clear" class="size-8" />
       </buttons-circle>
-      <h1 class="font-mono">コピーモード中....</h1>
+      <div class="flex items-end gap-x-2">
+        <h1 class="font-mono text-blue-500">コピーモード</h1>
+        <button @click="cancelCopyMode" class="text-sm text-gray-500 hover:text-gray-700">コピーモードをキャンセルする</button>
+      </div>
     </div>
 
     <div class="flex items-center gap-x-4">
@@ -34,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import UploadForm from "@/components/forms/UploadForm.vue";
 
 defineProps({
@@ -48,7 +51,7 @@ defineProps({
   },
 });
 
-defineEmits(["next-month", "prev-month"]);
+const emit = defineEmits(["next-month", "prev-month", "close-copy-mode", "cancel-copy-mode"]);
 
 const showModal = ref(false);
 
@@ -56,7 +59,28 @@ const openForm = () => {
   showModal.value = true;
 };
 
-const closeForm = () => {
+const CloseCopyMode = () => {
   showModal.value = false;
+  emit("close-copy-mode");
 };
+
+const cancelCopyMode = () => {
+  emit("cancel-copy-mode");
+};
+
+const handleKeyDown = (e) => {
+  if (e.key === "Escape") {
+    cancelCopyMode();
+  } else if (e.key === "Enter") {
+    CloseCopyMode();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeyDown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleKeyDown);
+});
 </script>
