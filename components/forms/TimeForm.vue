@@ -16,7 +16,7 @@
       <h5 class="pl-2 text-xs mb-2">
         「終日」と表記する場合は00:00に設定してください
       </h5>
-      <div class="max-h-[30vh] overflow-y-auto pr-2" ref="timeSlotsContainer">
+      <div class="max-h-[40vh] overflow-y-auto pr-2" ref="timeSlotsContainer">
         <div v-for="(timeSlot, index) in timeSlots" :key="index">
           <div class="flex pr-3 justify-center items-center gap-x-2 mb-2">
             <label>開始時刻</label>
