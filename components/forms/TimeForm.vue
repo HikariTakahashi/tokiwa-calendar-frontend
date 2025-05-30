@@ -16,7 +16,7 @@
       <h5 class="pl-2 text-xs mb-2">
         「終日」と表記する場合は00:00に設定してください
       </h5>
-      <div class="max-h-[30vh] overflow-y-auto pr-2">
+      <div class="max-h-[30vh] overflow-y-auto pr-2" ref="timeSlotsContainer">
         <div v-for="(timeSlot, index) in timeSlots" :key="index">
           <div class="flex pr-3 justify-center items-center gap-x-2 mb-2">
             <label>開始時刻</label>
@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed, nextTick } from "vue";
+import { onMounted, onBeforeUnmount, computed } from "vue";
 import { DateTimePicker } from "vue-drumroll-datetime-picker";
 import "vue-drumroll-datetime-picker/dist/style.css";
 import { useTimeUtils } from "@/utils/TimeUtils";
@@ -85,7 +85,24 @@ const props = defineProps({
 
 const emit = defineEmits(["save", "delete"]);
 
-const { timeSlots, addTimeSlot, removeTimeSlot, validateTime } = useTimeUtils();
+const {
+  timeSlots,
+  addTimeSlot: addTimeSlotBase,
+  removeTimeSlot,
+  validateTime,
+} = useTimeUtils();
+
+const timeSlotsContainer = ref(null);
+
+const addTimeSlot = () => {
+  addTimeSlotBase();
+  nextTick(() => {
+    if (timeSlotsContainer.value) {
+      timeSlotsContainer.value.scrollTop =
+        timeSlotsContainer.value.scrollHeight;
+    }
+  });
+};
 
 if (props.existingTime.start && props.existingTime.end) {
   timeSlots.value = [
