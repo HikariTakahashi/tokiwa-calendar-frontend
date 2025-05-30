@@ -8,18 +8,17 @@
       @click="openForm(date.date)"
     >
       <div
-        class="flex items-center justify-center py-0.5 sm:py-2"
+        class="flex items-center justify-center sm:pt-2"
         :class="[isCurrentMonth(date.date) ? 'text-black' : 'text-gray-500']"
       >
         {{ new Date(date.date).getDate() }}
       </div>
       <div
         v-if="timeData[date.date]"
-        class="text-center text-xs sm:text-sm font-bold text-blue-500 flex flex-col w-full"
+        class="text-center text-xs sm:text-sm font-bold text-blue-500 w-full flex flex-col min-h-0"
       >
-        <!--この世の終わりみたいなスクロール実装してるのでそのうち解決する-->
         <div
-          class="overflow-y-auto max-h-[65px] sm:max-h-[100px] mt-[-10px] whitespace-pre-line"
+          class="overflow-y-auto overflow-x-hidden whitespace-pre-line break-words w-full"
         >
           {{ formatTimeForDisplay(timeData[date.date]) }}
         </div>
