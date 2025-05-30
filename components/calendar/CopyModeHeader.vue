@@ -6,7 +6,7 @@
       <buttons-circle @click="CloseCopyMode">
         <UIcon name="ic:sharp-clear" class="size-8" />
       </buttons-circle>
-      <div class="flex items-end gap-x-2">
+      <div class="flex flex-col sm:flex-row items-end gap-x-2">
         <h1 class="font-mono text-blue-500">コピーモード</h1>
         <button @click="cancelCopyMode" class="text-sm text-gray-500 hover:text-gray-700">コピーモードをキャンセルする</button>
       </div>
