@@ -3,11 +3,11 @@
     @click="$emit('click')"
     :class="[
       baseClass,
-      isHovered ? color : '',
+      isUse && isHovered ? color : '',
       !isUse ? 'opacity-50 cursor-not-allowed bg-gray-500 text-white' : '',
     ]"
-    @mouseover="isHovered = true"
-    @mouseleave="isHovered = false"
+    @mouseover="isUse && (isHovered = true)"
+    @mouseleave="isUse && (isHovered = false)"
     :disabled="!isUse"
   >
     {{ label }}

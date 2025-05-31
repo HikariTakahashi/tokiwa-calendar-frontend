@@ -17,7 +17,7 @@
         />
       </div>
       <buttons-circle @click="openForm">
-        <UIcon name="ic:outline-download-for-offline" class="size-5" />
+        <UIcon name="ic:baseline-file-upload" class="size-5" />
       </buttons-circle>
       <buttons-circle @click="$emit('prev-month')">
         <UIcon name="ic:baseline-arrow-back-ios-new" class="size-5" />

@@ -74,7 +74,6 @@ const {
   handleCopy: copyLogic,
   handlePaste,
   handleCancelCopyMode: cancelCopyLogic,
-  closeCopyMode
 } = useCopyLogic();
 
 const onSave = (data) => {
