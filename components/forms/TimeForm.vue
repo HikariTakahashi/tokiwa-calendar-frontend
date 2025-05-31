@@ -2,16 +2,28 @@
   <div
     class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border bg-white rounded shadow-lg"
   >
+  <div class="flex justify-between items-center py-1 px-2 border-b-2 hover:bg-gray-100">
+    <div class="flex gap-x-2">
+        <button @click="copy"  class="py-1.5 px-1.5 flex justify-center items-center rounded-full hover:bg-gray-100">
+          <UIcon name="ic:baseline-copy-all" class="size-5 hover:bg-blue-500" />
+        </button>
+        <button @click="deleteTime" class="py-1.5 px-1.5 flex justify-center items-center rounded-full hover:bg-gray-100">
+          <UIcon name="ic:baseline-delete" class="size-5 hover:bg-red-500" />
+        </button>
+    </div>
+        <button @click="props.close" class="pt-1">
+          <UIcon name="ic:sharp-clear" class="size-6 hover:bg-red-500" />
+        </button>
+      </div>
     <div class="pl-5 pr-2 pb-5 rounded-lg w-96 shadow-lg relative">
+      
       <div class="flex justify-between items-center">
-        <h2 class="pt-5 text-xl font-bold">
+        <h2 class="text-xl font-bold">
           {{ isCurrentYear ? "" : dateComponents.year + "年" }}
           {{ isCurrentMonth ? "" : dateComponents.month + "月" }}
           {{ dateComponents.day }} 日の時間設定
         </h2>
-        <button @click="props.close">
-          <UIcon name="ic:sharp-clear" class="size-6 hover:bg-red-500" />
-        </button>
+        
       </div>
       <h5 class="pl-2 text-xs mb-2">
         「終日」と表記する場合は00:00に設定してください
@@ -58,14 +70,14 @@
         </div>
       </div>
       <div class="mt-3 flex justify-end gap-x-2">
-        <buttons-square 
+        <!-- <buttons-square 
           @click="copy" 
           label="コピー" 
           color="bg-green-200" 
           :isUse="hasTimeData"
-        />
+        /> -->
         <buttons-square @click="save" label="保存" color="bg-blue-200" />
-        <buttons-square @click="deleteTime" label="削除" color="bg-red-200" />
+        <!-- <buttons-square @click="deleteTime" label="削除" color="bg-red-200" /> -->
       </div>
     </div>
   </div>
