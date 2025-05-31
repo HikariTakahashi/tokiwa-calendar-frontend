@@ -1,8 +1,13 @@
 <template>
   <div
+    ref="modalRef"
     class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border bg-white rounded shadow-lg"
+    :style="modalStyle"
   >
-  <div class="flex items-center py-1 px-2 border-b-2 hover:bg-gray-100">
+  <div 
+    class="flex items-center py-1 px-2 border-b-2 hover:bg-gray-100 cursor-move"
+    @mousedown="startDrag"
+  >
     <div class="flex flex-row justify-between w-full">
       <div v-if="hasTimeData" class="flex gap-x-2">
         <button @click="copy"  class="py-2 px-2 flex justify-center items-center rounded-full hover:bg-gray-300">
@@ -87,7 +92,7 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, computed } from "vue";
+import { onMounted, onBeforeUnmount, computed, ref } from "vue";
 import { DateTimePicker } from "vue-drumroll-datetime-picker";
 import "vue-drumroll-datetime-picker/dist/style.css";
 import { useTimeUtils } from "@/utils/TimeUtils";
@@ -197,7 +202,102 @@ const hasTimeData = computed(() => {
   return props.existingTime && Object.keys(props.existingTime).length > 0;
 });
 
-onMounted(() => window.addEventListener("keydown", onKeyDown));
-onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown));
+const isDragging = ref(false);
+const dragStartX = ref(0);
+const dragStartY = ref(0);
+const offsetX = ref(0);
+const offsetY = ref(0);
+const modalStyle = ref({
+  transform: 'translate(-50%, -50%)'
+});
+
+// モーダルのサイズを保持するためのref
+const modalRef = ref(null);
+const modalWidth = ref(0);
+const modalHeight = ref(0);
+
+// モーダルのサイズを取得
+const updateModalSize = () => {
+  if (modalRef.value) {
+    const rect = modalRef.value.getBoundingClientRect();
+    modalWidth.value = rect.width;
+    modalHeight.value = rect.height;
+  }
+};
+
+const startDrag = (e) => {
+  e.preventDefault();
+  isDragging.value = true;
+  
+  // モーダルのサイズを更新
+  updateModalSize();
+  
+  // マウスの位置を記録
+  dragStartX.value = e.clientX;
+  dragStartY.value = e.clientY;
+  
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDrag);
+};
+
+const onDrag = (e) => {
+  if (!isDragging.value) return;
+  
+  const deltaX = e.clientX - dragStartX.value;
+  const deltaY = e.clientY - dragStartY.value;
+  
+  // 新しい位置を計算
+  let newOffsetX = offsetX.value + deltaX;
+  let newOffsetY = offsetY.value + deltaY;
+  
+  // 画面の端との距離を計算
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+  
+  // X軸の制限
+  const maxOffsetX = (windowWidth - modalWidth.value) / 2;
+  const minOffsetX = -maxOffsetX;
+  newOffsetX = Math.min(Math.max(newOffsetX, minOffsetX), maxOffsetX);
+  
+  // Y軸の制限
+  const maxOffsetY = (windowHeight - modalHeight.value) / 2;
+  const minOffsetY = -maxOffsetY;
+  newOffsetY = Math.min(Math.max(newOffsetY, minOffsetY), maxOffsetY);
+  
+  // 制限された位置を適用
+  offsetX.value = newOffsetX;
+  offsetY.value = newOffsetY;
+  
+  modalStyle.value = {
+    transform: `translate(calc(-50% + ${offsetX.value}px), calc(-50% + ${offsetY.value}px))`
+  };
+  
+  // 次のドラッグのために開始位置を更新
+  dragStartX.value = e.clientX;
+  dragStartY.value = e.clientY;
+};
+
+const stopDrag = () => {
+  if (!isDragging.value) return;
+  isDragging.value = false;
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+};
+
+// ウィンドウのリサイズ時にモーダルのサイズを更新
+onMounted(() => {
+  window.addEventListener("keydown", onKeyDown);
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDrag);
+  window.addEventListener('resize', updateModalSize);
+  updateModalSize();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", onKeyDown);
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+  window.removeEventListener('resize', updateModalSize);
+});
 
 </script>
