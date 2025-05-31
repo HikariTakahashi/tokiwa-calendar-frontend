@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-7 grid-rows-6 gap-0.5 sm:gap-2 h-full">
+  <div class="grid grid-cols-7 grid-rows-6 gap-0.5 sm:gap-2 h-full sm:p-1.5">
     <div
       v-for="date in calendarDays"
       :key="date.date"
@@ -113,7 +113,6 @@ const handleCopy = () => {
   const result = copyLogic(selectedDate.value, timeData.value);
   emit("update:is-copy-mode", result.isCopyMode);
   showModal.value = false;
-  console.log("isCopyMode true");
 };
 
 const handleCancelCopyMode = () => {
