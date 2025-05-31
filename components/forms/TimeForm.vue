@@ -58,7 +58,12 @@
         </div>
       </div>
       <div class="mt-3 flex justify-end gap-x-2">
-        <buttons-square @click="copy" label="コピー" color="bg-green-200" />
+        <buttons-square 
+          @click="copy" 
+          label="コピー" 
+          color="bg-green-200" 
+          :isUse="hasTimeData"
+        />
         <buttons-square @click="save" label="保存" color="bg-blue-200" />
         <buttons-square @click="deleteTime" label="削除" color="bg-red-200" />
       </div>
@@ -172,6 +177,10 @@ const onKeyDown = (e) => {
     props.close();
   }
 };
+
+const hasTimeData = computed(() => {
+  return props.existingTime && Object.keys(props.existingTime).length > 0;
+});
 
 onMounted(() => window.addEventListener("keydown", onKeyDown));
 onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown));
