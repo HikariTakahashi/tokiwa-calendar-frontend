@@ -2,17 +2,17 @@
   <div
     class="flex flex-col sm:flex-row justify-between items-center py-2 sx:py-1 px-2"
   >
-    <div class="flex items-center text-2xl font-bold mb-2 sm:mb-0 gap-x-5 ">
+    <div class="flex items-center mb-2 sm:mb-0 gap-x-5 ">
       <buttons-circle @click="CloseCopyMode">
         <UIcon name="ic:sharp-clear" class="size-8" />
       </buttons-circle>
-      <div class="flex flex-col sm:flex-row items-end gap-x-2">
-        <h1 class="font-mono text-blue-500">コピーモード</h1>
-        <button @click="cancelCopyMode" class="text-sm text-gray-500 hover:text-gray-700">コピーモードをキャンセルする</button>
+      <div class="flex items-end gap-x-2">
+        <p class="text-2xl font-bold font-mono text-blue-500">コピーモード</p>
+        <p class="hidden sm:block text-sm font-bold text-gray-500">Enterキーでモードを終了できます。</p>
       </div>
     </div>
 
-    <div class="flex items-center gap-x-4">
+    <div class="flex sm:items-center gap-x-4">
       <div class="border-r border-gray-400 pr-4">
         <CalendarDays
           :current-year="currentYear"
@@ -64,14 +64,12 @@ const CloseCopyMode = () => {
   emit("close-copy-mode");
 };
 
-const cancelCopyMode = () => {
-  emit("cancel-copy-mode");
-};
+// const cancelCopyMode = () => {
+//   emit("cancel-copy-mode");
+// };
 
 const handleKeyDown = (e) => {
-  if (e.key === "Escape") {
-    cancelCopyMode();
-  } else if (e.key === "Enter") {
+if (e.key === "Enter") {
     CloseCopyMode();
   }
 };
