@@ -1,5 +1,7 @@
 <template>
-  <div class="flex flex-col sm:flex-row justify-between items-center py-1 px-2">
+  <div
+    class="flex flex-col sm:flex-row justify-between items-center py-2 sx:py-1 px-2"
+  >
     <div class="flex items-center text-2xl font-bold mb-2 sm:mb-0">
       <h1 class="text-blue-500 font-mono">Toki</h1>
       <h1 class="text-green-500 font-mono">Wa</h1>
@@ -15,7 +17,7 @@
         />
       </div>
       <buttons-circle @click="openForm">
-        <UIcon name="ic:outline-download-for-offline" class="size-5" />
+        <UIcon name="ic:baseline-file-upload" class="size-5" />
       </buttons-circle>
       <buttons-circle @click="$emit('prev-month')">
         <UIcon name="ic:baseline-arrow-back-ios-new" class="size-5" />
