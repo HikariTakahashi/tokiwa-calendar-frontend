@@ -86,11 +86,13 @@ const props = defineProps({
     type: Number,
     validator: (value) => value >= 1 && value <= 60,
   },
+  // 将来的に増減値を変更する設定を追加
   initialHours: {
     type: Number,
     default: 0,
     validator: (value) => value >= 0 && value <= 23,
   },
+  // 将来的に増減値を変更する設定を追加
   initialMinutes: {
     type: Number,
     default: 0,
