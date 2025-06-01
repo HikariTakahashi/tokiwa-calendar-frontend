@@ -90,7 +90,7 @@ const props = defineProps({
   initialHours: {
     type: Number,
     default: 0,
-    validator: (value) => value >= 0 && value <= 23,
+    validator: (value) => value >= 0 && value <= 24,
   },
   // 将来的に増減値を変更する設定を追加
   initialMinutes: {
@@ -195,7 +195,7 @@ const handleMinutesWheel = (event) => {
 };
 
 const incrementHours = () => {
-  hours.value = (hours.value + 1) % 24;
+  hours.value = (hours.value + 1) % 25;
   updateTime();
 };
 
@@ -205,7 +205,7 @@ const incrementMinutes = () => {
 };
 
 const decrementHours = () => {
-  hours.value = (hours.value - 1 + 24) % 24;
+  hours.value = (hours.value - 1 + 25) % 25;
   updateTime();
 };
 
