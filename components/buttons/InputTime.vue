@@ -148,7 +148,7 @@ const startEditingMinutes = () => {
 
 const finishEditingHours = () => {
   const value = parseInt(hoursInputValue.value);
-  if (!isNaN(value) && value >= 0 && value <= 23) {
+  if (!isNaN(value) && value >= 0 && value <= 24) {
     hours.value = value;
     updateTime();
   }
