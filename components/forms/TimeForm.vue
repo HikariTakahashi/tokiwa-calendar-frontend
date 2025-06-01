@@ -37,6 +37,9 @@
     </div>
 
     <div class="pl-5 pr-2 pt-1 pb-5 rounded-lg w-96 shadow-lg relative">
+      <h6 class="text-sm font-bold text-red-500">
+        {{ errorMessage }}
+      </h6>
       <div class="flex justify-between items-center">
         <h2 class="text-xl font-bold">
           {{ isCurrentYear ? "" : dateComponents.year + "年" }}
@@ -44,9 +47,7 @@
           {{ dateComponents.day }} 日の時間設定
         </h2>
       </div>
-      <h5 class="pl-2 text-xs mb-2">
-        「終日」と表記する場合は00:00に設定してください
-      </h5>
+
       <div class="max-h-[40vh] overflow-y-auto pr-2" ref="timeSlotsContainer">
         <div v-for="(timeSlot, index) in timeSlots" :key="index">
           <div class="flex pr-3 justify-center items-center gap-x-2 mb-2">
@@ -121,6 +122,8 @@ const {
   addTimeSlot: addTimeSlotBase,
   removeTimeSlot,
   validateTime,
+  validateTimeOrder,
+  validateTimeOverlap,
 } = useTimeUtils();
 
 const timeSlotsContainer = ref(null);
@@ -208,12 +211,27 @@ const isCurrentMonth = computed(() => {
   );
 });
 
+const errorMessage = ref("");
+
 const save = () => {
   if (!validateTime(timeSlots.value)) {
     alert("開始時刻と終了時刻を入力してください");
     return;
   }
 
+  const orderValidation = validateTimeOrder(timeSlots.value);
+  if (!orderValidation.isValid) {
+    errorMessage.value = orderValidation.errorMessage;
+    return;
+  }
+
+  const overlapValidation = validateTimeOverlap(timeSlots.value);
+  if (!overlapValidation.isValid) {
+    errorMessage.value = overlapValidation.errorMessage;
+    return;
+  }
+
+  errorMessage.value = "";
   emit("save", {
     date: props.selectedDate,
     timeSlots: timeSlots.value,
