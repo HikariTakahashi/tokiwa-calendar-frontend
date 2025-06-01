@@ -94,7 +94,7 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, computed, ref } from "vue";
+import { onMounted, onBeforeUnmount, computed, ref, watch } from "vue";
 import InputTime from "@/components/buttons/InputTime.vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 
@@ -141,19 +141,48 @@ const parseTimeSlot = (timeString) => {
   return { hours, minutes };
 };
 
-if (props.existingTime.start && props.existingTime.end) {
-  timeSlots.value = [
-    {
-      start: props.existingTime.start,
-      end: props.existingTime.end,
-    },
-  ];
-} else if (Array.isArray(props.existingTime)) {
-  timeSlots.value = props.existingTime.map((slot) => ({
-    start: slot.start,
-    end: slot.end,
-  }));
-}
+const updateTimeSlots = () => {
+  if (props.existingTime.start && props.existingTime.end) {
+    timeSlots.value = [
+      {
+        start: props.existingTime.start,
+        end: props.existingTime.end,
+      },
+    ];
+  } else if (Array.isArray(props.existingTime)) {
+    timeSlots.value = props.existingTime.map((slot) => ({
+      start: slot.start,
+      end: slot.end,
+    }));
+  } else {
+    timeSlots.value = [
+      {
+        start: "00:00",
+        end: "00:00",
+      },
+    ];
+  }
+};
+
+// 初期化時に実行
+updateTimeSlots();
+
+// selectedDateが変更された時に実行
+watch(
+  () => props.selectedDate,
+  () => {
+    updateTimeSlots();
+  }
+);
+
+// existingTimeが変更された時に実行
+watch(
+  () => props.existingTime,
+  () => {
+    updateTimeSlots();
+  },
+  { deep: true }
+);
 
 const dateComponents = computed(() => {
   const parts = props.selectedDate.split("-");
@@ -251,8 +280,30 @@ const onDrag = (e) => {
   const dx = e.clientX - dragStartX.value;
   const dy = e.clientY - dragStartY.value;
 
-  offsetX.value += dx;
-  offsetY.value += dy;
+  // 新しい位置を計算
+  let newOffsetX = offsetX.value + dx;
+  let newOffsetY = offsetY.value + dy;
+
+  // 画面の端との距離を計算
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+
+  // モーダルのサイズを更新
+  updateModalSize();
+
+  // X軸の制限（左右の余白を考慮）
+  const maxOffsetX = (windowWidth - modalWidth.value) / 2 - 2;
+  const minOffsetX = -(windowWidth - modalWidth.value) / 2 + 2;
+  newOffsetX = Math.min(Math.max(newOffsetX, minOffsetX), maxOffsetX);
+
+  // Y軸の制限（上下の余白を考慮）
+  const maxOffsetY = (windowHeight - modalHeight.value) / 2 - 2;
+  const minOffsetY = -(windowHeight - modalHeight.value) / 2 + 2;
+  newOffsetY = Math.min(Math.max(newOffsetY, minOffsetY), maxOffsetY);
+
+  // 制限された位置を適用
+  offsetX.value = newOffsetX;
+  offsetY.value = newOffsetY;
 
   modalStyle.value = {
     transform: `translate(calc(-50% + ${offsetX.value}px), calc(-50% + ${offsetY.value}px))`,
@@ -268,11 +319,15 @@ const stopDrag = () => {
   document.removeEventListener("mouseup", stopDrag);
 };
 
+// ウィンドウのリサイズ時にモーダルのサイズを更新
 onMounted(() => {
   window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("resize", updateModalSize);
+  updateModalSize();
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", onKeyDown);
+  window.removeEventListener("resize", updateModalSize);
 });
 </script>
