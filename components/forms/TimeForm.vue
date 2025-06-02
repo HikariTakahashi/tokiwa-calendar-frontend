@@ -15,15 +15,27 @@
             class="py-2 px-2 flex justify-center items-center rounded-full hover:bg-gray-300"
           >
             <UIcon
-              name="ic:baseline-copy-all"
-              class="size-5 hover:bg-blue-500"
+              name="mdi:calendar-blank-multiple"
+              class="size-5 bg-gray-600 hover:bg-blue-500"
+            />
+          </button>
+          <button
+            @click="copyClipboard"
+            class="py-2 px-2 flex justify-center items-center rounded-full hover:bg-gray-300"
+          >
+            <UIcon
+              name="mdi:clipboard-multiple-outline"
+              class="size-5 bg-gray-600 hover:bg-green-500"
             />
           </button>
           <button
             @click="deleteTime"
             class="py-2 px-2 flex justify-center items-center rounded-full hover:bg-gray-300"
           >
-            <UIcon name="ic:baseline-delete" class="size-5 hover:bg-red-500" />
+            <UIcon
+              name="ic:baseline-delete"
+              class="size-5 bg-gray-600 hover:bg-red-500"
+            />
           </button>
         </div>
         <button
@@ -98,6 +110,7 @@
 import { onMounted, onBeforeUnmount, computed, ref, watch } from "vue";
 import InputTime from "@/components/buttons/InputTime.vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
+import { copySingleDateToClipboard } from "@/utils/CopyDate";
 
 const props = defineProps({
   close: Function,
@@ -249,6 +262,14 @@ const deleteTime = () => {
 
 const copy = () => {
   emit("copy");
+};
+
+const copyClipboard = () => {
+  copySingleDateToClipboard(props.selectedDate, timeSlots.value).catch(
+    (err) => {
+      console.error("コピーに失敗しました:", err);
+    }
+  );
 };
 
 const onKeyDown = (e) => {

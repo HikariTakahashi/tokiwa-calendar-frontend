@@ -37,3 +37,25 @@ export const copyToClipboard = (
       throw err;
     });
 };
+
+export const copySingleDateToClipboard = (
+  date: string,
+  timeSlots: any[]
+): Promise<void> => {
+  if (!timeSlots || timeSlots.length === 0) {
+    alert("コピーするデータがありません");
+    return Promise.reject("データがありません");
+  }
+
+  const { formatTimeForCopy } = useTimeUtils();
+
+  const text = `${formatDate(date)}:${formatTimeForCopy(timeSlots)}`;
+
+  return navigator.clipboard
+    .writeText(text)
+    .then(() => alert("クリップボードにコピーしました"))
+    .catch((err) => {
+      console.error("コピーに失敗しました:", err);
+      throw err;
+    });
+};
