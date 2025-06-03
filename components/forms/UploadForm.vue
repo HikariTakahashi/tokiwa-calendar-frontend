@@ -17,7 +17,7 @@
         </button>
       </div>
 
-      <div class="space-y-4">
+      <div class="grid sm:grid-cols-5 gap-2">
         <div
           v-if="Object.keys(displayData).length === 0"
           class="text-center py-4"
@@ -26,24 +26,30 @@
         </div>
         <div
           v-else
-          v-for="(time, date) in displayData"
+          v-for="(timeSlots, date) in displayData"
           :key="date"
           class="border p-4 rounded"
         >
           <div class="font-bold">{{ formatDate(date) }}</div>
-          <div class="text-blue-500">{{ time.start }} ~ {{ time.end }}</div>
+          <div class="text-blue-500 whitespace-pre-line">
+            {{ formatTimeForDisplay(timeSlots) }}
+          </div>
         </div>
       </div>
 
-      <div
-        class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white z-10 pb-6"
-      >
+      <div class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white pb-6">
         <buttons-square
-          @click="copyToClipboard"
+          @click="handleCopy"
           label="コピー"
           color="bg-gray-300"
+          :isUse="Object.keys(displayData).length > 0"
         />
-        <buttons-square @click="syncData" label="同期" color="bg-blue-300" />
+        <buttons-square
+          @click="syncData"
+          label="同期"
+          color="bg-blue-300"
+          
+        />
       </div>
     </div>
   </div>
@@ -51,7 +57,6 @@
 
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from "vue";
-import { useRouter } from "vue-router";
 
 const props = defineProps({
   timeData: {
@@ -62,6 +67,7 @@ const props = defineProps({
 
 const emit = defineEmits(["close"]);
 const displayData = ref({});
+const { formatTimeForDisplay } = useTimeUtils();
 
 watch(
   () => props.timeData,
@@ -96,6 +102,10 @@ const copyToClipboard = () => {
     .writeText(text)
     .then(() => alert("クリップボードにコピーしました"))
     .catch((err) => console.error("コピーに失敗しました:", err));
+};
+
+const handleCopy = () => {
+  copyToClipboard(displayData.value);
 };
 
 const generateRandomString = (length = 8) => {
