@@ -46,8 +46,8 @@ export const useTimeUtils = () => {
       if (!slot.start || !slot.end) continue;
 
       const startTime = new Date(`2000-01-01T${slot.start}`);
-      const endTime = new Date(`2000-01-01T${slot.end}`);
-
+      const endTime = new Date(`2000-01-01T${slot.end}`); 
+      // エラー表示
       if (startTime >= endTime) {
         return {
           isValid: false,
@@ -79,7 +79,7 @@ export const useTimeUtils = () => {
 
       const currentEnd = new Date(`2000-01-01T${current.end}`).getTime();
       const nextStart = new Date(`2000-01-01T${next.start}`).getTime();
-
+      // エラー表示
       if (currentEnd > nextStart) {
         return {
           isValid: false,
