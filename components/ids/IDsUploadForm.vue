@@ -53,6 +53,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import type { TimeSlot } from "@/utils/TimeUtils";
+import { useAPI } from "@/composables/useAPI";
 
 const props = defineProps({
   timeData: {
@@ -64,6 +65,7 @@ const props = defineProps({
 const emit = defineEmits(["close"]);
 const displayData = ref<{ [key: string]: TimeSlot | TimeSlot[] }>({});
 const { formatTimeForDisplay } = useTimeUtils();
+const { syncTimeData } = useAPI();
 
 watch(
   () => props.timeData,
@@ -126,7 +128,7 @@ const syncData = async () => {
     }
 
     const route = useRoute();
-    const spaceId = route.params.id;
+    const spaceId = route.params.id as string;
 
     // データを適切な形式に変換
     const formattedData = Object.entries(displayData.value).reduce(
@@ -142,23 +144,7 @@ const syncData = async () => {
       {} as { [key: string]: any }
     );
 
-    const response = await $fetch<{
-      message: string;
-      spaceId: string;
-      savedEvents: { [key: string]: TimeSlot[] };
-    }>("http://localhost:8080/api/time", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: {
-        ...formattedData,
-        spaceId: spaceId,
-      },
-    });
-
-    // レスポンスから保存されたイベントを取得
+    const response = await syncTimeData(formattedData, spaceId);
     displayData.value = response.savedEvents;
     alert("同期が完了しました");
   } catch (error) {
