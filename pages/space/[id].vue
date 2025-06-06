@@ -54,6 +54,7 @@ import IDsTimeForm from "@/components/ids/IDsTimeForm.vue";
 import IDsCalendarHeader from "@/components/ids/IDsCalendarHeader.vue";
 import IDsUploadForm from "@/components/ids/IDsUploadForm.vue";
 import IDsCalendar from "@/components/ids/IDsCalendar.vue";
+import { useAPI } from "@/composables/useAPI";
 
 interface CalendarDay {
   date: string;
@@ -75,6 +76,8 @@ const { currentYear, currentMonth, getCalendarDays, nextMonth, prevMonth } =
 
 const showTimeForm = ref(false);
 const selectedDate = ref("");
+
+const { fetchSpaceData: fetchSpaceDataFromAPI } = useAPI();
 
 const updateCalendarDays = () => {
   calendarDays.value = getCalendarDays(currentYear.value, currentMonth.value);
@@ -130,18 +133,11 @@ const getTimeSlots = (date: string): TimeSlot[] => {
   }));
 };
 
-const fetchSpaceData = async () => {
+const fetchSpaceDataFromServer = async () => {
   try {
-    const spaceId = route.params.id;
-    const response = await $fetch(`http://localhost:8080/api/time/${spaceId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-    });
-    console.log("API Response:", response); // デバッグログ
-    timeData.value = response as TimeData;
+    const spaceId = route.params.id as string;
+    const response = await fetchSpaceDataFromAPI(spaceId);
+    timeData.value = response;
     updateCalendarDays();
   } catch (error) {
     console.error("スペースデータの取得に失敗しました:", error);
@@ -149,6 +145,6 @@ const fetchSpaceData = async () => {
 };
 
 onMounted(() => {
-  fetchSpaceData();
+  fetchSpaceDataFromServer();
 });
 </script>
