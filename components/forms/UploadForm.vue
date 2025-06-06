@@ -17,10 +17,13 @@
         </button>
       </div>
 
-      <div class="grid sm:grid-cols-5 gap-2">
+      <div
+        class="grid"
+        :class="{ 'sm:grid-cols-5 gap-2': Object.keys(displayData).length > 0 }"
+      >
         <div
           v-if="Object.keys(displayData).length === 0"
-          class="text-center py-4"
+          class="flex justify-center items-center text-center py-4"
         >
           データがありません
         </div>
