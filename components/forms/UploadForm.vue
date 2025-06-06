@@ -44,12 +44,7 @@
           color="bg-gray-300"
           :isUse="Object.keys(displayData).length > 0"
         />
-        <buttons-square
-          @click="syncData"
-          label="同期"
-          color="bg-blue-300"
-          
-        />
+        <buttons-square @click="syncData" label="同期" color="bg-blue-300" />
       </div>
     </div>
   </div>
@@ -57,6 +52,7 @@
 
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from "vue";
+import { copyToClipboard } from "@/utils/CopyDate";
 
 const props = defineProps({
   timeData: {
@@ -86,22 +82,6 @@ const handleEscKey = (event) => {
 const formatDate = (dateString) => {
   const date = new Date(dateString);
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
-};
-
-const copyToClipboard = () => {
-  if (Object.keys(displayData.value).length === 0) {
-    alert("コピーするデータがありません");
-    return;
-  }
-
-  const text = Object.entries(displayData.value)
-    .map(([date, time]) => `${formatDate(date)}: ${time.start} ~ ${time.end}`)
-    .join("\n");
-
-  navigator.clipboard
-    .writeText(text)
-    .then(() => alert("クリップボードにコピーしました"))
-    .catch((err) => console.error("コピーに失敗しました:", err));
 };
 
 const handleCopy = () => {

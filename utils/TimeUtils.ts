@@ -46,7 +46,7 @@ export const useTimeUtils = () => {
       if (!slot.start || !slot.end) continue;
 
       const startTime = new Date(`2000-01-01T${slot.start}`);
-      const endTime = new Date(`2000-01-01T${slot.end}`); 
+      const endTime = new Date(`2000-01-01T${slot.end}`);
       // エラー表示
       if (startTime >= endTime) {
         return {
@@ -124,7 +124,7 @@ export const useTimeUtils = () => {
   const formatTimeForCopy = (timeSlots: TimeSlot[]) => {
     return timeSlots
       .map((time) => {
-        if (time.start === "00:00" && time.end === "00:00") {
+        if (time.start === "00:00" && time.end === "24:00") {
           return "終日";
         } else if (time.end === "00:00") {
           return `${time.start}~終日`;
