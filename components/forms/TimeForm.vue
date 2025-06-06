@@ -79,24 +79,23 @@
               :initial-minutes="parseTimeSlot(timeSlot.end).minutes"
             />
             <label>終了時刻</label>
-          </div>
-
-          <div class="flex items-center gap-x-5">
             <button
-              type="button"
-              @click="addTimeSlot"
-              class="text-blue-500 pb-2 hover:underline"
-            >
-              複数時間を入力
-            </button>
-            <button
-              v-if="index > 0"
+              v-if="timeSlots.length > 1"
               @click="removeTimeSlot(index)"
               class="text-red-500"
             >
               <UIcon name="ic:sharp-delete" class="size-5 hover:bg-red-800" />
             </button>
           </div>
+        </div>
+        <div class="flex items-center gap-x-5">
+          <button
+            type="button"
+            @click="addTimeSlot"
+            class="text-blue-500 pb-2 hover:underline"
+          >
+            複数時間を入力
+          </button>
         </div>
       </div>
       <div class="mt-3 flex justify-end gap-x-2">
@@ -282,6 +281,7 @@ const hasTimeData = computed(() => {
   return props.existingTime && Object.keys(props.existingTime).length > 0;
 });
 
+//モーダル移動
 const isDragging = ref(false);
 const dragStartX = ref(0);
 const dragStartY = ref(0);
