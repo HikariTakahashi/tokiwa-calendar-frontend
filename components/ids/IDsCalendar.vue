@@ -4,12 +4,12 @@
       v-for="date in calendarDays"
       :key="date.date"
       class="flex flex-col items-center border rounded transition-transform duration-200 hover:-translate-y-1 shadow-md min-h-[100px] cursor-pointer"
-      :class="[isCurrentMonth(date.date) ? '' : 'bg-gray-100']"
+      :class="[date.isCurrentMonth ? '' : 'bg-gray-100']"
       @click="$emit('open-time-form', date.date)"
     >
       <div
         class="flex items-center justify-center pt-2"
-        :class="[isCurrentMonth(date.date) ? 'text-black' : 'text-gray-500']"
+        :class="[date.isCurrentMonth ? 'text-black' : 'text-gray-500']"
       >
         {{ new Date(date.date).getDate() }}
       </div>
@@ -30,6 +30,7 @@
 <script setup lang="ts">
 import { useTimeUtils } from "@/utils/TimeUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
+import { watch } from "vue";
 
 interface CalendarDay {
   date: string;
@@ -50,17 +51,20 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits<{
   (e: "open-time-form", date: string): void;
+  (e: "prev-month"): void;
+  (e: "next-month"): void;
 }>();
 
 const { formatTimeForDisplay } = useTimeUtils();
 
-const isCurrentMonth = (dateString: string): boolean => {
-  const d = new Date(dateString);
-  return (
-    d.getFullYear() === props.currentYear &&
-    d.getMonth() + 1 === props.currentMonth
-  );
-};
+// 月が変更されたときにカレンダーを更新
+watch(
+  () => [props.currentYear, props.currentMonth],
+  () => {
+    emit("prev-month");
+    emit("next-month");
+  }
+);
 
 const getTimeSlots = (date: string): TimeSlot[] => {
   const slots = props.timeData[date];

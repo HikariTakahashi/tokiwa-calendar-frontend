@@ -22,6 +22,8 @@
       :current-year="currentYear"
       :current-month="currentMonth"
       @open-time-form="openTimeForm"
+      @prev-month="prevMonth"
+      @next-month="nextMonth"
     />
 
     <IDsUploadForm
@@ -43,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useDateUtils } from "@/utils/DateUtils";
@@ -77,6 +79,14 @@ const selectedDate = ref("");
 const updateCalendarDays = () => {
   calendarDays.value = getCalendarDays(currentYear.value, currentMonth.value);
 };
+
+// 月の移動を監視
+watch(
+  () => [currentYear.value, currentMonth.value],
+  () => {
+    updateCalendarDays();
+  }
+);
 
 const isCurrentMonth = (dateString: string): boolean => {
   const d = new Date(dateString);
