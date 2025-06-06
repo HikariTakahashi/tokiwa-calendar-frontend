@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import type { TimeSlot } from "@/utils/TimeUtils";
 
 const props = defineProps<{
