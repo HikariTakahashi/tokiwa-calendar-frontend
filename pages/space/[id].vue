@@ -1,30 +1,13 @@
 <template>
   <div class="container p-2 max-w-full h-screen flex flex-col">
-    <div
-      class="flex flex-col sm:flex-row justify-between items-center py-2 sx:py-1 px-2"
-    >
-      <div class="flex items-center text-2xl font-bold mb-2 sm:mb-0">
-        <h1 class="text-blue-500 font-mono">Toki</h1>
-        <h1 class="text-green-500 font-mono">Wa</h1>
-        <h1 class="pl-1 font-mono">Calendar</h1>
-        <h2 class="pl-3 text-xl font-mono">予定調整モード(閲覧用)</h2>
-      </div>
-
-      <div class="flex items-center gap-x-4">
-        <div class="border-r border-gray-400 pr-4">
-          <CalendarDays
-            :current-year="currentYear"
-            :current-month="currentMonth"
-          />
-        </div>
-        <buttons-circle @click="prevMonth">
-          <UIcon name="ic:baseline-arrow-back-ios-new" class="size-5" />
-        </buttons-circle>
-        <buttons-circle @click="nextMonth">
-          <UIcon name="ic:baseline-arrow-forward-ios" class="size-5" />
-        </buttons-circle>
-      </div>
-    </div>
+    <IDsCalendarHeader
+      :current-year="currentYear"
+      :current-month="currentMonth"
+      :timeData="timeData"
+      @open-form="openForm"
+      @prev-month="prevMonth"
+      @next-month="nextMonth"
+    />
 
     <!-- デバッグ表示 -->
     <!-- <div class="mb-4 p-4 bg-gray-100 rounded-lg">
@@ -66,6 +49,12 @@
       @close="showUploadForm = false"
     />
 
+    <IDsUploadForm
+      v-if="showIDsUploadForm"
+      :timeData="timeData"
+      @close="showIDsUploadForm = false"
+    />
+
     <IDsTimeForm
       v-if="showTimeForm"
       :is-open="showTimeForm"
@@ -84,6 +73,8 @@ import { useRoute } from "vue-router";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import IDsTimeForm from "@/components/ids/IDsTimeForm.vue";
+import IDsCalendarHeader from "@/components/ids/IDsCalendarHeader.vue";
+import IDsUploadForm from "@/components/ids/IDsUploadForm.vue";
 
 interface CalendarDay {
   date: string;
@@ -96,6 +87,7 @@ interface TimeData {
 
 const route = useRoute();
 const showUploadForm = ref(false);
+const showIDsUploadForm = ref(false);
 const timeData = ref<TimeData>({});
 const calendarDays = ref<CalendarDay[]>([]);
 const { formatTimeForDisplay } = useTimeUtils();
@@ -125,8 +117,8 @@ const nextMonth = () => {
   calendarDays.value = getCalendarDays(currentYear.value, currentMonth.value);
 };
 
-const openUploadForm = () => {
-  showUploadForm.value = true;
+const openForm = () => {
+  showIDsUploadForm.value = true;
 };
 
 const openTimeForm = (date: string) => {
