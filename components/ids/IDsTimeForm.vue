@@ -1,6 +1,7 @@
 <template>
   <div
     ref="modalRef"
+    v-if="isOpen"
     class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border bg-white rounded shadow-lg"
     :style="modalStyle"
   >
@@ -10,7 +11,8 @@
     >
       <div class="flex flex-row justify-between w-full">
         <div v-if="hasTimeData" class="flex gap-x-2">
-          <button
+          <!--あとで実装する-->
+          <!-- <button
             @click="copy"
             class="py-2 px-2 flex justify-center items-center rounded-full hover:bg-gray-300"
           >
@@ -27,7 +29,7 @@
               name="mdi:clipboard-multiple-outline"
               class="size-5 bg-gray-600 hover:bg-green-500"
             />
-          </button>
+          </button> -->
           <button
             @click="deleteTime"
             class="py-2 px-2 flex justify-center items-center rounded-full hover:bg-gray-300"
@@ -38,20 +40,18 @@
             />
           </button>
         </div>
-        <button
-          @click="props.close"
-          class="py-1.5 px-1.5 flex justify-center items-center"
-          :class="{ 'ml-auto': !hasTimeData }"
-        >
-          <UIcon name="ic:sharp-clear" class="size-6 hover:bg-red-500" />
-        </button>
+        <div :class="{ 'ml-auto': !hasTimeData }">
+          <button
+            @click="closeModal"
+            class="py-1.5 px-1.5 flex justify-center items-center"
+          >
+            <UIcon name="ic:sharp-clear" class="size-6 hover:bg-red-500" />
+          </button>
+        </div>
       </div>
     </div>
 
     <div class="pl-5 pr-2 pt-1 pb-5 rounded-lg w-96 shadow-lg relative">
-      <h6 class="text-sm font-bold text-red-500">
-        {{ errorMessage }}
-      </h6>
       <div class="flex justify-between items-center">
         <h2 class="text-xl font-bold">
           {{ isCurrentYear ? "" : dateComponents.year + "年" }}
@@ -60,31 +60,35 @@
         </h2>
       </div>
 
-      <div class="max-h-[40vh] overflow-y-auto pr-2" ref="timeSlotsContainer">
-        <div v-for="(timeSlot, index) in timeSlots" :key="index">
-          <div class="flex pr-3 justify-center items-center gap-x-2 mb-2">
+      <div class="space-y-4">
+        <div
+          v-for="(slot, index) in timeSlots"
+          :key="index"
+          class="flex items-center gap-2"
+        >
+          <div class="flex pl-5 justify-center items-center gap-x-2 mb-2">
             <label>開始時刻</label>
             <div class="border-r border-gray-400 pr-2">
               <InputTime
-                v-model:time="timeSlot.start"
                 :minute-interval="5"
-                :initial-hours="parseTimeSlot(timeSlot.start).hours"
-                :initial-minutes="parseTimeSlot(timeSlot.start).minutes"
+                :initial-hours="getHoursFromTime(slot.start)"
+                :initial-minutes="getMinutesFromTime(slot.start)"
+                @update:time="(time) => updateStartTime(index, time)"
               />
             </div>
             <InputTime
-              v-model:time="timeSlot.end"
               :minute-interval="5"
-              :initial-hours="parseTimeSlot(timeSlot.end).hours"
-              :initial-minutes="parseTimeSlot(timeSlot.end).minutes"
+              :initial-hours="getHoursFromTime(slot.end)"
+              :initial-minutes="getMinutesFromTime(slot.end)"
+              @update:time="(time) => updateEndTime(index, time)"
             />
             <label>終了時刻</label>
             <button
               v-if="timeSlots.length > 1"
               @click="removeTimeSlot(index)"
-              class="text-red-500"
+              class="text-red-500 hover:text-red-700"
             >
-              <UIcon name="ic:sharp-delete" class="size-5 hover:bg-red-800" />
+              <UIcon name="ic:baseline-delete" class="size-5" />
             </button>
           </div>
         </div>
@@ -97,107 +101,48 @@
             複数時間を入力
           </button>
         </div>
-      </div>
-      <div class="mt-3 flex justify-end gap-x-2">
-        <buttons-square @click="save" label="保存" color="bg-blue-200" />
+        <div class="flex justify-end gap-2 mt-4">
+          <buttons-square
+            @click="saveTimeSlots"
+            label="保存"
+            color="bg-blue-200"
+          />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { onMounted, onBeforeUnmount, computed, ref, watch } from "vue";
-import InputTime from "@/components/buttons/InputTime.vue";
+<script setup lang="ts">
+import { computed, onMounted, onBeforeUnmount, ref } from "vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
-import { copySingleDateToClipboard } from "@/utils/CopyDate";
+import type { TimeSlot } from "@/utils/TimeUtils";
+import InputTime from "@/components/buttons/InputTime.vue";
 
-const props = defineProps({
-  close: Function,
-  selectedDate: String,
-  year: Number,
-  month: Number,
-  day: Number,
-  existingTime: {
-    type: Object,
-    default: () => ({}),
-  },
-  isCopyMode: {
-    type: Boolean,
-    default: false,
-  },
-});
+const props = defineProps<{
+  isOpen: boolean;
+  selectedDate: string;
+  initialTimeSlots?: TimeSlot[];
+}>();
 
-const emit = defineEmits(["save", "delete", "copy"]);
+const emit = defineEmits<{
+  (e: "close"): void;
+  (e: "save", date: string, slots: TimeSlot[]): void;
+  (e: "delete", date: string): void;
+}>();
 
 const {
   timeSlots,
-  addTimeSlot: addTimeSlotBase,
+  addTimeSlot,
   removeTimeSlot,
   validateTime,
   validateTimeOrder,
   validateTimeOverlap,
 } = useTimeUtils();
 
-const timeSlotsContainer = ref(null);
-
-const addTimeSlot = () => {
-  addTimeSlotBase();
-  nextTick(() => {
-    if (timeSlotsContainer.value) {
-      timeSlotsContainer.value.scrollTop =
-        timeSlotsContainer.value.scrollHeight;
-    }
-  });
+const closeModal = () => {
+  emit("close");
 };
-
-const parseTimeSlot = (timeString) => {
-  if (!timeString) return { hours: 0, minutes: 0 };
-  const [hours, minutes] = timeString.split(":").map(Number);
-  return { hours, minutes };
-};
-
-const updateTimeSlots = () => {
-  if (props.existingTime.start && props.existingTime.end) {
-    timeSlots.value = [
-      {
-        start: props.existingTime.start,
-        end: props.existingTime.end,
-      },
-    ];
-  } else if (Array.isArray(props.existingTime)) {
-    timeSlots.value = props.existingTime.map((slot) => ({
-      start: slot.start,
-      end: slot.end,
-    }));
-  } else {
-    timeSlots.value = [
-      {
-        start: "00:00",
-        end: "00:00",
-      },
-    ];
-  }
-};
-
-// 初期化時に実行
-updateTimeSlots();
-
-// selectedDateが変更された時に実行
-watch(
-  () => props.selectedDate,
-  () => {
-    updateTimeSlots();
-  }
-);
-
-// existingTimeが変更された時に実行
-watch(
-  () => props.existingTime,
-  () => {
-    updateTimeSlots();
-  },
-  { deep: true }
-);
 
 const dateComponents = computed(() => {
   const parts = props.selectedDate.split("-");
@@ -223,65 +168,62 @@ const isCurrentMonth = computed(() => {
   );
 });
 
-const errorMessage = ref("");
+const hasTimeData = computed(() => {
+  return props.initialTimeSlots && props.initialTimeSlots.length > 0;
+});
 
-const save = () => {
+const saveTimeSlots = () => {
   if (!validateTime(timeSlots.value)) {
-    alert("開始時刻と終了時刻を入力してください");
+    alert("すべての時間を入力してください");
     return;
   }
 
   const orderValidation = validateTimeOrder(timeSlots.value);
   if (!orderValidation.isValid) {
-    errorMessage.value = orderValidation.errorMessage;
+    alert(orderValidation.errorMessage);
     return;
   }
 
   const overlapValidation = validateTimeOverlap(timeSlots.value);
   if (!overlapValidation.isValid) {
-    errorMessage.value = overlapValidation.errorMessage;
+    alert(overlapValidation.errorMessage);
     return;
   }
 
-  errorMessage.value = "";
-  emit("save", {
-    date: props.selectedDate,
-    timeSlots: timeSlots.value,
-  });
+  emit("save", props.selectedDate, timeSlots.value);
+  closeModal();
+};
 
-  props.close();
+const getHoursFromTime = (time: string): number => {
+  if (!time) return 0;
+  return parseInt(time.split(":")[0], 10);
+};
+
+const getMinutesFromTime = (time: string): number => {
+  if (!time) return 0;
+  return parseInt(time.split(":")[1], 10);
+};
+
+const updateStartTime = (index: number, time: string) => {
+  timeSlots.value[index].start = time;
+};
+
+const updateEndTime = (index: number, time: string) => {
+  timeSlots.value[index].end = time;
 };
 
 const deleteTime = () => {
-  emit("delete", {
-    date: props.selectedDate,
-  });
-  props.close();
+  emit("delete", props.selectedDate);
+  closeModal();
 };
 
-const copy = () => {
-  emit("copy");
-};
-
-const copyClipboard = () => {
-  copySingleDateToClipboard(props.selectedDate, timeSlots.value).catch(
-    (err) => {
-      console.error("コピーに失敗しました:", err);
-    }
-  );
-};
-
-const onKeyDown = (e) => {
-  if (e.key === "Escape") {
-    props.close();
+onMounted(() => {
+  if (props.initialTimeSlots && props.initialTimeSlots.length > 0) {
+    timeSlots.value = props.initialTimeSlots;
   }
-};
-
-const hasTimeData = computed(() => {
-  return props.existingTime && Object.keys(props.existingTime).length > 0;
 });
 
-//モーダル移動
+// モーダル移動用の変数
 const isDragging = ref(false);
 const dragStartX = ref(0);
 const dragStartY = ref(0);
@@ -291,7 +233,7 @@ const modalStyle = ref({
   transform: "translate(-50%, -50%)",
 });
 
-const modalRef = ref(null);
+const modalRef = ref<HTMLElement | null>(null);
 const modalWidth = ref(0);
 const modalHeight = ref(0);
 
@@ -303,7 +245,7 @@ const updateModalSize = () => {
   }
 };
 
-const startDrag = (e) => {
+const startDrag = (e: MouseEvent) => {
   e.preventDefault();
   isDragging.value = true;
   updateModalSize();
@@ -313,7 +255,7 @@ const startDrag = (e) => {
   document.addEventListener("mouseup", stopDrag);
 };
 
-const onDrag = (e) => {
+const onDrag = (e: MouseEvent) => {
   if (!isDragging.value) return;
 
   const dx = e.clientX - dragStartX.value;
@@ -356,6 +298,12 @@ const stopDrag = () => {
   isDragging.value = false;
   document.removeEventListener("mousemove", onDrag);
   document.removeEventListener("mouseup", stopDrag);
+};
+
+const onKeyDown = (e: KeyboardEvent) => {
+  if (e.key === "Escape") {
+    closeModal();
+  }
 };
 
 // ウィンドウのリサイズ時にモーダルのサイズを更新

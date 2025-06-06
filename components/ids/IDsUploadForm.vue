@@ -7,7 +7,7 @@
         class="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pt-6"
       >
         <h2 class="text-xl font-bold border-b-2 border-gray-200">
-          時間データ一覧
+          スペース内の時間データ一覧
         </h2>
         <button
           @click="emit('close')"
@@ -17,13 +17,10 @@
         </button>
       </div>
 
-      <div
-        class="grid"
-        :class="{ 'sm:grid-cols-5 gap-2': Object.keys(displayData).length > 0 }"
-      >
+      <div class="grid sm:grid-cols-5 gap-2">
         <div
           v-if="Object.keys(displayData).length === 0"
-          class="flex justify-center items-center text-center py-4"
+          class="text-center py-4"
         >
           データがありません
         </div>
@@ -33,37 +30,29 @@
           :key="date"
           class="border p-4 rounded"
         >
-          <div class="font-bold">{{ formatDate(date) }}</div>
+          <div class="font-bold">{{ formatDate(String(date)) }}</div>
           <div class="text-blue-500 whitespace-pre-line">
-            {{ formatTimeForDisplay(timeSlots) }}
+            {{ formatTimeForDisplay(getTimeSlots(String(date))) }}
           </div>
         </div>
       </div>
 
-      <div class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white pb-4">
+      <div class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white pb-6">
         <buttons-square
           @click="handleCopy"
           label="コピー"
           color="bg-gray-300"
           :isUse="Object.keys(displayData).length > 0"
         />
-        <div class="flex-col">
-          <buttons-square
-            @click="syncData"
-            label="同期"
-            color="bg-blue-300"
-            :isUse="false"
-          />
-          <p class="text-center text-xs text-gray-600">coming soon...</p>
-        </div>
+        <buttons-square @click="syncData" label="再同期" color="bg-blue-300" />
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from "vue";
-import { copyToClipboard } from "@/utils/CopyDate";
+import type { TimeSlot } from "@/utils/TimeUtils";
 import { useAPI } from "@/composables/useAPI";
 
 const props = defineProps({
@@ -74,9 +63,9 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["close"]);
-const displayData = ref({});
+const displayData = ref<{ [key: string]: TimeSlot | TimeSlot[] }>({});
 const { formatTimeForDisplay } = useTimeUtils();
-const { createNewSpace } = useAPI();
+const { syncTimeData } = useAPI();
 
 watch(
   () => props.timeData,
@@ -86,29 +75,49 @@ watch(
   { immediate: true }
 );
 
-const handleEscKey = (event) => {
+const handleEscKey = (event: KeyboardEvent) => {
   if (event.key === "Escape") {
     emit("close");
   }
 };
 
-const formatDate = (dateString) => {
+const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
 };
 
-const handleCopy = () => {
-  copyToClipboard(displayData.value);
+const getTimeSlots = (date: string): TimeSlot[] => {
+  const slots = displayData.value[date];
+  if (!slots) return [];
+
+  // APIから受け取ったデータをTimeSlot形式に変換
+  const convertedSlots = Array.isArray(slots) ? slots : [slots];
+  return convertedSlots.map((slot) => ({
+    start: (slot as any).Start || (slot as any).start,
+    end: (slot as any).End || (slot as any).end,
+    order: (slot as any).order || 1,
+  }));
 };
 
-const generateRandomString = (length = 8) => {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+const handleCopy = () => {
+  if (Object.keys(displayData.value).length === 0) {
+    alert("コピーするデータがありません");
+    return;
   }
-  return result;
+
+  const text = Object.entries(displayData.value)
+    .map(([date, slots]) => {
+      const timeSlots = getTimeSlots(date);
+      return `${formatDate(date)}: ${timeSlots
+        .map((slot) => `${slot.start} ~ ${slot.end}`)
+        .join(", ")}`;
+    })
+    .join("\n");
+
+  navigator.clipboard
+    .writeText(text)
+    .then(() => alert("クリップボードにコピーしました"))
+    .catch((err) => console.error("コピーに失敗しました:", err));
 };
 
 const syncData = async () => {
@@ -118,19 +127,25 @@ const syncData = async () => {
       return;
     }
 
-    // ランダムなURLを生成
-    const randomId = generateRandomString();
+    const route = useRoute();
+    const spaceId = route.params.id as string;
 
-    const response = await createNewSpace({
-      ...displayData.value,
-      spaceId: randomId,
-    });
+    // データを適切な形式に変換
+    const formattedData = Object.entries(displayData.value).reduce(
+      (acc, [date, slots]) => {
+        const timeSlots = getTimeSlots(date);
+        acc[date] = timeSlots.map((slot) => ({
+          start: slot.start,
+          end: slot.end,
+          order: slot.order,
+        }));
+        return acc;
+      },
+      {} as { [key: string]: any }
+    );
 
+    const response = await syncTimeData(formattedData, spaceId);
     displayData.value = response.savedEvents;
-
-    // 生成したランダムIDでURLに遷移
-    await navigateTo(`/space/${randomId}`);
-
     alert("同期が完了しました");
   } catch (error) {
     console.error("同期エラー:", error);
