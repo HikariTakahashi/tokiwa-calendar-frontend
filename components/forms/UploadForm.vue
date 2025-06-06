@@ -40,19 +40,22 @@
         </div>
       </div>
 
-      <div class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white pb-6">
+      <div class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white pb-4">
         <buttons-square
           @click="handleCopy"
           label="コピー"
           color="bg-gray-300"
           :isUse="Object.keys(displayData).length > 0"
         />
-        <buttons-square
-          @click="syncData"
-          label="同期"
-          color="bg-blue-300"
-          :isUse="false"
-        />
+        <div class="flex-col">
+          <buttons-square
+            @click="syncData"
+            label="同期"
+            color="bg-blue-300"
+            :isUse="false"
+          />
+          <p class="text-center text-xs text-gray-600">coming soon...</p>
+        </div>
       </div>
     </div>
   </div>
