@@ -44,6 +44,7 @@
           color="bg-gray-300"
           :isUse="Object.keys(displayData).length > 0"
         />
+        <buttons-square @click="syncData" label="再同期" color="bg-blue-300" />
       </div>
     </div>
   </div>
@@ -115,6 +116,55 @@ const handleCopy = () => {
     .writeText(text)
     .then(() => alert("クリップボードにコピーしました"))
     .catch((err) => console.error("コピーに失敗しました:", err));
+};
+
+const syncData = async () => {
+  try {
+    if (Object.keys(displayData.value).length === 0) {
+      alert("同期するデータがありません");
+      return;
+    }
+
+    const route = useRoute();
+    const spaceId = route.params.id;
+
+    // データを適切な形式に変換
+    const formattedData = Object.entries(displayData.value).reduce(
+      (acc, [date, slots]) => {
+        const timeSlots = getTimeSlots(date);
+        acc[date] = timeSlots.map((slot) => ({
+          start: slot.start,
+          end: slot.end,
+          order: slot.order,
+        }));
+        return acc;
+      },
+      {} as { [key: string]: any }
+    );
+
+    const response = await $fetch<{
+      message: string;
+      spaceId: string;
+      savedEvents: { [key: string]: TimeSlot[] };
+    }>("http://localhost:8080/api/time", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: {
+        ...formattedData,
+        spaceId: spaceId,
+      },
+    });
+
+    // レスポンスから保存されたイベントを取得
+    displayData.value = response.savedEvents;
+    alert("同期が完了しました");
+  } catch (error) {
+    console.error("同期エラー:", error);
+    alert("同期に失敗しました");
+  }
 };
 
 onMounted(() => {
