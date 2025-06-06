@@ -53,6 +53,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import { copyToClipboard } from "@/utils/CopyDate";
+import { useAPI } from "@/composables/useAPI";
 
 const props = defineProps({
   timeData: {
@@ -64,6 +65,7 @@ const props = defineProps({
 const emit = defineEmits(["close"]);
 const displayData = ref({});
 const { formatTimeForDisplay } = useTimeUtils();
+const { createNewSpace } = useAPI();
 
 watch(
   () => props.timeData,
@@ -108,19 +110,12 @@ const syncData = async () => {
     // ランダムなURLを生成
     const randomId = generateRandomString();
 
-    const response = await $fetch("http://localhost:8080/api/time", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: {
-        ...displayData.value,
-        spaceId: randomId,
-      },
+    const response = await createNewSpace({
+      ...displayData.value,
+      spaceId: randomId,
     });
 
-    displayData.value = response;
+    displayData.value = response.savedEvents;
 
     // 生成したランダムIDでURLに遷移
     await navigateTo(`/space/${randomId}`);
