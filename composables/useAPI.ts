@@ -11,7 +11,8 @@ interface APIResponse {
 }
 
 export const useAPI = () => {
-  const API_BASE_URL = "http://localhost:8080/api";
+  const config = useRuntimeConfig();
+  const API_BASE_URL = config.public.apiBaseUrl;
 
   //[id].vue用 スペースデータ取得
   const fetchSpaceData = async (spaceId: string): Promise<TimeData> => {
