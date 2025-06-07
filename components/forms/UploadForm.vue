@@ -40,21 +40,29 @@
         </div>
       </div>
 
-      <div class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white pb-4">
-        <buttons-square
-          @click="handleCopy"
-          label="コピー"
-          color="bg-gray-300"
-          :isUse="Object.keys(displayData).length > 0"
-        />
-        <div class="flex-col">
+      <div class="flex flex-col sticky bottom-0 bg-white pb-4 mt-6 gap-y-2">
+        <div class="flex justify-end gap-x-2">
           <buttons-square
-            @click="syncData"
-            label="同期"
-            color="bg-blue-300"
-            :isUse="false"
+            @click="handleCopy"
+            label="コピー"
+            color="bg-gray-300"
+            :isUse="Object.keys(displayData).length > 0"
           />
-          <p class="text-center text-xs text-gray-600">coming soon...</p>
+          <buttons-square @click="syncData" label="同期" color="bg-blue-300" />
+        </div>
+        <div v-if="showSyncInput" class="flex justify-end gap-x-2 items-center">
+          <input
+            v-model="username"
+            type="text"
+            placeholder="ユーザー名を入力"
+            class="border rounded px-2 py-1"
+          />
+          <buttons-square
+            @click="confirmSync"
+            label="確定"
+            color="bg-green-300"
+            :isUse="username.length > 0"
+          />
         </div>
       </div>
     </div>
@@ -75,6 +83,8 @@ const props = defineProps({
 
 const emit = defineEmits(["close"]);
 const displayData = ref({});
+const showSyncInput = ref(false);
+const username = ref("");
 const { formatTimeForDisplay } = useTimeUtils();
 const { createNewSpace } = useAPI();
 
@@ -112,6 +122,10 @@ const generateRandomString = (length = 8) => {
 };
 
 const syncData = async () => {
+  showSyncInput.value = true;
+};
+
+const confirmSync = async () => {
   try {
     if (Object.keys(displayData.value).length === 0) {
       alert("同期するデータがありません");
@@ -124,6 +138,7 @@ const syncData = async () => {
     const response = await createNewSpace({
       ...displayData.value,
       spaceId: randomId,
+      username: username.value,
     });
 
     displayData.value = response.savedEvents;
@@ -132,6 +147,8 @@ const syncData = async () => {
     await navigateTo(`/space/${randomId}`);
 
     alert("同期が完了しました");
+    showSyncInput.value = false;
+    username.value = "";
   } catch (error) {
     console.error("同期エラー:", error);
     alert("同期に失敗しました");
