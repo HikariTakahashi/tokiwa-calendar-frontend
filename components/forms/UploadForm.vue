@@ -51,18 +51,86 @@
           <buttons-square @click="syncData" label="同期" color="bg-blue-300" />
         </div>
         <div v-if="showSyncInput" class="flex justify-end gap-x-2 items-center">
-          <input
-            v-model="username"
-            type="text"
-            placeholder="ユーザー名を入力"
-            class="border rounded px-2 py-1"
-          />
-          <buttons-square
-            @click="confirmSync"
-            label="確定"
-            color="bg-green-300"
-            :isUse="username.length > 0"
-          />
+          <div class="flex flex-col gap-y-2 pr-2">
+            <div>
+              <p>HEX</p>
+              <input
+                v-model="username"
+                type="text"
+                placeholder="ここにテキストを入力"
+                class="border rounded px-2 py-1 font-bold"
+              />
+            </div>
+            <div>
+              <p>RGB</p>
+              <input
+                v-model="username"
+                type="text"
+                placeholder="ここにテキストを入力"
+                class="border rounded px-2 py-1 font-bold"
+              />
+            </div>
+            <div>
+              <p>HSV</p>
+              <input
+                v-model="username"
+                type="text"
+                placeholder="ここにテキストを入力"
+                class="border rounded px-2 py-1 font-bold"
+              />
+            </div>
+          </div>
+          <div class="flex flex-col gap-y-2">
+            <input
+              v-model="username"
+              type="text"
+              placeholder="ユーザー名を入力"
+              class="border rounded px-2 py-1 font-bold"
+              :style="{ color: userColor }"
+            />
+            <div class="flex justify-center gap-x-2">
+              <ColorPicker v-model="userColor" />
+              <!--色を表示-->
+              <div class="flex flex-wrap max-w-20 gap-y-2">
+                <div
+                  class="w-20 h-8 rounded border"
+                  :style="{ backgroundColor: userColor }"
+                ></div>
+                <div class="flex flex-wrap gap-2 justify-center">
+                  <button
+                    class="w-5 h-5 rounded border bg-red-500"
+                    @click="userColor = '#ef4444'"
+                  ></button>
+                  <button
+                    class="w-5 h-5 rounded border bg-green-500"
+                    @click="userColor = '#22c55e'"
+                  ></button>
+                  <button
+                    class="w-5 h-5 rounded border bg-pink-500"
+                    @click="userColor = '#ec4899'"
+                  ></button>
+                  <button
+                    class="w-5 h-5 rounded border bg-purple-500"
+                    @click="userColor = '#a855f7'"
+                  ></button>
+                  <button
+                    class="w-5 h-5 rounded border bg-blue-500"
+                    @click="userColor = '#3b82f6'"
+                  ></button>
+                  <button
+                    class="w-5 h-5 rounded border bg-indigo-500"
+                    @click="userColor = '#6366f1'"
+                  ></button>
+                </div>
+                <buttons-square
+                  @click="confirmSync"
+                  label="確定"
+                  color="bg-green-300"
+                  :isUse="username.length > 0"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -73,6 +141,7 @@
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import { copyToClipboard } from "@/utils/CopyDate";
 import { useAPI } from "@/composables/useAPI";
+import ColorPicker from "@/components/buttons/ColorPicker.vue";
 
 const props = defineProps({
   timeData: {
@@ -85,6 +154,7 @@ const emit = defineEmits(["close"]);
 const displayData = ref({});
 const showSyncInput = ref(false);
 const username = ref("");
+const userColor = ref("#3b82f6");
 const { formatTimeForDisplay } = useTimeUtils();
 const { createNewSpace } = useAPI();
 
@@ -132,23 +202,23 @@ const confirmSync = async () => {
       return;
     }
 
-    // ランダムなURLを生成
     const randomId = generateRandomString();
 
     const response = await createNewSpace({
       ...displayData.value,
       spaceId: randomId,
       username: username.value,
+      userColor: userColor.value,
     });
 
     displayData.value = response.savedEvents;
 
-    // 生成したランダムIDでURLに遷移
     await navigateTo(`/space/${randomId}`);
 
     alert("同期が完了しました");
     showSyncInput.value = false;
     username.value = "";
+    userColor.value = "#000000";
   } catch (error) {
     console.error("同期エラー:", error);
     alert("同期に失敗しました");
@@ -163,3 +233,39 @@ onUnmounted(() => {
   window.removeEventListener("keydown", handleEscKey);
 });
 </script>
+
+<style scoped>
+.cursor-crosshair {
+  cursor: crosshair;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border: 2px solid #666;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: white;
+  border: 2px solid #666;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+</style>
