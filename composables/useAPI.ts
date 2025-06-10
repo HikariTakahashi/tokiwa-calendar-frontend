@@ -1,7 +1,12 @@
 import type { TimeSlot } from "@/utils/TimeUtils";
 
 interface TimeData {
-  [key: string]: TimeSlot | TimeSlot[];
+  events: {
+    [key: string]: TimeSlot | TimeSlot[];
+  };
+  spaceId: string;
+  username: string;
+  userColor: string;
 }
 
 interface APIResponse {
