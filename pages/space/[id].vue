@@ -137,7 +137,7 @@ const fetchSpaceDataFromServer = async () => {
   try {
     const spaceId = route.params.id as string;
     const response = await fetchSpaceDataFromAPI(spaceId);
-    timeData.value = response;
+    timeData.value = response.events;
     updateCalendarDays();
   } catch (error) {
     console.error("スペースデータの取得に失敗しました:", error);
