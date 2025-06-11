@@ -2,13 +2,15 @@
   <div
     class="flex flex-col sm:flex-row justify-between items-center py-2 sx:py-1 px-2"
   >
-    <div class="flex items-center mb-2 sm:mb-0 gap-x-5 ">
+    <div class="flex items-center mb-2 sm:mb-0 gap-x-5">
       <buttons-circle @click="CloseCopyMode">
         <UIcon name="ic:sharp-clear" class="size-8" />
       </buttons-circle>
       <div class="flex items-end gap-x-2">
         <p class="text-2xl font-bold font-mono text-blue-500">コピーモード</p>
-        <p class="hidden sm:block text-sm font-bold text-gray-500">Enterキーでモードを終了できます。</p>
+        <p class="hidden sm:block text-sm font-bold text-gray-500">
+          Enterキーでモードを終了できます。
+        </p>
       </div>
     </div>
 
@@ -20,7 +22,7 @@
         />
       </div>
       <buttons-circle @click="openForm" :isUse="false">
-        <UIcon name="ic:outline-download-for-offline" class="size-5" />
+        <UIcon name="ic:baseline-file-upload" class="size-5" />
       </buttons-circle>
       <buttons-circle @click="$emit('prev-month')">
         <UIcon name="ic:baseline-arrow-back-ios-new" class="size-5" />
@@ -51,7 +53,12 @@ defineProps({
   },
 });
 
-const emit = defineEmits(["next-month", "prev-month", "close-copy-mode", "cancel-copy-mode"]);
+const emit = defineEmits([
+  "next-month",
+  "prev-month",
+  "close-copy-mode",
+  "cancel-copy-mode",
+]);
 
 const showModal = ref(false);
 
@@ -69,7 +76,7 @@ const CloseCopyMode = () => {
 // };
 
 const handleKeyDown = (e) => {
-if (e.key === "Enter") {
+  if (e.key === "Enter") {
     CloseCopyMode();
   }
 };
