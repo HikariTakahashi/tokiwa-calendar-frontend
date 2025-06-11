@@ -7,8 +7,12 @@
       :class="[
         isCurrentMonth(date.date) ? '' : 'bg-gray-100',
         props.isCopyMode ? 'cursor-pointer' : '',
-        props.isCopyMode && date.date === selectedDate ? 'border-8 border-dashed border-blue-500' : '',
-        props.isCopyMode && timeData[date.date] === copiedTimeData ? 'border-8 border-blue-500' : ''
+        props.isCopyMode && date.date === selectedDate
+          ? 'border-8 border-dashed border-blue-500'
+          : '',
+        props.isCopyMode && timeData[date.date] === copiedTimeData
+          ? 'border-8 border-blue-500'
+          : '',
       ]"
       @click="openForm(date.date)"
     >
@@ -25,7 +29,7 @@
         <div
           class="overflow-y-auto overflow-x-hidden whitespace-pre-line break-words w-full"
         >
-          {{ formatTimeForDisplay(timeData[date.date]) }}
+          {{ formatTimeForDisplay(getTimeSlots(date.date)) }}
         </div>
       </div>
     </div>
@@ -37,7 +41,7 @@
     :selectedDate="selectedDate"
     :year="year"
     :month="month"
-    :existingTime="timeData[selectedDate] || {}"
+    :existingTime="selectedDate ? timeData[selectedDate] || {} : {}"
     :isCopyMode="props.isCopyMode"
     @save="onSave"
     @delete="onDelete"
@@ -46,28 +50,44 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import TimeForm from "@/components/forms/TimeForm.vue";
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
+import type { TimeSlot } from "@/utils/TimeUtils";
+import { useAPI } from "@/composables/useAPI";
 
-const props = defineProps({
-  calendarDays: Array,
-  year: Number,
-  month: Number,
-  isCopyMode: {
-    type: Boolean,
-    default: false
-  }
-});
+interface CalendarDay {
+  date: string;
+  isCurrentMonth: boolean;
+}
 
-const emit = defineEmits(["save", "delete", "update:time-data", "update:is-copy-mode", "cancel-copy-mode"]);
+interface TimeData {
+  [key: string]: TimeSlot | TimeSlot[];
+}
 
-const timeData = ref({});
+interface Props {
+  calendarDays: CalendarDay[];
+  year: number;
+  month: number;
+  isCopyMode: boolean;
+  spaceId?: string;
+}
+
+const props = defineProps<Props>();
+const emit = defineEmits<{
+  (e: "save", data: { date: string; timeSlots: TimeSlot[] }): void;
+  (e: "delete", data: { date: string }): void;
+  (e: "update:time-data", data: TimeData): void;
+  (e: "update:is-copy-mode", value: boolean): void;
+  (e: "cancel-copy-mode"): void;
+}>();
+
+const timeData = ref<TimeData>({});
 const { formatTimeForDisplay } = useTimeUtils();
 const showModal = ref(false);
-const selectedDate = ref(null);
+const selectedDate = ref<string>("");
 
 const {
   copiedTimeData,
@@ -76,22 +96,32 @@ const {
   handleCancelCopyMode: cancelCopyLogic,
 } = useCopyLogic();
 
-const onSave = (data) => {
+const { fetchSpaceData, syncTimeData } = useAPI();
+
+const onSave = async (data: { date: string; timeSlots: TimeSlot[] }) => {
   timeData.value[data.date] = data.timeSlots;
   emit("update:time-data", timeData.value);
+
+  if (props.spaceId) {
+    await syncDataToAPI();
+  }
 };
 
-const onDelete = (data) => {
+const onDelete = async (data: { date: string }) => {
   delete timeData.value[data.date];
   emit("update:time-data", timeData.value);
+
+  if (props.spaceId) {
+    await syncDataToAPI();
+  }
 };
 
-const isCurrentMonth = (dateString) => {
+const isCurrentMonth = (dateString: string): boolean => {
   const d = new Date(dateString);
   return d.getFullYear() === props.year && d.getMonth() + 1 === props.month;
 };
 
-const openForm = (date) => {
+const openForm = (date: string) => {
   if (props.isCopyMode) {
     const result = handlePaste(date, timeData.value);
     if (result.isPasted) {
@@ -109,6 +139,7 @@ const closeForm = () => {
 };
 
 const handleCopy = () => {
+  if (!selectedDate.value) return;
   const result = copyLogic(selectedDate.value, timeData.value);
   emit("update:is-copy-mode", result.isCopyMode);
   showModal.value = false;
@@ -120,4 +151,53 @@ const handleCancelCopyMode = () => {
   emit("update:time-data", timeData.value);
   emit("update:is-copy-mode", result.isCopyMode);
 };
+
+const getTimeSlots = (date: string): TimeSlot[] => {
+  const slots = timeData.value[date];
+  if (!slots) return [];
+
+  const convertedSlots = Array.isArray(slots) ? slots : [slots];
+  return convertedSlots.map((slot) => ({
+    start: (slot as any).Start || (slot as any).start,
+    end: (slot as any).End || (slot as any).end,
+    order: (slot as any).Order || (slot as any).order || 1,
+  }));
+};
+
+const fetchDataFromAPI = async () => {
+  if (!props.spaceId) return;
+
+  try {
+    const response = await fetchSpaceData(props.spaceId);
+    timeData.value = response.events;
+    emit("update:time-data", timeData.value);
+  } catch (error) {
+    console.error("データの取得に失敗しました:", error);
+  }
+};
+
+const syncDataToAPI = async () => {
+  if (!props.spaceId) return;
+
+  try {
+    const response = await syncTimeData(
+      {
+        events: timeData.value,
+        spaceId: props.spaceId,
+        username: "",
+        userColor: "",
+      },
+      props.spaceId
+    );
+    console.log("データの同期が完了しました:", response);
+  } catch (error) {
+    console.error("データの同期に失敗しました:", error);
+  }
+};
+
+onMounted(() => {
+  if (props.spaceId) {
+    fetchDataFromAPI();
+  }
+});
 </script>
