@@ -66,6 +66,18 @@ interface TimeData {
   [key: string]: TimeSlot | TimeSlot[];
 }
 
+interface APITimeSlot {
+  Start: string;
+  End: string;
+  Order: number;
+}
+
+interface APIResponse {
+  events?: {
+    [key: string]: APITimeSlot | APITimeSlot[];
+  };
+}
+
 const route = useRoute();
 const showUploadForm = ref(false);
 const showIDsUploadForm = ref(false);
@@ -91,14 +103,6 @@ watch(
     updateCalendarDays();
   }
 );
-
-const isCurrentMonth = (dateString: string): boolean => {
-  const d = new Date(dateString);
-  return (
-    d.getFullYear() === currentYear.value &&
-    d.getMonth() + 1 === currentMonth.value
-  );
-};
 
 const openForm = () => {
   showIDsUploadForm.value = true;
@@ -138,12 +142,73 @@ const fetchSpaceDataFromServer = async () => {
   try {
     const spaceId = route.params.id as string;
     const response = await fetchSpaceDataFromAPI(spaceId);
-    timeData.value = response.events;
+
+    // APIレスポンスの検証
+    if (!response || typeof response !== "object") {
+      console.error("APIからのレスポンスが不正です:", response);
+      timeData.value = {};
+      updateCalendarDays();
+      return;
+    }
+
+    // 開発用のモックデータ
+    const mockData = {
+      "2025-06-05": [
+        {
+          End: "01:00",
+          Order: 1,
+          Start: "00:00",
+        },
+        {
+          End: "02:00",
+          Order: 2,
+          Start: "01:05",
+        },
+      ],
+    };
+
+    // APIからのデータを適切な形式に変換
+    const convertedData: TimeData = {};
+    const apiResponse = response as unknown as APIResponse;
+    const events = apiResponse.events || mockData; // APIレスポンスがない場合はモックデータを使用
+
+    Object.entries(events).forEach(([date, slots]) => {
+      if (!slots) return;
+
+      convertedData[date] = Array.isArray(slots)
+        ? slots.map((slot) => ({
+            start: slot.Start,
+            end: slot.End,
+            order: slot.Order,
+          }))
+        : [
+            {
+              start: (slots as APITimeSlot).Start,
+              end: (slots as APITimeSlot).End,
+              order: (slots as APITimeSlot).Order,
+            },
+          ];
+    });
+
+    timeData.value = convertedData;
     updateCalendarDays();
   } catch (error) {
     console.error("スペースデータの取得に失敗しました:", error);
-    // 開発中は空のデータで初期化
-    timeData.value = {};
+    // 開発中はモックデータで初期化
+    timeData.value = {
+      "2025-06-05": [
+        {
+          start: "00:00",
+          end: "01:00",
+          order: 1,
+        },
+        {
+          start: "01:05",
+          end: "02:00",
+          order: 2,
+        },
+      ],
+    };
     updateCalendarDays();
   }
 };
