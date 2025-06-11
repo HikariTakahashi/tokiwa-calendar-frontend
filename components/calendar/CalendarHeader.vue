@@ -63,6 +63,8 @@ const emit = defineEmits<{
   (e: "openForm"): void;
   (e: "prevMonth"): void;
   (e: "nextMonth"): void;
+  (e: "closeCopyMode"): void;
+  (e: "cancelCopyMode"): void;
 }>();
 
 const openForm = () => {
