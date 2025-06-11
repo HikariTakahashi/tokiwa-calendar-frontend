@@ -54,6 +54,7 @@ import IDsTimeForm from "@/components/ids/IDsTimeForm.vue";
 import IDsCalendarHeader from "@/components/ids/IDsCalendarHeader.vue";
 import IDsUploadForm from "@/components/ids/IDsUploadForm.vue";
 import IDsCalendar from "@/components/ids/IDsCalendar.vue";
+import CalendarWeeks from "@/components/calendar/CalendarWeeks.vue";
 import { useAPI } from "@/composables/useAPI";
 
 interface CalendarDay {
@@ -141,6 +142,9 @@ const fetchSpaceDataFromServer = async () => {
     updateCalendarDays();
   } catch (error) {
     console.error("スペースデータの取得に失敗しました:", error);
+    // 開発中は空のデータで初期化
+    timeData.value = {};
+    updateCalendarDays();
   }
 };
 

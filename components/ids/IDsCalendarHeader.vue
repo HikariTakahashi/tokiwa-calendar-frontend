@@ -30,9 +30,9 @@
   </div>
   <Teleport to="body">
     <IDsUploadForm
-      v-if="showForm"
+      v-if="showIDsUploadForm"
       :timeData="timeData"
-      @close="showForm = false"
+      @close="showIDsUploadForm = false"
     />
   </Teleport>
 </template>
@@ -40,6 +40,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { TimeSlot } from "@/utils/TimeUtils";
+import IDsUploadForm from "@/components/ids/IDsUploadForm.vue";
 
 const props = defineProps<{
   currentYear: number;
@@ -49,7 +50,7 @@ const props = defineProps<{
   };
 }>();
 
-const showForm = ref(false);
+const showIDsUploadForm = ref(false);
 
 const emit = defineEmits<{
   (e: "openForm"): void;
@@ -58,7 +59,7 @@ const emit = defineEmits<{
 }>();
 
 const openForm = () => {
-  showForm.value = true;
+  showIDsUploadForm.value = true;
   emit("openForm");
 };
 
