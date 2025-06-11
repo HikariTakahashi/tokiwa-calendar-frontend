@@ -1,6 +1,6 @@
 import type { TimeSlot } from "@/utils/TimeUtils";
 
-interface TimeData {
+export interface TimeData {
   events: {
     [key: string]: TimeSlot | TimeSlot[];
   };
@@ -15,6 +15,12 @@ interface APIResponse {
   savedEvents: { [key: string]: TimeSlot[] };
 }
 
+interface APITimeSlot {
+  Start: string;
+  End: string;
+  Order: number;
+}
+
 export const useAPI = () => {
   const config = useRuntimeConfig();
   const API_BASE_URL = config.public.apiBaseUrl;
@@ -22,14 +28,38 @@ export const useAPI = () => {
   //[id].vue用 スペースデータ取得
   const fetchSpaceData = async (spaceId: string): Promise<TimeData> => {
     try {
-      const response = await $fetch(`${API_BASE_URL}/time/${spaceId}`, {
+      const response = await $fetch<{
+        [key: string]: APITimeSlot | APITimeSlot[];
+      }>(`${API_BASE_URL}/time/${spaceId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
       });
-      return response as TimeData;
+
+      // APIレスポンスをTimeSlot型に変換
+      const convertedEvents: { [key: string]: TimeSlot | TimeSlot[] } = {};
+      Object.entries(response).forEach(([date, slots]) => {
+        convertedEvents[date] = Array.isArray(slots)
+          ? slots.map((slot) => ({
+              start: slot.Start,
+              end: slot.End,
+              order: slot.Order,
+            }))
+          : {
+              start: slots.Start,
+              end: slots.End,
+              order: slots.Order,
+            };
+      });
+
+      return {
+        events: convertedEvents,
+        spaceId: spaceId,
+        username: "",
+        userColor: "",
+      };
     } catch (error) {
       console.error("スペースデータの取得に失敗しました:", error);
       throw error;

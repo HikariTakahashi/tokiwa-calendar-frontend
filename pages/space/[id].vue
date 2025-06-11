@@ -56,6 +56,7 @@ import IDsUploadForm from "@/components/ids/IDsUploadForm.vue";
 import IDsCalendar from "@/components/ids/IDsCalendar.vue";
 import CalendarWeeks from "@/components/calendar/CalendarWeeks.vue";
 import { useAPI } from "@/composables/useAPI";
+import type { TimeData as APITimeData } from "@/composables/useAPI";
 
 interface CalendarDay {
   date: string;
@@ -64,18 +65,6 @@ interface CalendarDay {
 
 interface TimeData {
   [key: string]: TimeSlot | TimeSlot[];
-}
-
-interface APITimeSlot {
-  Start: string;
-  End: string;
-  Order: number;
-}
-
-interface APIResponse {
-  events?: {
-    [key: string]: APITimeSlot | APITimeSlot[];
-  };
 }
 
 const route = useRoute();
@@ -103,6 +92,14 @@ watch(
     updateCalendarDays();
   }
 );
+
+const isCurrentMonth = (dateString: string): boolean => {
+  const d = new Date(dateString);
+  return (
+    d.getFullYear() === currentYear.value &&
+    d.getMonth() + 1 === currentMonth.value
+  );
+};
 
 const openForm = () => {
   showIDsUploadForm.value = true;
@@ -143,72 +140,37 @@ const fetchSpaceDataFromServer = async () => {
     const spaceId = route.params.id as string;
     const response = await fetchSpaceDataFromAPI(spaceId);
 
-    // APIレスポンスの検証
-    if (!response || typeof response !== "object") {
-      console.error("APIからのレスポンスが不正です:", response);
+    // レスポンスの検証
+    if (!response || !response.events) {
+      console.warn("APIからのレスポンスが不正です:", response);
       timeData.value = {};
       updateCalendarDays();
       return;
     }
 
-    // 開発用のモックデータ
-    const mockData = {
-      "2025-06-05": [
-        {
-          End: "01:00",
-          Order: 1,
-          Start: "00:00",
-        },
-        {
-          End: "02:00",
-          Order: 2,
-          Start: "01:05",
-        },
-      ],
-    };
-
-    // APIからのデータを適切な形式に変換
+    // APIからのレスポンスを適切な形式に変換
     const convertedData: TimeData = {};
-    const apiResponse = response as unknown as APIResponse;
-    const events = apiResponse.events || mockData; // APIレスポンスがない場合はモックデータを使用
-
-    Object.entries(events).forEach(([date, slots]) => {
-      if (!slots) return;
+    Object.entries(response.events).forEach(([date, slots]) => {
+      if (!slots) return; // スロットがnullまたはundefinedの場合はスキップ
 
       convertedData[date] = Array.isArray(slots)
         ? slots.map((slot) => ({
-            start: slot.Start,
-            end: slot.End,
-            order: slot.Order,
+            start: (slot as any).Start || slot.start || "00:00",
+            end: (slot as any).End || slot.end || "00:00",
+            order: (slot as any).Order || slot.order || 1,
           }))
-        : [
-            {
-              start: (slots as APITimeSlot).Start,
-              end: (slots as APITimeSlot).End,
-              order: (slots as APITimeSlot).Order,
-            },
-          ];
+        : {
+            start: (slots as any).Start || slots.start || "00:00",
+            end: (slots as any).End || slots.end || "00:00",
+            order: (slots as any).Order || slots.order || 1,
+          };
     });
-
     timeData.value = convertedData;
     updateCalendarDays();
   } catch (error) {
     console.error("スペースデータの取得に失敗しました:", error);
-    // 開発中はモックデータで初期化
-    timeData.value = {
-      "2025-06-05": [
-        {
-          start: "00:00",
-          end: "01:00",
-          order: 1,
-        },
-        {
-          start: "01:05",
-          end: "02:00",
-          order: 2,
-        },
-      ],
-    };
+    // 開発中は空のデータで初期化
+    timeData.value = {};
     updateCalendarDays();
   }
 };
