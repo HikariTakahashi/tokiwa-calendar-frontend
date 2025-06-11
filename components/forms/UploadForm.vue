@@ -48,87 +48,37 @@
             color="bg-gray-300"
             :isUse="Object.keys(displayData).length > 0"
           />
-          <buttons-square @click="syncData" label="同期" color="bg-blue-300" />
+          <buttons-square
+            @click="syncData"
+            label="共有"
+            color="bg-blue-300"
+            :isUse="Object.keys(displayData).length > 0"
+          />
         </div>
-        <div v-if="showSyncInput" class="flex justify-end gap-x-2 items-center">
-          <div class="flex flex-col gap-y-2 pr-2">
-            <div>
-              <p>HEX</p>
-              <input
-                v-model="username"
-                type="text"
-                placeholder="ここにテキストを入力"
-                class="border rounded px-2 py-1 font-bold"
-              />
-            </div>
-            <div>
-              <p>RGB</p>
-              <input
-                v-model="username"
-                type="text"
-                placeholder="ここにテキストを入力"
-                class="border rounded px-2 py-1 font-bold"
-              />
-            </div>
-            <div>
-              <p>HSV</p>
-              <input
-                v-model="username"
-                type="text"
-                placeholder="ここにテキストを入力"
-                class="border rounded px-2 py-1 font-bold"
-              />
-            </div>
+        <div v-if="showSyncInput">
+          <div class="flex flex-row justify-center items-center mb-4">
+            <div class="flex items-center w-20 h-0.5 bg-gray-700" />
+            <h2 class="text-xl font-bold mx-4">カレンダー共有設定</h2>
+            <div class="flex items-center w-20 h-0.5 bg-gray-700" />
           </div>
-          <div class="flex flex-col gap-y-2">
-            <input
-              v-model="username"
-              type="text"
-              placeholder="ユーザー名を入力"
-              class="border rounded px-2 py-1 font-bold"
-              :style="{ color: userColor }"
-            />
-            <div class="flex justify-center gap-x-2">
-              <ColorPicker v-model="userColor" />
-              <!--色を表示-->
-              <div class="flex flex-wrap max-w-20 gap-y-2">
-                <div
-                  class="w-20 h-8 rounded border"
-                  :style="{ backgroundColor: userColor }"
-                ></div>
-                <div class="flex flex-wrap gap-2 justify-center">
-                  <button
-                    class="w-5 h-5 rounded border bg-red-500"
-                    @click="userColor = '#ef4444'"
-                  ></button>
-                  <button
-                    class="w-5 h-5 rounded border bg-green-500"
-                    @click="userColor = '#22c55e'"
-                  ></button>
-                  <button
-                    class="w-5 h-5 rounded border bg-pink-500"
-                    @click="userColor = '#ec4899'"
-                  ></button>
-                  <button
-                    class="w-5 h-5 rounded border bg-purple-500"
-                    @click="userColor = '#a855f7'"
-                  ></button>
-                  <button
-                    class="w-5 h-5 rounded border bg-blue-500"
-                    @click="userColor = '#3b82f6'"
-                  ></button>
-                  <button
-                    class="w-5 h-5 rounded border bg-indigo-500"
-                    @click="userColor = '#6366f1'"
-                  ></button>
-                </div>
-                <buttons-square
-                  @click="confirmSync"
-                  label="確定"
-                  color="bg-green-300"
-                  :isUse="username.length > 0"
-                />
-              </div>
+          <div class="flex flex-col sm:flex-row gap-y-2 gap-x-2 justify-end">
+            <div class="flex items-center">
+              <input
+                v-model="username"
+                type="text"
+                placeholder="ユーザー名を入力"
+                class="border rounded px-2 py-1 font-bold"
+                :style="{ color: userColor }"
+              />
+            </div>
+            <ColorPicker v-model="userColor" />
+            <div class="flex items-end">
+              <buttons-square
+                @click="confirmSync"
+                label="確定"
+                color="bg-green-300"
+                :isUse="username.length > 0"
+              />
             </div>
           </div>
         </div>
