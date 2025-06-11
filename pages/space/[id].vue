@@ -1,62 +1,14 @@
-<template>
-  <div class="h-screen flex flex-col">
-    <IDsCalendarHeader
-      :current-year="currentYear"
-      :current-month="currentMonth"
-      :timeData="timeData"
-      @open-form="openForm"
-      @prev-month="prevMonth"
-      @next-month="nextMonth"
-    />
-
-    <!-- デバッグ表示 -->
-    <!-- <div class="mb-4 p-4 bg-gray-100 rounded-lg">
-      <p>Debug: timeData = {{ JSON.stringify(timeData, null, 2) }}</p>
-    </div> -->
-
-    <CalendarWeeks />
-
-    <IDsCalendar
-      :calendar-days="calendarDays"
-      :time-data="timeData"
-      :current-year="currentYear"
-      :current-month="currentMonth"
-      @open-time-form="openTimeForm"
-      @prev-month="prevMonth"
-      @next-month="nextMonth"
-    />
-
-    <IDsUploadForm
-      v-if="showIDsUploadForm"
-      :timeData="timeData"
-      @close="showIDsUploadForm = false"
-    />
-
-    <IDsTimeForm
-      v-if="showTimeForm"
-      :is-open="showTimeForm"
-      :selected-date="selectedDate"
-      :initial-time-slots="getTimeSlots(selectedDate)"
-      @close="closeTimeForm"
-      @save="saveTimeData"
-      @delete="deleteTimeData"
-    />
-  </div>
-</template>
-
+<!-- vscodeのエラーでシンタックスハイライトが効かなくなるのでscriptタグを上に移動 -->
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { useTimeUtils } from "@/utils/TimeUtils";
 import { useDateUtils } from "@/utils/DateUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
-import IDsTimeForm from "@/components/ids/IDsTimeForm.vue";
-import IDsCalendarHeader from "@/components/ids/IDsCalendarHeader.vue";
-import IDsUploadForm from "@/components/ids/IDsUploadForm.vue";
-import IDsCalendar from "@/components/ids/IDsCalendar.vue";
+import CalendarHeader from "@/components/calendar/CalendarHeader.vue";
+import CopyModeHeader from "@/components/calendar/CopyModeHeader.vue";
+import Calendar from "@/components/calendar/Calendar.vue";
 import CalendarWeeks from "@/components/calendar/CalendarWeeks.vue";
 import { useAPI } from "@/composables/useAPI";
-import type { TimeData as APITimeData } from "@/composables/useAPI";
 
 interface CalendarDay {
   date: string;
@@ -68,16 +20,19 @@ interface TimeData {
 }
 
 const route = useRoute();
-const showUploadForm = ref(false);
 const showIDsUploadForm = ref(false);
 const timeData = ref<TimeData>({});
 const calendarDays = ref<CalendarDay[]>([]);
-const { formatTimeForDisplay } = useTimeUtils();
-const { currentYear, currentMonth, getCalendarDays, nextMonth, prevMonth } =
-  useDateUtils();
-
-const showTimeForm = ref(false);
-const selectedDate = ref("");
+const isCopyMode = ref(false);
+const {
+  currentYear,
+  currentMonth,
+  currentDay,
+  currentWeek,
+  getCalendarDays,
+  nextMonth,
+  prevMonth,
+} = useDateUtils();
 
 const { fetchSpaceData: fetchSpaceDataFromAPI } = useAPI();
 
@@ -85,54 +40,42 @@ const updateCalendarDays = () => {
   calendarDays.value = getCalendarDays(currentYear.value, currentMonth.value);
 };
 
-// 月の移動を監視
-watch(
-  () => [currentYear.value, currentMonth.value],
-  () => {
-    updateCalendarDays();
-  }
-);
-
-const isCurrentMonth = (dateString: string): boolean => {
-  const d = new Date(dateString);
-  return (
-    d.getFullYear() === currentYear.value &&
-    d.getMonth() + 1 === currentMonth.value
-  );
-};
-
 const openForm = () => {
   showIDsUploadForm.value = true;
 };
 
-const openTimeForm = (date: string) => {
-  selectedDate.value = date;
-  showTimeForm.value = true;
+const handleCalendarSave = (data: { date: string; timeSlots: TimeSlot[] }) => {
+  timeData.value[data.date] = data.timeSlots;
 };
 
-const closeTimeForm = () => {
-  showTimeForm.value = false;
+const deleteTimeData = (data: { date: string }) => {
+  delete timeData.value[data.date];
 };
 
-const saveTimeData = (date: string, slots: TimeSlot[]) => {
-  timeData.value[date] = slots;
+const updateTimeData = (newTimeData: TimeData) => {
+  timeData.value = newTimeData;
 };
 
-const deleteTimeData = (date: string) => {
-  delete timeData.value[date];
+const updateIsCopyMode = (value: boolean) => {
+  isCopyMode.value = value;
 };
 
-const getTimeSlots = (date: string): TimeSlot[] => {
-  const slots = timeData.value[date];
-  if (!slots) return [];
+const closeCopyMode = () => {
+  isCopyMode.value = false;
+};
 
-  // APIから受け取ったデータをTimeSlot形式に変換
-  const convertedSlots = Array.isArray(slots) ? slots : [slots];
-  return convertedSlots.map((slot) => ({
-    start: (slot as any).Start || (slot as any).start,
-    end: (slot as any).End || (slot as any).end,
-    order: (slot as any).order || 1,
-  }));
+const handleCancelCopyMode = () => {
+  isCopyMode.value = false;
+};
+
+const handleNextMonth = () => {
+  nextMonth();
+  updateCalendarDays();
+};
+
+const handlePrevMonth = () => {
+  prevMonth();
+  updateCalendarDays();
 };
 
 const fetchSpaceDataFromServer = async () => {
@@ -140,7 +83,6 @@ const fetchSpaceDataFromServer = async () => {
     const spaceId = route.params.id as string;
     const response = await fetchSpaceDataFromAPI(spaceId);
 
-    // レスポンスの検証
     if (!response || !response.events) {
       console.warn("APIからのレスポンスが不正です:", response);
       timeData.value = {};
@@ -148,28 +90,10 @@ const fetchSpaceDataFromServer = async () => {
       return;
     }
 
-    // APIからのレスポンスを適切な形式に変換
-    const convertedData: TimeData = {};
-    Object.entries(response.events).forEach(([date, slots]) => {
-      if (!slots) return; // スロットがnullまたはundefinedの場合はスキップ
-
-      convertedData[date] = Array.isArray(slots)
-        ? slots.map((slot) => ({
-            start: (slot as any).Start || slot.start || "00:00",
-            end: (slot as any).End || slot.end || "00:00",
-            order: (slot as any).Order || slot.order || 1,
-          }))
-        : {
-            start: (slots as any).Start || slots.start || "00:00",
-            end: (slots as any).End || slots.end || "00:00",
-            order: (slots as any).Order || slots.order || 1,
-          };
-    });
-    timeData.value = convertedData;
+    timeData.value = response.events;
     updateCalendarDays();
   } catch (error) {
     console.error("スペースデータの取得に失敗しました:", error);
-    // 開発中は空のデータで初期化
     timeData.value = {};
     updateCalendarDays();
   }
@@ -179,3 +103,40 @@ onMounted(() => {
   fetchSpaceDataFromServer();
 });
 </script>
+
+<template>
+  <div class="h-screen flex flex-col">
+    <component
+      :is="isCopyMode ? CopyModeHeader : CalendarHeader"
+      :current-year="currentYear"
+      :current-month="currentMonth"
+      :current-day="currentDay"
+      :current-week="currentWeek"
+      :is-sync="true"
+      :time-data="timeData"
+      @next-month="handleNextMonth"
+      @prev-month="handlePrevMonth"
+      @open-form="openForm"
+      @close-copy-mode="closeCopyMode"
+      @cancel-copy-mode="handleCancelCopyMode"
+    />
+    <!-- デバッグ表示 -->
+    <!-- <div class="mb-4 p-4 bg-gray-100 rounded-lg">
+      <p>Debug: timeData = {{ JSON.stringify(timeData, null, 2) }}</p>
+    </div> -->
+    <CalendarWeeks />
+
+    <Calendar
+      :calendar-days="calendarDays"
+      :year="currentYear"
+      :month="currentMonth"
+      :is-copy-mode="isCopyMode"
+      :space-id="route.params.id as string"
+      @save="handleCalendarSave"
+      @delete="deleteTimeData"
+      @update:time-data="updateTimeData"
+      @update:is-copy-mode="updateIsCopyMode"
+      @cancel-copy-mode="handleCancelCopyMode"
+    />
+  </div>
+</template>
