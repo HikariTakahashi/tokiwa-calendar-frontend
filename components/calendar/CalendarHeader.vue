@@ -32,7 +32,12 @@
   </div>
 
   <Teleport to="body">
-    <UploadForm v-if="showModal" @close="closeForm" :time-data="timeData" />
+    <UploadForm
+      v-if="showModal"
+      @close="closeForm"
+      :time-data="timeData"
+      :is-sync="isSync"
+    />
   </Teleport>
 </template>
 
