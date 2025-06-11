@@ -49,10 +49,17 @@
             :isUse="Object.keys(displayData).length > 0"
           />
           <buttons-square
+            v-if="!isSync"
             @click="syncData"
             label="共有"
             color="bg-blue-300"
             :isUse="Object.keys(displayData).length > 0"
+          />
+          <buttons-square
+            v-else
+            @click="syncData"
+            label="再同期"
+            color="bg-blue-300"
           />
         </div>
         <div v-if="showSyncInput">
@@ -97,6 +104,10 @@ const props = defineProps({
   timeData: {
     type: Object,
     default: () => ({}),
+  },
+  isSync: {
+    type: Boolean,
+    default: false,
   },
 });
 
