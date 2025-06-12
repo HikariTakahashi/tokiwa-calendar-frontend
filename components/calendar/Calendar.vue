@@ -24,12 +24,35 @@
       </div>
       <div
         v-if="timeData[date.date]"
-        class="text-center text-xs sm:text-sm font-bold text-blue-500 w-full flex flex-col min-h-0"
+        class="text-center text-xs sm:text-sm font-bold w-full flex flex-col min-h-0"
       >
         <div
           class="overflow-y-auto overflow-x-hidden whitespace-pre-line break-words w-full"
         >
-          {{ formatTimeForDisplay(getTimeSlots(date.date)) }}
+          <template
+            v-for="(slot, index) in getTimeSlots(date.date)"
+            :key="index"
+          >
+            <!--ここから下のdivのcssは直接の命令がない限り消去・変更しない-->
+            <div
+              class="flex flex-col sm:flex-row justify-center items-center sm:gap-x-2"
+            >
+              <div
+                v-if="slot.username"
+                class="text-xs mb-1 font-bold"
+                :style="{ color: slot.userColor || '#3b82f6' }"
+              >
+                {{ slot.username }}
+              </div>
+              <div
+                class="text-xs sm:text-sm"
+                :style="{ color: slot.userColor || '#3b82f6' }"
+              >
+                {{ formatTimeForDisplay([slot]) }}
+              </div>
+            </div>
+            <!--ここから上のdivのcssは直接の命令がない限り消去・変更しない-->
+          </template>
         </div>
       </div>
     </div>
@@ -102,18 +125,18 @@ const onSave = async (data: { date: string; timeSlots: TimeSlot[] }) => {
   timeData.value[data.date] = data.timeSlots;
   emit("update:time-data", timeData.value);
 
-  if (props.spaceId) {
-    await syncDataToAPI();
-  }
+  // if (props.spaceId) {
+  //   await syncDataToAPI();
+  // }
 };
 
 const onDelete = async (data: { date: string }) => {
   delete timeData.value[data.date];
   emit("update:time-data", timeData.value);
 
-  if (props.spaceId) {
-    await syncDataToAPI();
-  }
+  // if (props.spaceId) {
+  //   await syncDataToAPI();
+  // }
 };
 
 const isCurrentMonth = (dateString: string): boolean => {
@@ -161,7 +184,13 @@ const getTimeSlots = (date: string): TimeSlot[] => {
     start: (slot as any).Start || (slot as any).start,
     end: (slot as any).End || (slot as any).end,
     order: (slot as any).Order || (slot as any).order || 1,
+    username: (slot as any).Username || (slot as any).username,
+    userColor: (slot as any).UserColor || (slot as any).userColor,
   }));
+};
+
+const getTimeSlotStyle = (date: string) => {
+  return {}; // スタイルは各スロットに個別に適用するため、ここでは空のオブジェクトを返す
 };
 
 const fetchDataFromAPI = async () => {
