@@ -13,6 +13,11 @@
         props.isCopyMode && timeData[date.date] === copiedTimeData
           ? 'border-8 border-blue-500'
           : '',
+        props.isCopyMode &&
+        hasUsernameInDate(date.date) &&
+        isPastedDate(date.date)
+          ? 'border-8 border-blue-500'
+          : '',
       ]"
       @click="openForm(date.date)"
     >
@@ -117,6 +122,7 @@ const {
   handleCopy: copyLogic,
   handlePaste,
   handleCancelCopyMode: cancelCopyLogic,
+  pastedDates,
 } = useCopyLogic();
 
 const { fetchSpaceData, syncTimeData } = useAPI();
@@ -130,13 +136,19 @@ const onSave = async (data: { date: string; timeSlots: TimeSlot[] }) => {
   // }
 };
 
-const onDelete = async (data: { date: string }) => {
-  delete timeData.value[data.date];
+const onDelete = async (data: {
+  date: string;
+  keepUserData?: boolean;
+  userTimeSlots?: TimeSlot[];
+}) => {
+  if (data.keepUserData && data.userTimeSlots) {
+    // Usernameが存在するデータを保持
+    timeData.value[data.date] = data.userTimeSlots;
+  } else {
+    // すべてのデータを削除
+    delete timeData.value[data.date];
+  }
   emit("update:time-data", timeData.value);
-
-  // if (props.spaceId) {
-  //   await syncDataToAPI();
-  // }
 };
 
 const isCurrentMonth = (dateString: string): boolean => {
@@ -222,6 +234,20 @@ const syncDataToAPI = async () => {
   } catch (error) {
     console.error("データの同期に失敗しました:", error);
   }
+};
+
+const hasUsernameInDate = (date: string): boolean => {
+  const timeSlot = timeData.value[date];
+  if (!timeSlot) return false;
+
+  if (Array.isArray(timeSlot)) {
+    return timeSlot.some((slot) => slot.username);
+  }
+  return !!timeSlot.username;
+};
+
+const isPastedDate = (date: string): boolean => {
+  return pastedDates.value.has(date);
 };
 
 onMounted(() => {
