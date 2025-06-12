@@ -63,10 +63,20 @@
           />
         </div>
         <div v-if="showSyncInput">
-          <div class="flex flex-row justify-center items-center mb-4">
-            <div class="flex items-center w-20 h-0.5 bg-gray-700" />
-            <h2 class="text-xl font-bold mx-4">カレンダー共有設定</h2>
-            <div class="flex items-center w-20 h-0.5 bg-gray-700" />
+          <div class="flex flex-col items-center mb-4">
+            <div class="flex flex-row items-center">
+              <div class="flex items-center w-20 h-0.5 bg-gray-700" />
+              <h2 class="text-xl font-bold ml-4">カレンダー共有設定</h2>
+              <h2
+                class="font-bold ml-2 mr-4 bg-blue-500 rounded-sm px-1.5 text-white font-mono"
+              >
+                Beta
+              </h2>
+              <div class="flex items-center w-20 h-0.5 bg-gray-700" />
+            </div>
+            <p class="text-sm text-red-500 font-bold">
+              一度共有した場合、ユーザー名と色を変更することはできません。
+            </p>
           </div>
           <div class="flex flex-col sm:flex-row gap-y-2 gap-x-2 justify-end">
             <div class="flex items-center">
