@@ -9,7 +9,7 @@
       @mousedown="startDrag"
     >
       <div class="flex flex-row justify-between w-full">
-        <div v-if="hasTimeData" class="flex gap-x-2">
+        <div v-if="hasTimeData && !hasOnlyUserTimeSlots" class="flex gap-x-2">
           <button
             @click="copy"
             class="py-2 px-2 flex justify-center items-center rounded-full hover:bg-gray-300"
@@ -62,17 +62,27 @@
 
       <div class="max-h-[40vh] overflow-y-auto pr-2" ref="timeSlotsContainer">
         <div v-for="(timeSlot, index) in timeSlots" :key="index">
+          <div v-if="timeSlot.username" class="mb-2">
+            <h3
+              class="text-lg font-bold"
+              :style="{ color: timeSlot.userColor || '#3b82f6' }"
+            >
+              {{ timeSlot.username }}
+            </h3>
+          </div>
           <div class="flex pr-3 justify-center items-center gap-x-2 mb-2">
             <label>開始時刻</label>
             <div class="border-r border-gray-400 pr-2">
-              <InputTime
+              <component
+                :is="timeSlot.username ? UserTime : InputTime"
                 v-model:time="timeSlot.start"
                 :minute-interval="5"
                 :initial-hours="parseTimeSlot(timeSlot.start).hours"
                 :initial-minutes="parseTimeSlot(timeSlot.start).minutes"
               />
             </div>
-            <InputTime
+            <component
+              :is="timeSlot.username ? UserTime : InputTime"
               v-model:time="timeSlot.end"
               :minute-interval="5"
               :initial-hours="parseTimeSlot(timeSlot.end).hours"
@@ -80,7 +90,7 @@
             />
             <label>終了時刻</label>
             <button
-              v-if="timeSlots.length > 1"
+              v-if="timeSlots.length > 1 && !timeSlot.username"
               @click="removeTimeSlot(index)"
               class="text-red-500"
             >
@@ -108,6 +118,7 @@
 <script setup>
 import { onMounted, onBeforeUnmount, computed, ref, watch } from "vue";
 import InputTime from "@/components/buttons/InputTime.vue";
+import UserTime from "@/components/buttons/UserTime.vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { copySingleDateToClipboard } from "@/utils/CopyDate";
 
@@ -141,7 +152,17 @@ const {
 const timeSlotsContainer = ref(null);
 
 const addTimeSlot = () => {
-  addTimeSlotBase();
+  // ユーザー名が存在する時間スロットの後に新しい時間スロットを追加
+  const userSlotIndex = timeSlots.value.findIndex((slot) => slot.username);
+  if (userSlotIndex !== -1) {
+    timeSlots.value.splice(userSlotIndex + 1, 0, {
+      start: "00:00",
+      end: "00:00",
+    });
+  } else {
+    addTimeSlotBase();
+  }
+
   nextTick(() => {
     if (timeSlotsContainer.value) {
       timeSlotsContainer.value.scrollTop =
@@ -156,19 +177,37 @@ const parseTimeSlot = (timeString) => {
   return { hours, minutes };
 };
 
+const hasUserTimeSlot = computed(() => {
+  return timeSlots.value.some((slot) => slot.username);
+});
+
 const updateTimeSlots = () => {
   if (props.existingTime.start && props.existingTime.end) {
     timeSlots.value = [
       {
         start: props.existingTime.start,
         end: props.existingTime.end,
+        username: props.existingTime.username,
+        userColor: props.existingTime.userColor,
+      },
+      {
+        start: "00:00",
+        end: "00:00",
       },
     ];
   } else if (Array.isArray(props.existingTime)) {
-    timeSlots.value = props.existingTime.map((slot) => ({
-      start: slot.start,
-      end: slot.end,
-    }));
+    timeSlots.value = [
+      ...props.existingTime.map((slot) => ({
+        start: slot.start,
+        end: slot.end,
+        username: slot.username,
+        userColor: slot.userColor,
+      })),
+      {
+        start: "00:00",
+        end: "00:00",
+      },
+    ];
   } else {
     timeSlots.value = [
       {
@@ -237,10 +276,14 @@ const save = () => {
     return;
   }
 
-  const overlapValidation = validateTimeOverlap(timeSlots.value);
-  if (!overlapValidation.isValid) {
-    errorMessage.value = overlapValidation.errorMessage;
-    return;
+  // UserNameが存在しない場合や重複しない場合は重複チェックをスキップ
+  const hasUserTimeSlot = timeSlots.value.some((slot) => slot.username);
+  if (hasUserTimeSlot) {
+    const overlapValidation = validateTimeOverlap(timeSlots.value);
+    if (!overlapValidation.isValid) {
+      errorMessage.value = overlapValidation.errorMessage;
+      return;
+    }
   }
 
   errorMessage.value = "";
@@ -277,7 +320,18 @@ const onKeyDown = (e) => {
   }
 };
 
+const hasOnlyUserTimeSlots = computed(() => {
+  // 空のスロットを除外して判定
+  const nonEmptySlots = timeSlots.value.filter(
+    (slot) => slot.start !== "00:00" || slot.end !== "00:00"
+  );
+  return (
+    nonEmptySlots.length > 0 && nonEmptySlots.every((slot) => slot.username)
+  );
+});
+
 const hasTimeData = computed(() => {
+  console.log("ExistingTime:", props.existingTime);
   return props.existingTime && Object.keys(props.existingTime).length > 0;
 });
 
