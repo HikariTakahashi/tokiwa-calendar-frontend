@@ -296,9 +296,24 @@ const save = () => {
 };
 
 const deleteTime = () => {
-  emit("delete", {
-    date: props.selectedDate,
-  });
+  // Usernameが存在するデータと存在しないデータを分離
+  const userTimeSlots = timeSlots.value.filter((slot) => slot.username);
+  const nonUserTimeSlots = timeSlots.value.filter((slot) => !slot.username);
+
+  if (userTimeSlots.length > 0) {
+    // Usernameが存在するデータがある場合、それらを保持して削除イベントを発火
+    emit("delete", {
+      date: props.selectedDate,
+      keepUserData: true,
+      userTimeSlots: userTimeSlots,
+    });
+  } else {
+    // Usernameが存在するデータがない場合、通常の削除イベントを発火
+    emit("delete", {
+      date: props.selectedDate,
+      keepUserData: false,
+    });
+  }
   props.close();
 };
 
