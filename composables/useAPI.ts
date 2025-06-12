@@ -19,6 +19,8 @@ interface APITimeSlot {
   Start: string;
   End: string;
   Order: number;
+  Username?: string;
+  UserColor?: string;
 }
 
 export const useAPI = () => {
@@ -46,11 +48,15 @@ export const useAPI = () => {
               start: slot.Start,
               end: slot.End,
               order: slot.Order,
+              username: slot.Username,
+              userColor: slot.UserColor,
             }))
           : {
               start: slots.Start,
               end: slots.End,
               order: slots.Order,
+              username: slots.Username,
+              userColor: slots.UserColor,
             };
       });
 
