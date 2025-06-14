@@ -1,3 +1,5 @@
+// useAPI.ts (修正版)
+
 import type { TimeSlot } from "@/utils/TimeUtils";
 
 export interface TimeData {
@@ -32,7 +34,8 @@ export const useAPI = () => {
     try {
       const response = await $fetch<{
         [key: string]: APITimeSlot | APITimeSlot[];
-      }>(`${API_BASE_URL}/time/${spaceId}`, {
+        // ★★★ 修正点1: /api を追加 ★★★
+      }>(`${API_BASE_URL}/api/time/${spaceId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -78,7 +81,8 @@ export const useAPI = () => {
     spaceId: string
   ): Promise<APIResponse> => {
     try {
-      const response = await $fetch<APIResponse>(`${API_BASE_URL}/time`, {
+      // ★★★ 修正点2: /api を追加 ★★★
+      const response = await $fetch<APIResponse>(`${API_BASE_URL}/api/time`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -99,11 +103,15 @@ export const useAPI = () => {
   //Calendar.vue用 新規スペース作成
   const createNewSpace = async (timeData: TimeData): Promise<APIResponse> => {
     try {
-      const response = await $fetch<APIResponse>(`${API_BASE_URL}/time`, {
+      console.log(API_BASE_URL);
+      // ★★★ 修正点3: /api を追加 ★★★
+      const response = await $fetch<APIResponse>(`${API_BASE_URL}/api/time`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
+          // 備考: CORS関連のヘッダーはサーバーからの応答に含まれるべきもので、
+          //       クライアントからのリクエストに含める必要はないため削除しました。
         },
         body: timeData,
       });
