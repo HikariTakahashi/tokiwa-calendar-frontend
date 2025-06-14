@@ -114,6 +114,7 @@ onMounted(() => {
       :current-week="currentWeek"
       :is-sync="true"
       :time-data="timeData"
+      :space-id="route.params.id as string"
       @next-month="handleNextMonth"
       @prev-month="handlePrevMonth"
       @open-form="openForm"
