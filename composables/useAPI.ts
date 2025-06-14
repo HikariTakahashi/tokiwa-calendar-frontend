@@ -34,7 +34,6 @@ export const useAPI = () => {
     try {
       const response = await $fetch<{
         [key: string]: APITimeSlot | APITimeSlot[];
-        // ★★★ 修正点1: /api を追加 ★★★
       }>(`${API_BASE_URL}/api/time/${spaceId}`, {
         method: "GET",
         headers: {
@@ -81,7 +80,6 @@ export const useAPI = () => {
     spaceId: string
   ): Promise<APIResponse> => {
     try {
-      // ★★★ 修正点2: /api を追加 ★★★
       const response = await $fetch<APIResponse>(`${API_BASE_URL}/api/time`, {
         method: "POST",
         headers: {
@@ -104,16 +102,13 @@ export const useAPI = () => {
   const createNewSpace = async (timeData: TimeData): Promise<APIResponse> => {
     try {
       console.log(API_BASE_URL);
-      // ★★★ 修正点3: /api を追加 ★★★
       const response = await $fetch<APIResponse>(`${API_BASE_URL}/api/time`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          // 備考: CORS関連のヘッダーはサーバーからの応答に含まれるべきもので、
-          //       クライアントからのリクエストに含める必要はないため削除しました。
         },
-        body: timeData,
+        body: timeData.events,
       });
       return response;
     } catch (error) {
