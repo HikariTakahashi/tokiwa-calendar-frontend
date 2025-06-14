@@ -3,6 +3,10 @@
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
   >
     <div class="bg-white px-6 rounded-lg w-3/4 max-h-[80vh] overflow-y-auto">
+      <div class="text-red-500 font-bold mb-2">
+        現在のspaceId: {{ props.spaceId }}
+      </div>
+
       <div
         class="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pt-6"
       >
@@ -119,6 +123,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  spaceId: {
+    type: String,
+    required: true,
+  },
 });
 
 const emit = defineEmits(["close"]);
@@ -173,23 +181,50 @@ const confirmSync = async () => {
       return;
     }
 
-    const randomId = generateRandomString();
+    const spaceId = props.isSync ? props.spaceId : generateRandomString();
+
+    const processedData = Object.entries(displayData.value).reduce(
+      (acc, [date, slots]) => {
+        const processedSlots = Array.isArray(slots) ? slots : [slots];
+        acc[date] = processedSlots.map((slot) => {
+          if (slot.username && slot.userColor) {
+            return slot;
+          }
+          return {
+            ...slot,
+            username: username.value,
+            userColor: userColor.value,
+          };
+        });
+        return acc;
+      },
+      {}
+    );
+
+    const requestData = {
+      ...processedData,
+      spaceId: spaceId,
+    };
 
     const response = await createNewSpace({
-      ...displayData.value,
-      spaceId: randomId,
+      events: requestData,
+      spaceId: spaceId,
       username: username.value,
       userColor: userColor.value,
     });
 
     displayData.value = response.savedEvents;
 
-    await navigateTo(`/space/${randomId}`);
+    if (props.isSync) {
+      window.location.reload();
+    } else {
+      await navigateTo(`/space/${spaceId}`);
+    }
 
     alert("同期が完了しました");
     showSyncInput.value = false;
     username.value = "";
-    userColor.value = "#000000";
+    userColor.value = "#3b82f6";
   } catch (error) {
     console.error("同期エラー:", error);
     alert("同期に失敗しました");
