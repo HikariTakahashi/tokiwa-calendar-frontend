@@ -5,6 +5,8 @@ export interface TimeSlot {
   start: string;
   end: string;
   order?: number;
+  username?: string;
+  userColor?: string;
 }
 
 export const useTimeUtils = () => {
@@ -70,16 +72,38 @@ export const useTimeUtils = () => {
       return dateA - dateB;
     });
 
-    // 隣接する時間スロットの重複をチェック
-    for (let i = 0; i < sortedSlots.length - 1; i++) {
-      const current = sortedSlots[i];
-      const next = sortedSlots[i + 1];
+    // ユーザー名が存在する時間スロットを取得
+    const userSlots = sortedSlots.filter((slot) => slot.username);
+    const nonUserSlots = sortedSlots.filter((slot) => !slot.username);
+
+    // ユーザー名が存在する時間スロット同士の重複チェック
+    for (let i = 0; i < userSlots.length - 1; i++) {
+      const current = userSlots[i];
+      const next = userSlots[i + 1];
 
       if (!current.start || !current.end || !next.start || !next.end) continue;
 
       const currentEnd = new Date(`2000-01-01T${current.end}`).getTime();
       const nextStart = new Date(`2000-01-01T${next.start}`).getTime();
-      // エラー表示
+
+      if (currentEnd > nextStart) {
+        return {
+          isValid: false,
+          errorMessage: "重複する時間が存在します",
+        };
+      }
+    }
+
+    // ユーザー名が存在しない時間スロット同士の重複チェック
+    for (let i = 0; i < nonUserSlots.length - 1; i++) {
+      const current = nonUserSlots[i];
+      const next = nonUserSlots[i + 1];
+
+      if (!current.start || !current.end || !next.start || !next.end) continue;
+
+      const currentEnd = new Date(`2000-01-01T${current.end}`).getTime();
+      const nextStart = new Date(`2000-01-01T${next.start}`).getTime();
+
       if (currentEnd > nextStart) {
         return {
           isValid: false,

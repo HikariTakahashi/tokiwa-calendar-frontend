@@ -3,6 +3,10 @@
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
   >
     <div class="bg-white px-6 rounded-lg w-3/4 max-h-[80vh] overflow-y-auto">
+      <div class="text-red-500 font-bold mb-2">
+        現在のspaceId: {{ props.spaceId }}
+      </div>
+
       <div
         class="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pt-6"
       >
@@ -40,21 +44,64 @@
         </div>
       </div>
 
-      <div class="mt-6 flex justify-end gap-4 sticky bottom-0 bg-white pb-4">
-        <buttons-square
-          @click="handleCopy"
-          label="コピー"
-          color="bg-gray-300"
-          :isUse="Object.keys(displayData).length > 0"
-        />
-        <div class="flex-col">
+      <div class="flex flex-col sticky bottom-0 bg-white pb-4 mt-6 gap-y-2">
+        <div class="flex justify-end gap-x-2">
           <buttons-square
-            @click="syncData"
-            label="同期"
-            color="bg-blue-300"
-            :isUse="false"
+            @click="handleCopy"
+            label="コピー"
+            color="bg-gray-300"
+            :isUse="Object.keys(displayData).length > 0"
           />
-          <p class="text-center text-xs text-gray-600">coming soon...</p>
+          <buttons-square
+            v-if="!isSync"
+            @click="syncData"
+            label="共有"
+            color="bg-blue-300"
+            :isUse="Object.keys(displayData).length > 0"
+          />
+          <buttons-square
+            v-else
+            @click="syncData"
+            label="再同期"
+            color="bg-blue-300"
+          />
+        </div>
+        <div v-if="showSyncInput">
+          <div class="flex flex-col items-center mb-4">
+            <div class="flex flex-row items-center">
+              <div class="flex items-center w-20 h-0.5 bg-gray-700" />
+              <h2 class="text-xl font-bold ml-4">カレンダー共有設定</h2>
+              <h2
+                class="font-bold ml-2 mr-4 bg-blue-500 rounded-sm px-1.5 text-white font-mono"
+              >
+                Beta
+              </h2>
+              <div class="flex items-center w-20 h-0.5 bg-gray-700" />
+            </div>
+            <p class="text-sm text-red-500 font-bold">
+              一度共有した場合、ユーザー名と色を変更することはできません。
+            </p>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-y-2 gap-x-2 justify-end">
+            <div class="flex items-center">
+              <input
+                v-model="username"
+                type="text"
+                placeholder="ユーザー名を入力"
+                class="border rounded px-2 py-1 font-bold"
+                :style="{ color: userColor }"
+              />
+            </div>
+            <ColorPicker v-model="userColor" />
+            <div class="flex items-end">
+              <buttons-square
+                @click="confirmSync"
+                label="確定"
+                color="bg-green-300"
+                :isUse="username.length > 0"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -65,16 +112,28 @@
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import { copyToClipboard } from "@/utils/CopyDate";
 import { useAPI } from "@/composables/useAPI";
+import ColorPicker from "@/components/buttons/ColorPicker.vue";
 
 const props = defineProps({
   timeData: {
     type: Object,
     default: () => ({}),
   },
+  isSync: {
+    type: Boolean,
+    default: false,
+  },
+  spaceId: {
+    type: String,
+    required: true,
+  },
 });
 
 const emit = defineEmits(["close"]);
 const displayData = ref({});
+const showSyncInput = ref(false);
+const username = ref("");
+const userColor = ref("#3b82f6");
 const { formatTimeForDisplay } = useTimeUtils();
 const { createNewSpace } = useAPI();
 
@@ -112,26 +171,60 @@ const generateRandomString = (length = 8) => {
 };
 
 const syncData = async () => {
+  showSyncInput.value = true;
+};
+
+const confirmSync = async () => {
   try {
     if (Object.keys(displayData.value).length === 0) {
       alert("同期するデータがありません");
       return;
     }
 
-    // ランダムなURLを生成
-    const randomId = generateRandomString();
+    const spaceId = props.isSync ? props.spaceId : generateRandomString();
+
+    const processedData = Object.entries(displayData.value).reduce(
+      (acc, [date, slots]) => {
+        const processedSlots = Array.isArray(slots) ? slots : [slots];
+        acc[date] = processedSlots.map((slot) => {
+          if (slot.username && slot.userColor) {
+            return slot;
+          }
+          return {
+            ...slot,
+            username: username.value,
+            userColor: userColor.value,
+          };
+        });
+        return acc;
+      },
+      {}
+    );
+
+    const requestData = {
+      ...processedData,
+      spaceId: spaceId,
+    };
 
     const response = await createNewSpace({
-      ...displayData.value,
-      spaceId: randomId,
+      events: requestData,
+      spaceId: spaceId,
+      username: username.value,
+      userColor: userColor.value,
     });
 
     displayData.value = response.savedEvents;
 
-    // 生成したランダムIDでURLに遷移
-    await navigateTo(`/space/${randomId}`);
+    if (props.isSync) {
+      window.location.reload();
+    } else {
+      await navigateTo(`/space/${spaceId}`);
+    }
 
     alert("同期が完了しました");
+    showSyncInput.value = false;
+    username.value = "";
+    userColor.value = "#3b82f6";
   } catch (error) {
     console.error("同期エラー:", error);
     alert("同期に失敗しました");
@@ -146,3 +239,39 @@ onUnmounted(() => {
   window.removeEventListener("keydown", handleEscKey);
 });
 </script>
+
+<style scoped>
+.cursor-crosshair {
+  cursor: crosshair;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border: 2px solid #666;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: white;
+  border: 2px solid #666;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+</style>
