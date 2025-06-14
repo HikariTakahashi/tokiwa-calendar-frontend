@@ -37,6 +37,7 @@
       @close="closeForm"
       :time-data="timeData"
       :is-sync="isSync"
+      :space-id="spaceId"
     />
   </Teleport>
 </template>
@@ -55,6 +56,7 @@ const props = defineProps<{
   timeData: {
     [key: string]: TimeSlot | TimeSlot[];
   };
+  spaceId: string;
 }>();
 
 const showModal = ref(false);
