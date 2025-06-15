@@ -276,14 +276,10 @@ const save = () => {
     return;
   }
 
-  // UserNameが存在しない場合や重複しない場合は重複チェックをスキップ
-  const hasUserTimeSlot = timeSlots.value.some((slot) => slot.username);
-  if (hasUserTimeSlot) {
-    const overlapValidation = validateTimeOverlap(timeSlots.value);
-    if (!overlapValidation.isValid) {
-      errorMessage.value = overlapValidation.errorMessage;
-      return;
-    }
+  const overlapValidation = validateTimeOverlap(timeSlots.value);
+  if (!overlapValidation.isValid) {
+    errorMessage.value = overlapValidation.errorMessage;
+    return;
   }
 
   errorMessage.value = "";
