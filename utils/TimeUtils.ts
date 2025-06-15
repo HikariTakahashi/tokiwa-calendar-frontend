@@ -64,8 +64,13 @@ export const useTimeUtils = () => {
   };
 
   const validateTimeOverlap = (slots: TimeSlot[]) => {
+    // 空のスロットを除外
+    const nonEmptySlots = slots.filter(
+      (slot) => slot.start !== "00:00" || slot.end !== "00:00"
+    );
+
     // 時間スロットを開始時刻でソート
-    const sortedSlots = [...slots].sort((a, b) => {
+    const sortedSlots = [...nonEmptySlots].sort((a, b) => {
       if (!a.start || !b.start) return 0;
       const dateA = new Date(`2000-01-01T${a.start}`).getTime();
       const dateB = new Date(`2000-01-01T${b.start}`).getTime();
@@ -76,21 +81,31 @@ export const useTimeUtils = () => {
     const userSlots = sortedSlots.filter((slot) => slot.username);
     const nonUserSlots = sortedSlots.filter((slot) => !slot.username);
 
-    // ユーザー名が存在する時間スロット同士の重複チェック
-    for (let i = 0; i < userSlots.length - 1; i++) {
-      const current = userSlots[i];
-      const next = userSlots[i + 1];
+    // 異なるusernameを持つ時間スロット同士の重複チェック
+    for (let i = 0; i < userSlots.length; i++) {
+      for (let j = i + 1; j < userSlots.length; j++) {
+        const current = userSlots[i];
+        const next = userSlots[j];
 
-      if (!current.start || !current.end || !next.start || !next.end) continue;
+        if (!current.start || !current.end || !next.start || !next.end)
+          continue;
+        if (current.username === next.username) continue; // 同じusernameの場合はスキップ
 
-      const currentEnd = new Date(`2000-01-01T${current.end}`).getTime();
-      const nextStart = new Date(`2000-01-01T${next.start}`).getTime();
+        const currentStart = new Date(`2000-01-01T${current.start}`).getTime();
+        const currentEnd = new Date(`2000-01-01T${current.end}`).getTime();
+        const nextStart = new Date(`2000-01-01T${next.start}`).getTime();
+        const nextEnd = new Date(`2000-01-01T${next.end}`).getTime();
 
-      if (currentEnd > nextStart) {
-        return {
-          isValid: false,
-          errorMessage: "重複する時間が存在します",
-        };
+        // 時間が重複しているかチェック
+        if (
+          (currentStart <= nextEnd && currentEnd >= nextStart) ||
+          (nextStart <= currentEnd && nextEnd >= currentStart)
+        ) {
+          return {
+            isValid: false,
+            errorMessage: "異なるユーザーの時間が重複しています",
+          };
+        }
       }
     }
 
@@ -101,10 +116,15 @@ export const useTimeUtils = () => {
 
       if (!current.start || !current.end || !next.start || !next.end) continue;
 
+      const currentStart = new Date(`2000-01-01T${current.start}`).getTime();
       const currentEnd = new Date(`2000-01-01T${current.end}`).getTime();
       const nextStart = new Date(`2000-01-01T${next.start}`).getTime();
+      const nextEnd = new Date(`2000-01-01T${next.end}`).getTime();
 
-      if (currentEnd > nextStart) {
+      if (
+        (currentStart <= nextEnd && currentEnd >= nextStart) ||
+        (nextStart <= currentEnd && nextEnd >= currentStart)
+      ) {
         return {
           isValid: false,
           errorMessage: "重複する時間が存在します",
