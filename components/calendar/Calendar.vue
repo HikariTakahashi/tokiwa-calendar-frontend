@@ -43,7 +43,6 @@
             v-for="(slot, index) in getTimeSlots(date.date)"
             :key="index"
           >
-            <!--ここから下のdivのcssは直接の命令がない限り消去・変更しない-->
             <div
               class="flex flex-col sm:flex-row justify-center items-center sm:gap-x-2"
             >
@@ -61,7 +60,6 @@
                 {{ formatTimeForDisplay([slot]) }}
               </div>
             </div>
-            <!--ここから上のdivのcssは直接の命令がない限り消去・変更しない-->
           </template>
         </div>
       </div>
