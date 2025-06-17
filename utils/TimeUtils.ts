@@ -72,25 +72,38 @@ export const useTimeUtils = () => {
       return dateA - dateB;
     });
 
-    // ユーザー名が存在する時間スロットを取得
-    const userSlots = sortedSlots.filter((slot) => slot.username);
+    // ユーザー名ごとにグループ化
+    const userGroups = new Map<string, TimeSlot[]>();
     const nonUserSlots = sortedSlots.filter((slot) => !slot.username);
 
-    // ユーザー名が存在する時間スロット同士の重複チェック
-    for (let i = 0; i < userSlots.length - 1; i++) {
-      const current = userSlots[i];
-      const next = userSlots[i + 1];
+    // ユーザー名が存在するスロットをグループ化
+    sortedSlots.forEach((slot) => {
+      if (slot.username) {
+        if (!userGroups.has(slot.username)) {
+          userGroups.set(slot.username, []);
+        }
+        userGroups.get(slot.username)?.push(slot);
+      }
+    });
 
-      if (!current.start || !current.end || !next.start || !next.end) continue;
+    // 各ユーザーグループ内での重複チェック
+    for (const [username, userSlots] of userGroups) {
+      for (let i = 0; i < userSlots.length - 1; i++) {
+        const current = userSlots[i];
+        const next = userSlots[i + 1];
 
-      const currentEnd = new Date(`2000-01-01T${current.end}`).getTime();
-      const nextStart = new Date(`2000-01-01T${next.start}`).getTime();
+        if (!current.start || !current.end || !next.start || !next.end)
+          continue;
 
-      if (currentEnd > nextStart) {
-        return {
-          isValid: false,
-          errorMessage: "重複する時間が存在します",
-        };
+        const currentEnd = new Date(`2000-01-01T${current.end}`).getTime();
+        const nextStart = new Date(`2000-01-01T${next.start}`).getTime();
+
+        if (currentEnd > nextStart) {
+          return {
+            isValid: false,
+            errorMessage: `${username}の時間が重複しています`,
+          };
+        }
       }
     }
 
