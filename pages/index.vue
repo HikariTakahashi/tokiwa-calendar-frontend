@@ -13,18 +13,20 @@
       @cancel-copy-mode="handleCancelCopyMode"
     />
     <CalendarWeeks />
-    <Calendar
-      :calendar-days="calendarDays"
-      :year="currentYear"
-      :month="currentMonth"
-      :is-copy-mode="isCopyMode"
-      :space-id="spaceId"
-      @save="saveTime"
-      @delete="deleteTime"
-      @update:time-data="updateTimeData"
-      @update:is-copy-mode="updateIsCopyMode"
-      @cancel-copy-mode="handleCancelCopyMode"
-    />
+    <div class="h-full overflow-y-auto">
+      <Calendar
+        :calendar-days="calendarDays"
+        :year="currentYear"
+        :month="currentMonth"
+        :is-copy-mode="isCopyMode"
+        :space-id="spaceId"
+        @save="saveTime"
+        @delete="deleteTime"
+        @update:time-data="updateTimeData"
+        @update:is-copy-mode="updateIsCopyMode"
+        @cancel-copy-mode="handleCancelCopyMode"
+      />
+    </div>
   </div>
 </template>
 
