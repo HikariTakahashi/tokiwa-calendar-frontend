@@ -22,8 +22,13 @@
       @click="openForm(date.date)"
     >
       <div
-        class="flex items-center justify-center sm:pt-2"
-        :class="[isCurrentMonth(date.date) ? 'text-black' : 'text-gray-500']"
+        class="flex items-center justify-center sm:mt-1 font-bold"
+        :class="[
+          isCurrentMonth(date.date) ? 'text-gray-700' : 'text-gray-400',
+          isToday(date.date)
+            ? 'bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center'
+            : '',
+        ]"
       >
         {{ new Date(date.date).getDate() }}
       </div>
@@ -248,6 +253,16 @@ const hasUsernameInDate = (date: string): boolean => {
 
 const isPastedDate = (date: string): boolean => {
   return pastedDates.value.has(date);
+};
+
+const isToday = (dateString: string): boolean => {
+  const today = new Date();
+  const date = new Date(dateString);
+  return (
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
+  );
 };
 
 onMounted(() => {
