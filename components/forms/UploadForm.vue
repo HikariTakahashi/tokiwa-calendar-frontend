@@ -3,9 +3,10 @@
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
   >
     <div class="bg-white px-6 rounded-lg w-3/4 max-h-[80vh] overflow-y-auto">
+      <!-- デバッグ用表示
       <div class="text-red-500 font-bold mb-2">
         現在のspaceId: {{ props.spaceId }}
-      </div>
+      </div> -->
 
       <div
         class="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pt-6"
@@ -33,13 +34,35 @@
         </div>
         <div
           v-else
-          v-for="(timeSlots, date) in displayData"
+          v-for="[date, timeSlots] in Object.entries(displayData).sort(
+            ([dateA], [dateB]) => new Date(dateA) - new Date(dateB)
+          )"
           :key="date"
           class="border p-4 rounded"
         >
           <div class="font-bold">{{ formatDate(date) }}</div>
           <div class="text-blue-500 whitespace-pre-line">
-            {{ formatTimeForDisplay(timeSlots) }}
+            <template v-if="Array.isArray(timeSlots)">
+              <div v-for="(slot, index) in timeSlots" :key="index">
+                <span
+                  v-if="slot.username"
+                  class="font-bold"
+                  :style="{ color: slot.userColor || '#3b82f6' }"
+                >
+                  {{ slot.username }}:
+                </span>
+                {{ formatTimeForDisplay([slot]) }}
+              </div>
+            </template>
+            <template v-else>
+              <span
+                v-if="timeSlots.username"
+                :style="{ color: timeSlots.userColor || '#3b82f6' }"
+              >
+                {{ timeSlots.username }}:
+              </span>
+              {{ formatTimeForDisplay([timeSlots]) }}
+            </template>
           </div>
         </div>
       </div>
