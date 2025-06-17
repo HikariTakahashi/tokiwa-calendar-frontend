@@ -126,18 +126,19 @@ onMounted(() => {
       <p>Debug: timeData = {{ JSON.stringify(timeData, null, 2) }}</p>
     </div> -->
     <CalendarWeeks />
-
-    <Calendar
-      :calendar-days="calendarDays"
-      :year="currentYear"
-      :month="currentMonth"
-      :is-copy-mode="isCopyMode"
-      :space-id="route.params.id as string"
-      @save="handleCalendarSave"
-      @delete="deleteTimeData"
-      @update:time-data="updateTimeData"
-      @update:is-copy-mode="updateIsCopyMode"
-      @cancel-copy-mode="handleCancelCopyMode"
-    />
+    <div class="h-full overflow-y-auto">
+      <Calendar
+        :calendar-days="calendarDays"
+        :year="currentYear"
+        :month="currentMonth"
+        :is-copy-mode="isCopyMode"
+        :space-id="route.params.id as string"
+        @save="handleCalendarSave"
+        @delete="deleteTimeData"
+        @update:time-data="updateTimeData"
+        @update:is-copy-mode="updateIsCopyMode"
+        @cancel-copy-mode="handleCancelCopyMode"
+      />
+    </div>
   </div>
 </template>
