@@ -3,7 +3,7 @@
     <div
       v-for="date in calendarDays"
       :key="date.date"
-      class="flex flex-col items-center border rounded transition-transform duration-200 hover:-translate-y-1 shadow-md"
+      class="flex flex-col items-center border rounded transition-transform duration-200 shadow-md"
       :class="[
         isCurrentMonth(date.date) ? '' : 'bg-gray-100',
         props.isCopyMode ? 'cursor-pointer' : '',
@@ -18,6 +18,9 @@
         isPastedDate(date.date)
           ? 'border-8 border-blue-500'
           : '',
+        isDateDisabled(date.date)
+          ? 'bg-gray-300 cursor-not-allowed'
+          : 'hover:-translate-y-1',
       ]"
       @click="openForm(date.date)"
     >
@@ -25,6 +28,7 @@
         class="flex items-center justify-center sm:mt-1 font-bold"
         :class="[
           isCurrentMonth(date.date) ? 'text-gray-700' : 'text-gray-400',
+          isDateDisabled(date.date) ? 'text-white' : '',
           isToday(date.date)
             ? 'bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center'
             : '',
@@ -116,6 +120,8 @@ const timeData = ref<TimeData>({
   spaceId: "",
   username: "",
   userColor: "",
+  startDate: null,
+  endDate: null,
 });
 const { formatTimeForDisplay } = useTimeUtils();
 const showModal = ref(false);
@@ -161,6 +167,11 @@ const isCurrentMonth = (dateString: string): boolean => {
 };
 
 const openForm = (date: string) => {
+  // 制限された日付の場合は何もしない
+  if (isDateDisabled(date)) {
+    return;
+  }
+
   if (props.isCopyMode) {
     const result = handlePaste(date, timeData.value.events);
     if (result.isPasted) {
@@ -262,6 +273,28 @@ const isToday = (dateString: string): boolean => {
     date.getMonth() === today.getMonth() &&
     date.getFullYear() === today.getFullYear()
   );
+};
+
+const isDateDisabled = (date: string): boolean => {
+  const selectedDate = new Date(date);
+
+  // StartDateが存在し、選択された日付がStartDateより前の場合
+  if (timeData.value.startDate) {
+    const startDate = new Date(timeData.value.startDate);
+    if (selectedDate < startDate) {
+      return true;
+    }
+  }
+
+  // EndDateが存在し、選択された日付がEndDateより後の場合
+  if (timeData.value.endDate) {
+    const endDate = new Date(timeData.value.endDate);
+    if (selectedDate > endDate) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 onMounted(() => {
