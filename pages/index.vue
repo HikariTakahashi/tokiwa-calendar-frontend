@@ -37,10 +37,7 @@ import CopyModeHeader from "@/components/calendar/CopyModeHeader.vue";
 import Calendar from "@/components/calendar/Calendar.vue";
 import { useDateUtils } from "@/utils/DateUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
-
-interface TimeData {
-  [key: string]: TimeSlot | TimeSlot[];
-}
+import type { TimeData } from "@/composables/useAPI";
 
 const {
   currentYear,
@@ -52,7 +49,12 @@ const {
   prevMonth,
 } = useDateUtils();
 
-const timeData = ref<TimeData>({});
+const timeData = ref<TimeData>({
+  events: {},
+  spaceId: "",
+  username: "",
+  userColor: "",
+});
 const isCopyMode = ref(false);
 const spaceId = ref<string | undefined>(undefined);
 const calendarDays = ref(
@@ -88,11 +90,11 @@ const saveTime = ({
   date: string;
   timeSlots: TimeSlot[];
 }) => {
-  timeData.value[date] = timeSlots;
+  timeData.value.events[date] = timeSlots;
 };
 
 const deleteTime = (data: { date: string }) => {
-  delete timeData.value[data.date];
+  delete timeData.value.events[data.date];
 };
 
 const handleCancelCopyMode = () => {
