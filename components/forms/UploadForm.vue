@@ -2,7 +2,9 @@
   <div
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
   >
-    <div class="bg-white px-6 rounded-lg w-3/4 max-h-[80vh] overflow-y-auto">
+    <div
+      class="bg-white px-6 rounded-lg w-full sm:w-4/5 max-h-full sm:max-h-[80vh] overflow-y-auto"
+    >
       <!-- デバッグ用表示
       <div class="text-red-500 font-bold mb-2">
         現在のspaceId: {{ props.spaceId }}
@@ -34,9 +36,16 @@
         </div>
         <div
           v-else
-          v-for="[date, timeSlots] in Object.entries(displayData).sort(
-            ([dateA], [dateB]) => new Date(dateA) - new Date(dateB)
-          )"
+          v-for="[date, timeSlots] in Object.entries(displayData)
+            .filter(([date, slots]) => date && slots)
+            .sort(([dateA], [dateB]) => {
+              const dateAObj = new Date(dateA);
+              const dateBObj = new Date(dateB);
+              if (isNaN(dateAObj.getTime()) || isNaN(dateBObj.getTime())) {
+                return 0;
+              }
+              return dateAObj - dateBObj;
+            })"
           :key="date"
           class="border p-4 rounded"
         >
@@ -60,19 +69,19 @@
             </span>
           </div>
           <div class="text-black whitespace-pre-line">
-            <template v-if="Array.isArray(timeSlots)">
+            <template v-if="Array.isArray(timeSlots) && timeSlots.length > 0">
               <div v-for="(slot, index) in timeSlots" :key="index">
                 <span
-                  v-if="slot.username"
+                  v-if="slot && slot.username"
                   class="font-bold px-1.5 rounded-md text-white"
                   :style="{ backgroundColor: slot.userColor || '#3b82f6' }"
                 >
                   {{ slot.username }}
                 </span>
-                {{ formatTimeForDisplay([slot]) }}
+                {{ slot ? formatTimeForDisplay([slot]) : "無効なデータ" }}
               </div>
             </template>
-            <template v-else>
+            <template v-else-if="timeSlots && typeof timeSlots === 'object'">
               <span
                 v-if="timeSlots.username"
                 :style="{ color: timeSlots.userColor || '#3b82f6' }"
@@ -80,6 +89,9 @@
                 {{ timeSlots.username }}:
               </span>
               {{ formatTimeForDisplay([timeSlots]) }}
+            </template>
+            <template v-else>
+              <span class="text-red-500">無効なデータ</span>
             </template>
           </div>
         </div>
@@ -125,29 +137,57 @@
           </div>
           <div class="flex flex-col sm:flex-row gap-y-2 gap-x-2">
             <div class="flex flex-col gap-y-2 w-1/2">
-              <p>ここらへんになんか色々設定する</p>
+              <p class="font-bold border-b-2 border-gray-600 sm:w-1/4">
+                詳細設定
+              </p>
+              <Switch
+                v-model="enablePeriodSetting"
+                label="入力可能な期間を設定する"
+              />
+              <div
+                v-if="enablePeriodSetting"
+                class="flex flex-row gap-x-2 items-center"
+              >
+                <input
+                  v-model="startDate"
+                  type="date"
+                  class="border rounded px-2 py-1 w-full"
+                />
+                <p class="text-xl font-bold">~</p>
+                <input
+                  v-model="endDate"
+                  type="date"
+                  class="border rounded px-2 py-1 w-full"
+                />
+              </div>
             </div>
             <div class="flex flex-col gap-y-2 w-1/2">
               <div class="flex flex-col gap-y-1 w-full">
-                <p>ユーザー名</p>
+                <p class="font-bold border-b-2 border-gray-600 sm:w-1/4">
+                  ユーザー名
+                </p>
                 <input
                   v-model="username"
                   type="text"
                   placeholder="ユーザー名を入力"
-                  class="border rounded px-2 py-1 w-full font-bold"
+                  class="border rounded px-2 py-1 font-bold"
                   :style="{ color: userColor }"
                 />
               </div>
-
-              <div class="flex">
-                <ColorPicker v-model="userColor" />
-                <div class="flex pl-2 items-end">
-                  <buttons-square
-                    @click="confirmSync"
-                    label="確定"
-                    color="bg-green-300"
-                    :isUse="username.length > 0"
-                  />
+              <div class="flex flex-col gap-y-1 w-full">
+                <p class="font-bold border-b-2 border-gray-600 sm:w-1/4">
+                  ユーザーカラー
+                </p>
+                <div class="flex">
+                  <ColorPicker v-model="userColor" />
+                  <div class="flex pl-2 items-end">
+                    <buttons-square
+                      @click="confirmSync"
+                      label="確定"
+                      color="bg-green-300"
+                      :isUse="username.length > 0"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -162,12 +202,19 @@
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import { copyToClipboard } from "@/utils/CopyDate";
 import { useAPI } from "@/composables/useAPI";
+import { useTimeUtils } from "@/utils/TimeUtils";
 import ColorPicker from "@/components/buttons/ColorPicker.vue";
+import Switch from "~/components/buttons/Switch.vue";
 
 const props = defineProps({
   timeData: {
     type: Object,
-    default: () => ({}),
+    default: () => ({
+      events: {},
+      spaceId: "",
+      username: "",
+      userColor: "",
+    }),
   },
   isSync: {
     type: Boolean,
@@ -186,11 +233,25 @@ const username = ref("");
 const userColor = ref("#3b82f6");
 const { formatTimeForDisplay } = useTimeUtils();
 const { createNewSpace } = useAPI();
+const enablePeriodSetting = ref(false);
+const startDate = ref("");
+const endDate = ref("");
 
 watch(
   () => props.timeData,
   (newValue) => {
-    displayData.value = { ...newValue };
+    console.log("UploadForm: timeData changed", newValue);
+    // TimeDataの新しい構造に対応
+    if (newValue && newValue.events) {
+      displayData.value = { ...newValue.events };
+      console.log("UploadForm: using events from TimeData", displayData.value);
+    } else if (newValue && typeof newValue === "object") {
+      displayData.value = { ...newValue };
+      console.log("UploadForm: using direct timeData", displayData.value);
+    } else {
+      displayData.value = {};
+      console.log("UploadForm: no valid data, using empty object");
+    }
   },
   { immediate: true }
 );
@@ -202,7 +263,38 @@ const handleEscKey = (event) => {
 };
 
 const formatDate = (dateString) => {
+  // 日付文字列が無効な場合の処理
+  if (!dateString || typeof dateString !== "string") {
+    return {
+      date: "無効な日付",
+      weekday: "?",
+      isSunday: false,
+      isMonday: false,
+      isTuesday: false,
+      isWednesday: false,
+      isThursday: false,
+      isFriday: false,
+      isSaturday: false,
+    };
+  }
+
   const date = new Date(dateString);
+
+  // 無効な日付の場合の処理
+  if (isNaN(date.getTime())) {
+    return {
+      date: "無効な日付",
+      weekday: "?",
+      isSunday: false,
+      isMonday: false,
+      isTuesday: false,
+      isWednesday: false,
+      isThursday: false,
+      isFriday: false,
+      isSaturday: false,
+    };
+  }
+
   const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
   return {
     date: `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`,
@@ -262,19 +354,25 @@ const confirmSync = async () => {
       {}
     );
 
+    // リクエストデータの構造を変更
     const requestData = {
-      ...processedData,
+      ...processedData, // 直接日付をキーとしたオブジェクト
       spaceId: spaceId,
     };
 
-    const response = await createNewSpace({
-      events: requestData,
-      spaceId: spaceId,
-      username: username.value,
-      userColor: userColor.value,
-    });
+    if (enablePeriodSetting.value && startDate.value && endDate.value) {
+      requestData.startDate = startDate.value;
+      requestData.endDate = endDate.value;
+    }
 
-    displayData.value = response.savedEvents;
+    console.log("UploadForm: sending request data", requestData);
+
+    const response = await createNewSpace(requestData);
+
+    // レスポンスの構造に応じてdisplayDataを更新
+    if (response.savedEvents) {
+      displayData.value = response.savedEvents;
+    }
 
     if (props.isSync) {
       window.location.reload();
@@ -286,6 +384,9 @@ const confirmSync = async () => {
     showSyncInput.value = false;
     username.value = "";
     userColor.value = "#3b82f6";
+    enablePeriodSetting.value = false;
+    startDate.value = "";
+    endDate.value = "";
   } catch (error) {
     console.error("同期エラー:", error);
     alert("同期に失敗しました");
