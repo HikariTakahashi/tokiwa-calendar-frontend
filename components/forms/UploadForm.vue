@@ -136,29 +136,44 @@
             </p>
           </div>
           <div class="flex flex-col sm:flex-row gap-y-2 gap-x-2">
-            <div class="flex flex-col gap-y-2 w-1/2">
+            <div class="flex flex-col gap-y-2 sm:w-1/2">
               <p class="font-bold border-b-2 border-gray-600 sm:w-1/4">
                 詳細設定
               </p>
-              <Switch
-                v-model="enablePeriodSetting"
-                label="入力可能な期間を設定する"
-              />
-              <div
-                v-if="enablePeriodSetting"
-                class="flex flex-row gap-x-2 items-center"
-              >
-                <input
-                  v-model="startDate"
-                  type="date"
-                  class="border rounded px-2 py-1 w-full"
+              <div v-if="!isSync" class="flex flex-col gap-y-2">
+                <Switch
+                  v-model="enablePeriodSetting"
+                  label="入力可能な期間を設定する"
                 />
-                <p class="text-xl font-bold">~</p>
-                <input
-                  v-model="endDate"
-                  type="date"
-                  class="border rounded px-2 py-1 w-full"
+
+                <div
+                  v-if="enablePeriodSetting"
+                  class="flex flex-row gap-x-2 items-center"
+                >
+                  <input
+                    v-model="startDate"
+                    type="date"
+                    class="border rounded px-2 py-1 w-full"
+                  />
+                  <p class="text-xl font-bold">~</p>
+                  <input
+                    v-model="endDate"
+                    type="date"
+                    class="border rounded px-2 py-1 w-full"
+                  />
+                </div>
+                <Switch
+                  v-model="allowOtherUserEdit"
+                  label="他ユーザーのデータ変更を許可する"
                 />
+                <div
+                  v-if="allowOtherUserEdit"
+                  class="flex flex-col gap-y-2 mx-1 bg-gray-200 rounded-md p-1 px-2"
+                >
+                  <p>
+                    本設定を許可した場合、他ユーザーの日付データに対する変更が許可されます
+                  </p>
+                </div>
               </div>
             </div>
             <div class="flex flex-col gap-y-2 w-1/2">
@@ -234,6 +249,7 @@ const userColor = ref("#3b82f6");
 const { formatTimeForDisplay } = useTimeUtils();
 const { createNewSpace } = useAPI();
 const enablePeriodSetting = ref(false);
+const allowOtherUserEdit = ref(false);
 const startDate = ref("");
 const endDate = ref("");
 
@@ -367,7 +383,10 @@ const confirmSync = async () => {
 
     console.log("UploadForm: sending request data", requestData);
 
-    const response = await createNewSpace(requestData);
+    const response = await createNewSpace(
+      requestData,
+      allowOtherUserEdit.value
+    );
 
     // レスポンスの構造に応じてdisplayDataを更新
     if (response.savedEvents) {
