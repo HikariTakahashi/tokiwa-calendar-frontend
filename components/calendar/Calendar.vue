@@ -10,7 +10,7 @@
         props.isCopyMode && date.date === selectedDate
           ? 'border-8 border-dashed border-blue-500'
           : '',
-        props.isCopyMode && timeData[date.date] === copiedTimeData
+        props.isCopyMode && timeData.events[date.date] === copiedTimeData
           ? 'border-8 border-blue-500'
           : '',
         props.isCopyMode &&
@@ -33,7 +33,7 @@
         {{ new Date(date.date).getDate() }}
       </div>
       <div
-        v-if="timeData[date.date]"
+        v-if="timeData.events[date.date]"
         class="text-center text-xs sm:text-sm font-bold w-full flex flex-col min-h-0"
       >
         <div
@@ -72,7 +72,7 @@
     :selectedDate="selectedDate"
     :year="year"
     :month="month"
-    :existingTime="selectedDate ? timeData[selectedDate] || {} : {}"
+    :existingTime="selectedDate ? timeData.events[selectedDate] || {} : {}"
     :isCopyMode="props.isCopyMode"
     @save="onSave"
     @delete="onDelete"
@@ -87,15 +87,11 @@ import { ref, onMounted } from "vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
-import { useAPI } from "@/composables/useAPI";
+import { useAPI, type TimeData } from "@/composables/useAPI";
 
 interface CalendarDay {
   date: string;
   isCurrentMonth: boolean;
-}
-
-interface TimeData {
-  [key: string]: TimeSlot | TimeSlot[];
 }
 
 interface Props {
@@ -115,7 +111,12 @@ const emit = defineEmits<{
   (e: "cancel-copy-mode"): void;
 }>();
 
-const timeData = ref<TimeData>({});
+const timeData = ref<TimeData>({
+  events: {},
+  spaceId: "",
+  username: "",
+  userColor: "",
+});
 const { formatTimeForDisplay } = useTimeUtils();
 const showModal = ref(false);
 const selectedDate = ref<string>("");
@@ -131,7 +132,7 @@ const {
 const { fetchSpaceData, syncTimeData } = useAPI();
 
 const onSave = async (data: { date: string; timeSlots: TimeSlot[] }) => {
-  timeData.value[data.date] = data.timeSlots;
+  timeData.value.events[data.date] = data.timeSlots;
   emit("update:time-data", timeData.value);
 
   // if (props.spaceId) {
@@ -146,10 +147,10 @@ const onDelete = async (data: {
 }) => {
   if (data.keepUserData && data.userTimeSlots) {
     // Usernameが存在するデータを保持
-    timeData.value[data.date] = data.userTimeSlots;
+    timeData.value.events[data.date] = data.userTimeSlots;
   } else {
     // すべてのデータを削除
-    delete timeData.value[data.date];
+    delete timeData.value.events[data.date];
   }
   emit("update:time-data", timeData.value);
 };
@@ -161,9 +162,9 @@ const isCurrentMonth = (dateString: string): boolean => {
 
 const openForm = (date: string) => {
   if (props.isCopyMode) {
-    const result = handlePaste(date, timeData.value);
+    const result = handlePaste(date, timeData.value.events);
     if (result.isPasted) {
-      timeData.value = result.timeData;
+      timeData.value.events = result.timeData;
       emit("update:time-data", timeData.value);
     }
   } else {
@@ -178,20 +179,20 @@ const closeForm = () => {
 
 const handleCopy = () => {
   if (!selectedDate.value) return;
-  const result = copyLogic(selectedDate.value, timeData.value);
+  const result = copyLogic(selectedDate.value, timeData.value.events);
   emit("update:is-copy-mode", result.isCopyMode);
   showModal.value = false;
 };
 
 const handleCancelCopyMode = () => {
-  const result = cancelCopyLogic(timeData.value);
-  timeData.value = result.timeData;
+  const result = cancelCopyLogic(timeData.value.events);
+  timeData.value.events = result.timeData;
   emit("update:time-data", timeData.value);
   emit("update:is-copy-mode", result.isCopyMode);
 };
 
 const getTimeSlots = (date: string): TimeSlot[] => {
-  const slots = timeData.value[date];
+  const slots = timeData.value.events[date];
   if (!slots) return [];
 
   const convertedSlots = Array.isArray(slots) ? slots : [slots];
@@ -213,7 +214,7 @@ const fetchDataFromAPI = async () => {
 
   try {
     const response = await fetchSpaceData(props.spaceId);
-    timeData.value = response.events;
+    timeData.value = response;
     emit("update:time-data", timeData.value);
   } catch (error) {
     console.error("データの取得に失敗しました:", error);
@@ -226,7 +227,7 @@ const syncDataToAPI = async () => {
   try {
     const response = await syncTimeData(
       {
-        events: timeData.value,
+        events: timeData.value.events,
         spaceId: props.spaceId,
         username: "",
         userColor: "",
@@ -240,13 +241,13 @@ const syncDataToAPI = async () => {
 };
 
 const hasUsernameInDate = (date: string): boolean => {
-  const timeSlot = timeData.value[date];
+  const timeSlot = timeData.value.events[date];
   if (!timeSlot) return false;
 
   if (Array.isArray(timeSlot)) {
-    return timeSlot.some((slot) => slot.username);
+    return timeSlot.some((slot: TimeSlot) => !!slot.username);
   }
-  return !!timeSlot.username;
+  return !!(timeSlot as TimeSlot).username;
 };
 
 const isPastedDate = (date: string): boolean => {
