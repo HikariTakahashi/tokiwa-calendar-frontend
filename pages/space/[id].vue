@@ -22,6 +22,8 @@ const timeData = ref<TimeData>({
   spaceId: "",
   username: "",
   userColor: "",
+  startDate: null,
+  endDate: null,
 });
 const calendarDays = ref<CalendarDay[]>([]);
 const isCopyMode = ref(false);
@@ -91,6 +93,8 @@ const fetchSpaceDataFromServer = async () => {
         spaceId: "",
         username: "",
         userColor: "",
+        startDate: null,
+        endDate: null,
       };
       updateCalendarDays();
       return;
@@ -105,6 +109,8 @@ const fetchSpaceDataFromServer = async () => {
       spaceId: "",
       username: "",
       userColor: "",
+      startDate: null,
+      endDate: null,
     };
     updateCalendarDays();
   }
