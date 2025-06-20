@@ -74,7 +74,7 @@
             <label>開始時刻</label>
             <div class="border-r border-gray-400 pr-2">
               <component
-                :is="timeSlot.username ? UserTime : InputTime"
+                :is="shouldUseUserTime(timeSlot) ? UserTime : InputTime"
                 v-model:time="timeSlot.start"
                 :minute-interval="5"
                 :initial-hours="parseTimeSlot(timeSlot.start).hours"
@@ -82,7 +82,7 @@
               />
             </div>
             <component
-              :is="timeSlot.username ? UserTime : InputTime"
+              :is="shouldUseUserTime(timeSlot) ? UserTime : InputTime"
               v-model:time="timeSlot.end"
               :minute-interval="5"
               :initial-hours="parseTimeSlot(timeSlot.end).hours"
@@ -133,6 +133,10 @@ const props = defineProps({
     default: () => ({}),
   },
   isCopyMode: {
+    type: Boolean,
+    default: false,
+  },
+  allowOtherEdit: {
     type: Boolean,
     default: false,
   },
@@ -265,18 +269,34 @@ const isCurrentMonth = computed(() => {
 const errorMessage = ref("");
 
 const save = () => {
-  if (!validateTime(timeSlots.value)) {
+  // 空のスロット（startが00:00かつendが00:00）を除外
+  const validTimeSlots = timeSlots.value.filter(
+    (slot) => !(slot.start === "00:00" && slot.end === "00:00")
+  );
+
+  // 有効なスロットがない場合は保存しない
+  if (validTimeSlots.length === 0) {
+    emit("save", {
+      date: props.selectedDate,
+      timeSlots: [],
+    });
+    props.close();
+    return;
+  }
+
+  // 有効なスロットのみでバリデーションを実行
+  if (!validateTime(validTimeSlots)) {
     alert("開始時刻と終了時刻を入力してください");
     return;
   }
 
-  const orderValidation = validateTimeOrder(timeSlots.value);
+  const orderValidation = validateTimeOrder(validTimeSlots);
   if (!orderValidation.isValid) {
     errorMessage.value = orderValidation.errorMessage;
     return;
   }
 
-  const overlapValidation = validateTimeOverlap(timeSlots.value);
+  const overlapValidation = validateTimeOverlap(validTimeSlots);
   if (!overlapValidation.isValid) {
     errorMessage.value = overlapValidation.errorMessage;
     return;
@@ -285,7 +305,7 @@ const save = () => {
   errorMessage.value = "";
   emit("save", {
     date: props.selectedDate,
-    timeSlots: timeSlots.value,
+    timeSlots: validTimeSlots,
   });
 
   props.close();
@@ -434,4 +454,13 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", onKeyDown);
   window.removeEventListener("resize", updateModalSize);
 });
+
+const shouldUseUserTime = (timeSlot) => {
+  // allowOtherEditがtrueの場合は、usernameが含まれていてもInputTimeを使用
+  if (props.allowOtherEdit) {
+    return false;
+  }
+  // allowOtherEditがfalseの場合は、従来通りusernameが含まれている場合はUserTimeを使用
+  return timeSlot.username;
+};
 </script>
