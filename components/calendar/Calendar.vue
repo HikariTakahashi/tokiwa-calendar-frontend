@@ -78,6 +78,7 @@
     :month="month"
     :existingTime="selectedDate ? timeData.events[selectedDate] || {} : {}"
     :isCopyMode="props.isCopyMode"
+    :allowOtherEdit="timeData.allowOtherEdit || false"
     @save="onSave"
     @delete="onDelete"
     @copy="handleCopy"
