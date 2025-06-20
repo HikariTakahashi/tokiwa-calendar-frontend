@@ -376,7 +376,16 @@ const confirmSync = async () => {
       spaceId: spaceId,
     };
 
-    if (enablePeriodSetting.value && startDate.value && endDate.value) {
+    // isSync時は既存のスペースデータから期間設定を取得
+    if (props.isSync && props.timeData) {
+      if (props.timeData.startDate) {
+        requestData.startDate = props.timeData.startDate;
+      }
+      if (props.timeData.endDate) {
+        requestData.endDate = props.timeData.endDate;
+      }
+    } else if (enablePeriodSetting.value && startDate.value && endDate.value) {
+      // 新規作成時は新しく設定された期間を使用
       requestData.startDate = startDate.value;
       requestData.endDate = endDate.value;
     }
