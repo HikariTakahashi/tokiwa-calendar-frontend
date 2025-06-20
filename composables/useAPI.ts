@@ -29,21 +29,17 @@ interface APITimeSlot {
 // バックエンドAPIレスポンスの型定義
 interface BackendAPIResponse {
   events: {
-    Events: {
-      [key: string]: APITimeSlot[];
-    };
+    [key: string]: APITimeSlot[];
   };
-  EndDate: string | null;
-  StartDate: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
   allowOtherEdit?: boolean;
 }
 
 // バックエンドAPIリクエストの型定義
 interface BackendAPIRequest {
   events: {
-    Events: {
-      [key: string]: APITimeSlot[];
-    };
+    [key: string]: APITimeSlot[];
   };
   EndDate: string | null;
   StartDate: string | null;
@@ -71,7 +67,7 @@ export const useAPI = () => {
 
       // APIレスポンスをTimeSlot型に変換
       const convertedEvents: { [key: string]: TimeSlot[] } = {};
-      Object.entries(response.events.Events).forEach(([date, slots]) => {
+      Object.entries(response.events).forEach(([date, slots]) => {
         convertedEvents[date] = slots.map((slot) => ({
           start: slot.Start,
           end: slot.End,
@@ -86,8 +82,8 @@ export const useAPI = () => {
         spaceId: spaceId,
         username: "",
         userColor: "",
-        startDate: response.StartDate,
-        endDate: response.EndDate,
+        startDate: response.startDate || null,
+        endDate: response.endDate || null,
         allowOtherEdit: response.allowOtherEdit || false,
       };
     } catch (error) {
@@ -116,9 +112,7 @@ export const useAPI = () => {
       });
 
       const backendRequest: BackendAPIRequest = {
-        events: {
-          Events: events,
-        },
+        events: events,
         EndDate: timeData.endDate || null,
         StartDate: timeData.startDate || null,
         AllowOtherEdit: allowOtherEdit,
@@ -166,9 +160,7 @@ export const useAPI = () => {
       });
 
       const backendRequest: BackendAPIRequest = {
-        events: {
-          Events: events,
-        },
+        events: events,
         EndDate: requestData.endDate || null,
         StartDate: requestData.startDate || null,
         AllowOtherEdit: allowOtherEdit,
