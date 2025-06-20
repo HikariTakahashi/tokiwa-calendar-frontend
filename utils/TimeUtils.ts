@@ -40,12 +40,20 @@ export const useTimeUtils = () => {
   };
 
   const validateTime = (timeSlots: TimeSlot[]) => {
-    return !timeSlots.some((slot) => !slot.start || !slot.end);
+    return !timeSlots.some((slot) => {
+      // startまたはendが空の場合
+      if (!slot.start || !slot.end) return true;
+      // startが00:00かつendが00:00の場合（空のスロット）
+      if (slot.start === "00:00" && slot.end === "00:00") return false;
+      return false;
+    });
   };
 
   const validateTimeOrder = (slots: TimeSlot[]) => {
     for (const slot of slots) {
       if (!slot.start || !slot.end) continue;
+      // startが00:00かつendが00:00の場合は空のスロットとしてスキップ
+      if (slot.start === "00:00" && slot.end === "00:00") continue;
 
       const startTime = new Date(`2000-01-01T${slot.start}`);
       const endTime = new Date(`2000-01-01T${slot.end}`);
@@ -64,8 +72,13 @@ export const useTimeUtils = () => {
   };
 
   const validateTimeOverlap = (slots: TimeSlot[]) => {
+    // 空のスロット（startが00:00かつendが00:00）を除外
+    const validSlots = slots.filter(
+      (slot) => !(slot.start === "00:00" && slot.end === "00:00")
+    );
+
     // 時間スロットを開始時刻でソート
-    const sortedSlots = [...slots].sort((a, b) => {
+    const sortedSlots = [...validSlots].sort((a, b) => {
       if (!a.start || !b.start) return 0;
       const dateA = new Date(`2000-01-01T${a.start}`).getTime();
       const dateB = new Date(`2000-01-01T${b.start}`).getTime();
