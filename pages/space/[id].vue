@@ -24,6 +24,7 @@ const timeData = ref<TimeData>({
   userColor: "",
   startDate: null,
   endDate: null,
+  allowOtherEdit: false,
 });
 const calendarDays = ref<CalendarDay[]>([]);
 const isCopyMode = ref(false);
@@ -95,6 +96,7 @@ const fetchSpaceDataFromServer = async () => {
         userColor: "",
         startDate: null,
         endDate: null,
+        allowOtherEdit: false,
       };
       updateCalendarDays();
       return;
@@ -111,6 +113,7 @@ const fetchSpaceDataFromServer = async () => {
       userColor: "",
       startDate: null,
       endDate: null,
+      allowOtherEdit: false,
     };
     updateCalendarDays();
   }
