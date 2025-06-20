@@ -9,6 +9,7 @@ export interface TimeData {
   userColor: string;
   startDate?: string | null;
   endDate?: string | null;
+  allowOtherEdit?: boolean;
 }
 
 interface APIResponse {
@@ -34,6 +35,7 @@ interface BackendAPIResponse {
   };
   EndDate: string | null;
   StartDate: string | null;
+  allowOtherEdit?: boolean;
 }
 
 // バックエンドAPIリクエストの型定義
@@ -86,6 +88,7 @@ export const useAPI = () => {
         userColor: "",
         startDate: response.StartDate,
         endDate: response.EndDate,
+        allowOtherEdit: response.allowOtherEdit || false,
       };
     } catch (error) {
       console.error("スペースデータの取得に失敗しました:", error);
