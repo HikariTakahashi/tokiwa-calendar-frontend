@@ -374,6 +374,7 @@ const confirmSync = async () => {
     const requestData = {
       ...processedData, // 直接日付をキーとしたオブジェクト
       spaceId: spaceId,
+      allowOtherEdit: allowOtherUserEdit.value,
     };
 
     // isSync時は既存のスペースデータから期間設定を取得
