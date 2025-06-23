@@ -19,11 +19,11 @@ interface APIResponse {
 }
 
 interface APITimeSlot {
-  Start: string;
-  End: string;
-  Order: number;
-  Username?: string;
-  UserColor?: string;
+  start: string;
+  end: string;
+  order: number;
+  username?: string;
+  userColor?: string;
 }
 
 // バックエンドAPIレスポンスの型定義
@@ -41,9 +41,9 @@ interface BackendAPIRequest {
   events: {
     [key: string]: APITimeSlot[];
   };
-  EndDate: string | null;
-  StartDate: string | null;
-  AllowOtherEdit: boolean;
+  endDate: string | null;
+  startDate: string | null;
+  allowOtherEdit: boolean;
   spaceId: string;
 }
 
@@ -69,11 +69,11 @@ export const useAPI = () => {
       const convertedEvents: { [key: string]: TimeSlot[] } = {};
       Object.entries(response.events).forEach(([date, slots]) => {
         convertedEvents[date] = slots.map((slot) => ({
-          start: slot.Start,
-          end: slot.End,
-          order: slot.Order,
-          username: slot.Username,
-          userColor: slot.UserColor,
+          start: slot.start,
+          end: slot.end,
+          order: slot.order,
+          username: slot.username,
+          userColor: slot.userColor,
         }));
       });
 
@@ -103,19 +103,19 @@ export const useAPI = () => {
       const events: { [key: string]: APITimeSlot[] } = {};
       Object.entries(timeData.events).forEach(([date, slots]) => {
         events[date] = slots.map((slot, index) => ({
-          Start: slot.start,
-          End: slot.end,
-          Order: index + 1,
-          Username: slot.username,
-          UserColor: slot.userColor,
+          start: slot.start,
+          end: slot.end,
+          order: index + 1,
+          username: slot.username,
+          userColor: slot.userColor,
         }));
       });
 
       const backendRequest: BackendAPIRequest = {
         events: events,
-        EndDate: timeData.endDate || null,
-        StartDate: timeData.startDate || null,
-        AllowOtherEdit: allowOtherEdit,
+        endDate: timeData.endDate || null,
+        startDate: timeData.startDate || null,
+        allowOtherEdit: allowOtherEdit,
         spaceId,
       };
 
@@ -150,20 +150,20 @@ export const useAPI = () => {
         if (key !== "spaceId" && key !== "startDate" && key !== "endDate") {
           const slots = Array.isArray(value) ? value : [value];
           events[key] = slots.map((slot: any, index: number) => ({
-            Start: slot.start,
-            End: slot.end,
-            Order: index + 1,
-            Username: slot.username,
-            UserColor: slot.userColor,
+            start: slot.start,
+            end: slot.end,
+            order: index + 1,
+            username: slot.username,
+            userColor: slot.userColor,
           }));
         }
       });
 
       const backendRequest: BackendAPIRequest = {
         events: events,
-        EndDate: requestData.endDate || null,
-        StartDate: requestData.startDate || null,
-        AllowOtherEdit: allowOtherEdit,
+        endDate: requestData.endDate || null,
+        startDate: requestData.startDate || null,
+        allowOtherEdit: allowOtherEdit,
         spaceId: requestData.spaceId,
       };
 
