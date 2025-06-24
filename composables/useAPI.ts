@@ -12,10 +12,14 @@ export interface TimeData {
   allowOtherEdit?: boolean;
 }
 
+// 新しいAPIレスポンス形式に対応
 interface APIResponse {
-  message: string;
-  spaceId: string;
-  savedEvents: { [key: string]: TimeSlot[] };
+  allowOtherEdit: boolean;
+  endDate: string | null;
+  events: {
+    [key: string]: TimeSlot[];
+  };
+  startDate: string | null;
 }
 
 interface APITimeSlot {
@@ -26,14 +30,14 @@ interface APITimeSlot {
   userColor?: string;
 }
 
-// バックエンドAPIレスポンスの型定義
+// バックエンドAPIレスポンスの型定義（新しい形式に対応）
 interface BackendAPIResponse {
+  allowOtherEdit: boolean;
+  endDate: string | null;
   events: {
     [key: string]: APITimeSlot[];
   };
-  startDate?: string | null;
-  endDate?: string | null;
-  allowOtherEdit?: boolean;
+  startDate: string | null;
 }
 
 // バックエンドAPIリクエストの型定義
@@ -54,7 +58,7 @@ export const useAPI = () => {
   //[id].vue用 スペースデータ取得
   const fetchSpaceData = async (spaceId: string): Promise<TimeData> => {
     try {
-      const response = await $fetch<BackendAPIResponse>(
+      const rawResponse = await $fetch(
         `${API_BASE_URL}/api/time/${spaceId}`,
         {
           method: "GET",
@@ -65,17 +69,27 @@ export const useAPI = () => {
         }
       );
 
+      // レスポンスが文字列の場合はJSONとしてパース
+      let response: BackendAPIResponse;
+      if (typeof rawResponse === 'string') {
+        response = JSON.parse(rawResponse);
+      } else {
+        response = rawResponse as BackendAPIResponse;
+      }
+
       // APIレスポンスをTimeSlot型に変換
       const convertedEvents: { [key: string]: TimeSlot[] } = {};
-      Object.entries(response.events).forEach(([date, slots]) => {
-        convertedEvents[date] = slots.map((slot) => ({
-          start: slot.start,
-          end: slot.end,
-          order: slot.order,
-          username: slot.username,
-          userColor: slot.userColor,
-        }));
-      });
+      if (response.events) {
+        Object.entries(response.events).forEach(([date, slots]) => {
+          convertedEvents[date] = slots.map((slot) => ({
+            start: slot.start,
+            end: slot.end,
+            order: slot.order,
+            username: slot.username,
+            userColor: slot.userColor,
+          }));
+        });
+      }
 
       return {
         events: convertedEvents,
@@ -119,8 +133,6 @@ export const useAPI = () => {
         spaceId,
       };
 
-      console.log("useAPI: syncTimeData request", backendRequest);
-
       const response = await $fetch<APIResponse>(`${API_BASE_URL}/api/time`, {
         method: "POST",
         headers: {
@@ -142,8 +154,6 @@ export const useAPI = () => {
     allowOtherEdit: boolean = false
   ): Promise<APIResponse> => {
     try {
-      console.log(API_BASE_URL);
-
       // 新しいリクエスト構造に変換
       const events: { [key: string]: APITimeSlot[] } = {};
       Object.entries(requestData).forEach(([key, value]) => {
@@ -166,8 +176,6 @@ export const useAPI = () => {
         allowOtherEdit: allowOtherEdit,
         spaceId: requestData.spaceId,
       };
-
-      console.log("useAPI: createNewSpace request", backendRequest);
 
       const response = await $fetch<APIResponse>(`${API_BASE_URL}/api/time`, {
         method: "POST",
