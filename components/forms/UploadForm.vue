@@ -398,9 +398,9 @@ const confirmSync = async () => {
       allowOtherUserEdit.value
     );
 
-    // レスポンスの構造に応じてdisplayDataを更新
-    if (response.savedEvents) {
-      displayData.value = response.savedEvents;
+    // 新しいレスポンス形式に対応：eventsプロパティを使用
+    if (response.events) {
+      displayData.value = response.events;
     }
 
     if (props.isSync) {
