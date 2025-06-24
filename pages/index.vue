@@ -20,6 +20,7 @@
         :month="currentMonth"
         :is-copy-mode="isCopyMode"
         :space-id="spaceId"
+        :time-data="timeData"
         @save="saveTime"
         @delete="deleteTime"
         @update:time-data="updateTimeData"
