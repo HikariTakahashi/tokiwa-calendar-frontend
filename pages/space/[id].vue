@@ -103,6 +103,20 @@ const fetchSpaceDataFromServer = async () => {
     }
 
     timeData.value = response;
+    
+    // APIデータの期間に基づいてカレンダーの年月を設定
+    if (response.events && Object.keys(response.events).length > 0) {
+      // データがある日付を取得
+      const eventDates = Object.keys(response.events);
+      const firstEventDate = new Date(eventDates[0]);
+      currentYear.value = firstEventDate.getFullYear();
+      currentMonth.value = firstEventDate.getMonth() + 1;
+    } else if (response.startDate) {
+      const startDate = new Date(response.startDate);
+      currentYear.value = startDate.getFullYear();
+      currentMonth.value = startDate.getMonth() + 1;
+    }
+    
     updateCalendarDays();
   } catch (error) {
     console.error("スペースデータの取得に失敗しました:", error);
@@ -141,10 +155,6 @@ onMounted(() => {
       @close-copy-mode="closeCopyMode"
       @cancel-copy-mode="handleCancelCopyMode"
     />
-    <!-- デバッグ表示 -->
-    <!-- <div class="mb-4 p-4 bg-gray-100 rounded-lg">
-      <p>Debug: timeData = {{ JSON.stringify(timeData, null, 2) }}</p>
-    </div> -->
     <CalendarWeeks />
     <div class="h-full overflow-y-auto">
       <Calendar
@@ -153,6 +163,7 @@ onMounted(() => {
         :month="currentMonth"
         :is-copy-mode="isCopyMode"
         :space-id="route.params.id as string"
+        :time-data="timeData"
         @save="handleCalendarSave"
         @delete="deleteTimeData"
         @update:time-data="updateTimeData"
