@@ -101,23 +101,26 @@
         <div class="flex justify-end gap-x-2">
           <buttons-square
             @click="handleCopy"
-            label="コピー"
             color="bg-gray-300"
             :isUse="Object.keys(displayData).length > 0"
-          />
+          >
+            コピー
+          </buttons-square>
           <buttons-square
             v-if="!isSync"
             @click="syncData"
-            label="共有"
             color="bg-blue-300"
             :isUse="Object.keys(displayData).length > 0"
-          />
+          >
+            共有
+          </buttons-square>
           <buttons-square
             v-else
             @click="syncData"
-            label="再同期"
             color="bg-blue-300"
-          />
+          >
+            再同期
+          </buttons-square>
         </div>
         <div v-if="showSyncInput">
           <div class="flex flex-col items-center mb-4">
@@ -198,10 +201,11 @@
                   <div class="flex pl-2 items-end">
                     <buttons-square
                       @click="confirmSync"
-                      label="確定"
                       color="bg-green-300"
                       :isUse="username.length > 0"
-                    />
+                    >
+                      確定
+                    </buttons-square>
                   </div>
                 </div>
               </div>
