@@ -10,16 +10,12 @@
     @mouseleave="isUse && (isHovered = false)"
     :disabled="!isUse"
   >
-    {{ label }}
+    <slot />
   </button>
 </template>
 
 <script setup>
 const props = defineProps({
-  label: {
-    type: String,
-    required: true,
-  },
   color: {
     type: String,
     required: false,
