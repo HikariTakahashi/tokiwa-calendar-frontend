@@ -8,20 +8,24 @@ import CalendarHeader from "@/components/calendar/CalendarHeader.vue";
 import CopyModeHeader from "@/components/calendar/CopyModeHeader.vue";
 import Calendar from "@/components/calendar/Calendar.vue";
 import CalendarWeeks from "@/components/calendar/CalendarWeeks.vue";
-import { useAPI } from "@/composables/useAPI";
+import { useAPI, type TimeData } from "@/composables/useAPI";
 
 interface CalendarDay {
   date: string;
   isCurrentMonth: boolean;
 }
 
-interface TimeData {
-  [key: string]: TimeSlot | TimeSlot[];
-}
-
 const route = useRoute();
 const showIDsUploadForm = ref(false);
-const timeData = ref<TimeData>({});
+const timeData = ref<TimeData>({
+  events: {},
+  spaceId: "",
+  username: "",
+  userColor: "",
+  startDate: null,
+  endDate: null,
+  allowOtherEdit: false,
+});
 const calendarDays = ref<CalendarDay[]>([]);
 const isCopyMode = ref(false);
 const {
@@ -45,11 +49,11 @@ const openForm = () => {
 };
 
 const handleCalendarSave = (data: { date: string; timeSlots: TimeSlot[] }) => {
-  timeData.value[data.date] = data.timeSlots;
+  timeData.value.events[data.date] = data.timeSlots;
 };
 
 const deleteTimeData = (data: { date: string }) => {
-  delete timeData.value[data.date];
+  delete timeData.value.events[data.date];
 };
 
 const updateTimeData = (newTimeData: TimeData) => {
@@ -85,16 +89,32 @@ const fetchSpaceDataFromServer = async () => {
 
     if (!response || !response.events) {
       console.warn("APIからのレスポンスが不正です:", response);
-      timeData.value = {};
+      timeData.value = {
+        events: {},
+        spaceId: "",
+        username: "",
+        userColor: "",
+        startDate: null,
+        endDate: null,
+        allowOtherEdit: false,
+      };
       updateCalendarDays();
       return;
     }
 
-    timeData.value = response.events;
+    timeData.value = response;
     updateCalendarDays();
   } catch (error) {
     console.error("スペースデータの取得に失敗しました:", error);
-    timeData.value = {};
+    timeData.value = {
+      events: {},
+      spaceId: "",
+      username: "",
+      userColor: "",
+      startDate: null,
+      endDate: null,
+      allowOtherEdit: false,
+    };
     updateCalendarDays();
   }
 };

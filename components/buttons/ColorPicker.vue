@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col sm:flex-row gap-2">
+  <div class="flex flex-col sm:flex-row gap-1.5">
     <!--カラー直接入力-->
-    <div class="flex-1 grid grid-cols-2 gap-2">
+    <div class="flex-1 grid grid-cols-2 gap-1">
       <div>
         <p>RGB</p>
         <input
@@ -43,7 +43,7 @@
         />
       </div>
     </div>
-    <div class="flex flex-row justify-between gap-2">
+    <div class="flex flex-row justify-between gap-0.5">
       <!--カラーフィールド&スライダー-->
       <div>
         <!--カラーフィールド-->

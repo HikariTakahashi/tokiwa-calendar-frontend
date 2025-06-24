@@ -3,14 +3,14 @@
     <div
       v-for="date in calendarDays"
       :key="date.date"
-      class="flex flex-col items-center border rounded transition-transform duration-200 hover:-translate-y-1 shadow-md"
+      class="flex flex-col items-center border rounded transition-transform duration-200 shadow-md"
       :class="[
         isCurrentMonth(date.date) ? '' : 'bg-gray-100',
         props.isCopyMode ? 'cursor-pointer' : '',
         props.isCopyMode && date.date === selectedDate
           ? 'border-8 border-dashed border-blue-500'
           : '',
-        props.isCopyMode && timeData[date.date] === copiedTimeData
+        props.isCopyMode && timeData.events[date.date] === copiedTimeData
           ? 'border-8 border-blue-500'
           : '',
         props.isCopyMode &&
@@ -18,6 +18,9 @@
         isPastedDate(date.date)
           ? 'border-8 border-blue-500'
           : '',
+        isDateDisabled(date.date)
+          ? 'bg-gray-300 cursor-not-allowed'
+          : 'hover:-translate-y-1',
       ]"
       @click="openForm(date.date)"
     >
@@ -25,6 +28,7 @@
         class="flex items-center justify-center sm:mt-1 font-bold"
         :class="[
           isCurrentMonth(date.date) ? 'text-gray-700' : 'text-gray-400',
+          isDateDisabled(date.date) ? 'text-white' : '',
           isToday(date.date)
             ? 'bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center'
             : '',
@@ -33,7 +37,7 @@
         {{ new Date(date.date).getDate() }}
       </div>
       <div
-        v-if="timeData[date.date]"
+        v-if="timeData.events[date.date]"
         class="text-center text-xs sm:text-sm font-bold w-full flex flex-col min-h-0"
       >
         <div
@@ -43,7 +47,6 @@
             v-for="(slot, index) in getTimeSlots(date.date)"
             :key="index"
           >
-            <!--ここから下のdivのcssは直接の命令がない限り消去・変更しない-->
             <div
               class="flex flex-col sm:flex-row justify-center items-center sm:gap-x-2"
             >
@@ -61,7 +64,6 @@
                 {{ formatTimeForDisplay([slot]) }}
               </div>
             </div>
-            <!--ここから上のdivのcssは直接の命令がない限り消去・変更しない-->
           </template>
         </div>
       </div>
@@ -74,8 +76,9 @@
     :selectedDate="selectedDate"
     :year="year"
     :month="month"
-    :existingTime="selectedDate ? timeData[selectedDate] || {} : {}"
+    :existingTime="selectedDate ? timeData.events[selectedDate] || {} : {}"
     :isCopyMode="props.isCopyMode"
+    :allowOtherEdit="timeData.allowOtherEdit || false"
     @save="onSave"
     @delete="onDelete"
     @copy="handleCopy"
@@ -89,15 +92,11 @@ import { ref, onMounted } from "vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
-import { useAPI } from "@/composables/useAPI";
+import { useAPI, type TimeData } from "@/composables/useAPI";
 
 interface CalendarDay {
   date: string;
   isCurrentMonth: boolean;
-}
-
-interface TimeData {
-  [key: string]: TimeSlot | TimeSlot[];
 }
 
 interface Props {
@@ -117,7 +116,14 @@ const emit = defineEmits<{
   (e: "cancel-copy-mode"): void;
 }>();
 
-const timeData = ref<TimeData>({});
+const timeData = ref<TimeData>({
+  events: {},
+  spaceId: "",
+  username: "",
+  userColor: "",
+  startDate: null,
+  endDate: null,
+});
 const { formatTimeForDisplay } = useTimeUtils();
 const showModal = ref(false);
 const selectedDate = ref<string>("");
@@ -133,7 +139,7 @@ const {
 const { fetchSpaceData, syncTimeData } = useAPI();
 
 const onSave = async (data: { date: string; timeSlots: TimeSlot[] }) => {
-  timeData.value[data.date] = data.timeSlots;
+  timeData.value.events[data.date] = data.timeSlots;
   emit("update:time-data", timeData.value);
 
   // if (props.spaceId) {
@@ -148,10 +154,10 @@ const onDelete = async (data: {
 }) => {
   if (data.keepUserData && data.userTimeSlots) {
     // Usernameが存在するデータを保持
-    timeData.value[data.date] = data.userTimeSlots;
+    timeData.value.events[data.date] = data.userTimeSlots;
   } else {
     // すべてのデータを削除
-    delete timeData.value[data.date];
+    delete timeData.value.events[data.date];
   }
   emit("update:time-data", timeData.value);
 };
@@ -162,10 +168,15 @@ const isCurrentMonth = (dateString: string): boolean => {
 };
 
 const openForm = (date: string) => {
+  // 制限された日付の場合は何もしない
+  if (isDateDisabled(date)) {
+    return;
+  }
+
   if (props.isCopyMode) {
-    const result = handlePaste(date, timeData.value);
+    const result = handlePaste(date, timeData.value.events);
     if (result.isPasted) {
-      timeData.value = result.timeData;
+      timeData.value.events = result.timeData;
       emit("update:time-data", timeData.value);
     }
   } else {
@@ -180,20 +191,20 @@ const closeForm = () => {
 
 const handleCopy = () => {
   if (!selectedDate.value) return;
-  const result = copyLogic(selectedDate.value, timeData.value);
+  const result = copyLogic(selectedDate.value, timeData.value.events);
   emit("update:is-copy-mode", result.isCopyMode);
   showModal.value = false;
 };
 
 const handleCancelCopyMode = () => {
-  const result = cancelCopyLogic(timeData.value);
-  timeData.value = result.timeData;
+  const result = cancelCopyLogic(timeData.value.events);
+  timeData.value.events = result.timeData;
   emit("update:time-data", timeData.value);
   emit("update:is-copy-mode", result.isCopyMode);
 };
 
 const getTimeSlots = (date: string): TimeSlot[] => {
-  const slots = timeData.value[date];
+  const slots = timeData.value.events[date];
   if (!slots) return [];
 
   const convertedSlots = Array.isArray(slots) ? slots : [slots];
@@ -215,7 +226,7 @@ const fetchDataFromAPI = async () => {
 
   try {
     const response = await fetchSpaceData(props.spaceId);
-    timeData.value = response.events;
+    timeData.value = response;
     emit("update:time-data", timeData.value);
   } catch (error) {
     console.error("データの取得に失敗しました:", error);
@@ -228,7 +239,7 @@ const syncDataToAPI = async () => {
   try {
     const response = await syncTimeData(
       {
-        events: timeData.value,
+        events: timeData.value.events,
         spaceId: props.spaceId,
         username: "",
         userColor: "",
@@ -242,13 +253,13 @@ const syncDataToAPI = async () => {
 };
 
 const hasUsernameInDate = (date: string): boolean => {
-  const timeSlot = timeData.value[date];
+  const timeSlot = timeData.value.events[date];
   if (!timeSlot) return false;
 
   if (Array.isArray(timeSlot)) {
-    return timeSlot.some((slot) => slot.username);
+    return timeSlot.some((slot: TimeSlot) => !!slot.username);
   }
-  return !!timeSlot.username;
+  return !!(timeSlot as TimeSlot).username;
 };
 
 const isPastedDate = (date: string): boolean => {
@@ -263,6 +274,28 @@ const isToday = (dateString: string): boolean => {
     date.getMonth() === today.getMonth() &&
     date.getFullYear() === today.getFullYear()
   );
+};
+
+const isDateDisabled = (date: string): boolean => {
+  const selectedDate = new Date(date);
+
+  // StartDateが存在し、選択された日付がStartDateより前の場合
+  if (timeData.value.startDate) {
+    const startDate = new Date(timeData.value.startDate);
+    if (selectedDate < startDate) {
+      return true;
+    }
+  }
+
+  // EndDateが存在し、選択された日付がEndDateより後の場合
+  if (timeData.value.endDate) {
+    const endDate = new Date(timeData.value.endDate);
+    if (selectedDate > endDate) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 onMounted(() => {
