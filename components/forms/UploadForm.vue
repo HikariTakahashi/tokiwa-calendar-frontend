@@ -202,9 +202,12 @@
                     <buttons-square
                       @click="confirmSync"
                       color="bg-green-300"
-                      :isUse="username.length > 0"
+                      :isUse="username.length > 0 && !isConfirming"
                     >
-                      確定
+                      <div v-if="isConfirming" class="flex items-center justify-center">
+                        <UIcon name="line-md:loading-loop" class="size-6" />
+                      </div>
+                      <span v-else>確定</span>
                     </buttons-square>
                   </div>
                 </div>
@@ -256,6 +259,7 @@ const enablePeriodSetting = ref(false);
 const allowOtherUserEdit = ref(false);
 const startDate = ref("");
 const endDate = ref("");
+const isConfirming = ref(false);
 
 watch(
   () => props.timeData,
@@ -397,6 +401,7 @@ const confirmSync = async () => {
 
     console.log("UploadForm: sending request data", requestData);
 
+    isConfirming.value = true;
     const response = await createNewSpace(
       requestData,
       allowOtherUserEdit.value
@@ -420,9 +425,11 @@ const confirmSync = async () => {
     enablePeriodSetting.value = false;
     startDate.value = "";
     endDate.value = "";
+    isConfirming.value = false;
   } catch (error) {
     console.error("同期エラー:", error);
     alert("同期に失敗しました");
+    isConfirming.value = false;
   }
 };
 
