@@ -109,7 +109,9 @@
         </div>
       </div>
       <div class="mt-3 flex justify-end gap-x-2">
-        <buttons-square @click="save" label="保存" color="bg-blue-200" />
+        <buttons-square @click="save" color="bg-blue-200">
+          保存
+        </buttons-square>
       </div>
     </div>
   </div>
