@@ -147,7 +147,7 @@ export const useAPI = () => {
       // 新しいリクエスト構造に変換
       const events: { [key: string]: APITimeSlot[] } = {};
       Object.entries(requestData).forEach(([key, value]) => {
-        if (key !== "spaceId" && key !== "startDate" && key !== "endDate") {
+        if (key !== "spaceId" && key !== "startDate" && key !== "endDate" && key !== "allowOtherEdit") {
           const slots = Array.isArray(value) ? value : [value];
           events[key] = slots.map((slot: any, index: number) => ({
             start: slot.start,
