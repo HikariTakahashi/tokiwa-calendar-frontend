@@ -189,8 +189,26 @@
                   type="text"
                   placeholder="ユーザー名を入力"
                   class="border rounded px-2 py-1 font-bold"
+                  :class="{ 'border-red-500': usernameErrors.length > 0 }"
                   :style="{ color: userColor }"
+                  @input="handleUsernameInput"
+                  maxlength="40"
                 />
+                <!-- 警告欄 -->
+                 <div class="flex flex-row gap-x-2 items-center justify-between">
+                  
+                <div v-if="usernameErrors.length > 0" class="text-red-500 text-sm mt-1">
+                  <div v-for="error in usernameErrors" :key="error" class="flex items-center gap-1">
+                    <UIcon name="ic:sharp-error" class="size-4" />
+                    <span>{{ error }}</span>
+                  </div>
+                </div>
+                <div class="text-gray-500 text-xs text-right">
+                  {{ username.length }}/40
+                </div>
+              </div>
+                <!-- 文字数表示 -->
+                
               </div>
               <div class="flex flex-col gap-y-1 w-full">
                 <p class="font-bold border-b-2 border-gray-600 sm:w-1/4">
@@ -202,7 +220,7 @@
                     <buttons-square
                       @click="confirmSync"
                       color="bg-green-300"
-                      :isUse="username.length > 0 && !isConfirming"
+                      :isUse="username.length > 0 && !isConfirming && usernameErrors.length === 0"
                     >
                       <div v-if="isConfirming" class="flex items-center justify-center">
                         <UIcon name="line-md:loading-loop" class="size-6" />
@@ -225,6 +243,7 @@ import { onMounted, onUnmounted, ref, watch } from "vue";
 import { copyToClipboard } from "@/utils/CopyDate";
 import { useAPI } from "@/composables/useAPI";
 import { useTimeUtils } from "@/utils/TimeUtils";
+import { validateUsername, applyUsernameRestrictions } from "@/utils/ArrayString";
 import ColorPicker from "@/components/buttons/ColorPicker.vue";
 import Switch from "~/components/buttons/Switch.vue";
 
@@ -260,6 +279,7 @@ const allowOtherUserEdit = ref(false);
 const startDate = ref("");
 const endDate = ref("");
 const isConfirming = ref(false);
+const usernameErrors = ref([]);
 
 watch(
   () => props.timeData,
@@ -431,6 +451,18 @@ const confirmSync = async () => {
     alert("同期に失敗しました");
     isConfirming.value = false;
   }
+};
+
+const handleUsernameInput = () => {
+  // 入力制限を適用
+  const restrictedUsername = applyUsernameRestrictions(username.value);
+  if (restrictedUsername !== username.value) {
+    username.value = restrictedUsername;
+  }
+  
+  // バリデーションを実行
+  const validation = validateUsername(username.value);
+  usernameErrors.value = validation.errors;
 };
 
 onMounted(() => {
