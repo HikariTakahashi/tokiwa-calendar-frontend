@@ -1,110 +1,125 @@
 <template>
-  <div v-show="showNightSky" class="night-sky">
+  <div class="scroll-container">
     <div
-      v-for="star in stars"
-      :key="star.id"
-      class="star"
-      :style="{
-        left: star.left + '%',
-        top: star.top + '%',
-        width: star.size + 'px',
-        height: star.size + 'px',
-        animationDelay: star.delay + 's',
-      }"
+      class="scroll-snap-section flex flex-col gap-y-4 justify-center items-center h-screen relative"
+    >
+      <div v-show="showNightSky" class="night-sky">
+        <div
+          v-for="star in stars"
+          :key="star.id"
+          class="star"
+          :style="{
+            left: star.left + '%',
+            top: star.top + '%',
+            width: star.size + 'px',
+            height: star.size + 'px',
+            animationDelay: star.delay + 's',
+          }"
+        ></div>
+      </div>
+      <div
+        v-show="isLoaded"
+        class="fade-in absolute left-[-80vh] sm:left-[-50vh] z-[-10] w-[120vh] h-[120vh] rounded-full border-4 sm:border-8"
+        :class="showNightSky ? 'border-gray-800' : 'border-black'"
+      />
+      <div
+        v-show="isLoaded"
+        class="fade-in absolute left-[30vh] top-[20vh] sm:left-[57vh] sm:top-[15vh] z-[-9] w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-red-500"
+        :class="showNightSky ? 'bg-opacity-60' : 'bg-opacity-100'"
+      />
+      <div
+        v-show="isLoaded"
+        class="fade-in absolute left-[-80vh] sm:left-[-50vh] z-[-10] w-[110vh] h-[110vh] rounded-full border-4 sm:border-8"
+        :class="showNightSky ? 'border-gray-800' : 'border-black'"
+      />
+      <div
+        v-show="isLoaded"
+        class="fade-in absolute left-[26vh] sm:left-[47vh] sm:top-[75vh] z-[-9] w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-green-500"
+        :class="showNightSky ? 'bg-opacity-60' : 'bg-opacity-100'"
+      />
+      <div
+        v-show="isLoaded"
+        class="fade-in absolute left-[-80vh] sm:left-[-50vh] z-[-10] w-[100vh] h-[100vh] rounded-full border-4 sm:border-8"
+        :class="showNightSky ? 'border-gray-800' : 'border-black'"
+      />
+      <div
+        v-show="isLoaded"
+        class="fade-in absolute left-[11vh] top-[70vh] sm:left-[45vh] sm:top-[50vh] z-[-9] w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-blue-500"
+        :class="showNightSky ? 'bg-opacity-60' : 'bg-opacity-100'"
+      />
+
+      <!-- タイプライター効果用のh1 -->
+      <h1
+        v-show="isLoaded && !typewriterFinished"
+        class="typewriter text-4xl font-bold font-mono text-white"
+        style="-webkit-text-stroke: 2px black"
+        @animationend="onTypewriterEnd"
+        @animationstart="onTypewriterStart"
+      >
+        Welcome to ToKiWa Calendar
+      </h1>
+
+      <!-- タイプライター効果終了後に表示される個別のテキスト -->
+      <div
+        v-show="isLoaded && typewriterFinished"
+        class="flex flex-col sm:flex-row items-center gap-x-4 gap-y-10"
+      >
+        <p
+          class="text-4xl font-bold font-mono text-white"
+          style="-webkit-text-stroke: 2px black"
+        >
+          Welcome to
+        </p>
+        <div class="flex flex-row">
+          <p
+            class="text-4xl font-bold font-mono text-white"
+            style="
+              -webkit-text-stroke: 2px
+                rgba(59, 130, 246, var(--tw-text-opacity));
+            "
+          >
+            ToKi
+          </p>
+          <p
+            class="text-4xl font-bold font-mono text-white"
+            style="
+              -webkit-text-stroke: 2px
+                rgba(16, 185, 129, var(--tw-text-opacity));
+            "
+          >
+            Wa
+          </p>
+        </div>
+        <h1
+          class="text-4xl font-bold font-mono text-white"
+          style="-webkit-text-stroke: 2px black"
+        >
+          Calendar
+        </h1>
+      </div>
+
+      <h2
+        class="sm:text-xl font-bold font-mono text-white"
+        :class="showNightSky ? 'opacity-100' : 'opacity-0'"
+      >
+        「部屋を丸ごとリマインダーにする」
+      </h2>
+      <h2
+        class="sm:text-xl font-bold font-mono text-white"
+        :class="showNightSky ? 'opacity-100' : 'opacity-0'"
+      >
+        タスク管理カレンダーアプリ
+      </h2>
+      <!--SEO対策-->
+      <h1 class="text-[0px]">welcome to tokiwa calendar</h1>
+    </div>
+    <div
+      class="scroll-snap-section flex flex-row justify-center items-center h-screen bg-white gap-x-4"
     ></div>
   </div>
-  <div class="flex flex-col gap-y-4 justify-center items-center h-screen">
-    <div
-      v-show="isLoaded"
-      class="fade-in absolute left-[-80vh] sm:left-[-50vh] z-[-10] w-[120vh] h-[120vh] rounded-full border-4 sm:border-8"
-      :class="showNightSky ? 'border-gray-800' : 'border-black'"
-    />
-    <div
-      v-show="isLoaded"
-      class="fade-in absolute left-[30vh] top-[20vh] sm:left-[57vh] sm:top-[15vh] z-[-9] w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-red-500"
-    />
-    <div
-      v-show="isLoaded"
-      class="fade-in absolute left-[-80vh] sm:left-[-50vh] z-[-10] w-[110vh] h-[110vh] rounded-full border-4 sm:border-8"
-      :class="showNightSky ? 'border-gray-800' : 'border-black'"
-    />
-    <div
-      v-show="isLoaded"
-      class="fade-in absolute left-[26vh] sm:left-[47vh] sm:top-[75vh] z-[-9] w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-green-500"
-    />
-    <div
-      v-show="isLoaded"
-      class="fade-in absolute left-[-80vh] sm:left-[-50vh] z-[-10] w-[100vh] h-[100vh] rounded-full border-4 sm:border-8"
-      :class="showNightSky ? 'border-gray-800' : 'border-black'"
-    />
-    <div
-      v-show="isLoaded"
-      class="fade-in absolute left-[11vh] top-[70vh] sm:left-[45vh] sm:top-[50vh] z-[-9] w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-blue-500"
-    />
-
-    <!-- タイプライター効果用のh1 -->
-    <h1
-      v-show="isLoaded && !typewriterFinished"
-      class="typewriter text-4xl font-bold font-mono text-white"
-      style="-webkit-text-stroke: 2px black"
-      @animationend="onTypewriterEnd"
-      @animationstart="onTypewriterStart"
-    >
-      Welcome to ToKiWa Calendar
-    </h1>
-
-    <!-- タイプライター効果終了後に表示される個別のテキスト -->
-    <div
-      v-show="isLoaded && typewriterFinished"
-      class="flex flex-col sm:flex-row items-center gap-x-4 gap-y-10"
-    >
-      <p
-        class="text-4xl font-bold font-mono text-white"
-        style="-webkit-text-stroke: 2px black"
-      >
-        Welcome to
-      </p>
-      <div class="flex flex-row">
-        <p
-          class="text-4xl font-bold font-mono text-white"
-          style="
-            -webkit-text-stroke: 2px rgba(59, 130, 246, var(--tw-text-opacity));
-          "
-        >
-          ToKi
-        </p>
-        <p
-          class="text-4xl font-bold font-mono text-white"
-          style="
-            -webkit-text-stroke: 2px rgba(16, 185, 129, var(--tw-text-opacity));
-          "
-        >
-          Wa
-        </p>
-      </div>
-      <h1
-        class="text-4xl font-bold font-mono text-white"
-        style="-webkit-text-stroke: 2px black"
-      >
-        Calendar
-      </h1>
-    </div>
-
-    <h2
-      class="sm:text-xl font-bold font-mono text-white"
-      :class="showNightSky ? 'opacity-100' : 'opacity-0'"
-    >
-      「部屋を丸ごとリマインダーにする」タスク管理カレンダーアプリ
-    </h2>
-    <!--SEO対策-->
-    <h1 class="text-[0px]">welcome to tokiwa calendar</h1>
-  </div>
-  <div
-    class="flex flex-row justify-center items-center h-screen bg-white"
-  ></div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from "vue";
 
 const isLoaded = ref(false);
@@ -164,6 +179,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.scroll-container {
+  scroll-snap-type: y mandatory;
+  height: 100vh;
+  overflow-y: scroll;
+}
+
+.scroll-snap-section {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
 .fade-in {
   opacity: 0;
   animation: fadeIn 1s ease-in-out forwards;
@@ -224,7 +250,7 @@ onMounted(() => {
 }
 
 .night-sky {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
