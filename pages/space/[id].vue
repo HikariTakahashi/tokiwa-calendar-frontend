@@ -4,8 +4,8 @@ import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useDateUtils } from "@/utils/DateUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
-import CalendarHeader from "@/components/calendar/CalendarHeader.vue";
-import CopyModeHeader from "@/components/calendar/CopyModeHeader.vue";
+import CalendarHeader from "@/components/header/CalendarHeader.vue";
+import CopyModeHeader from "@/components/header/CopyModeHeader.vue";
 import Calendar from "@/components/calendar/Calendar.vue";
 import CalendarWeeks from "@/components/calendar/CalendarWeeks.vue";
 import { useAPI, type TimeData } from "@/composables/useAPI";
@@ -103,7 +103,7 @@ const fetchSpaceDataFromServer = async () => {
     }
 
     timeData.value = response;
-    
+
     // APIデータの期間に基づいてカレンダーの年月を設定
     if (response.events && Object.keys(response.events).length > 0) {
       // データがある日付を取得
@@ -116,7 +116,7 @@ const fetchSpaceDataFromServer = async () => {
       currentYear.value = startDate.getFullYear();
       currentMonth.value = startDate.getMonth() + 1;
     }
-    
+
     updateCalendarDays();
   } catch (error) {
     console.error("スペースデータの取得に失敗しました:", error);
