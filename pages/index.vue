@@ -33,8 +33,8 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import CalendarHeader from "@/components/calendar/CalendarHeader.vue";
-import CopyModeHeader from "@/components/calendar/CopyModeHeader.vue";
+import CalendarHeader from "@/components/header/CalendarHeader.vue";
+import CopyModeHeader from "@/components/header/CopyModeHeader.vue";
 import Calendar from "@/components/calendar/Calendar.vue";
 import { useDateUtils } from "@/utils/DateUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
