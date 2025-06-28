@@ -1,7 +1,16 @@
 <template>
   <div class="scroll-container">
     <div
+      v-show="!isTopSectionVisible"
+      class="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm"
+    >
+      <WelcomeHeader />
+    </div>
+
+    <div
+      id="top"
       class="scroll-snap-section flex flex-col gap-y-4 justify-center items-center h-screen relative"
+      ref="topSection"
     >
       <div v-show="showNightSky" class="night-sky">
         <div
@@ -115,9 +124,12 @@
         「部屋を丸ごとリマインダーにする」タスク管理に特化したカレンダーアプリ
       </h2>
     </div>
-    <div class="scroll-snap-section flex flex-col h-screen bg-white gap-x-4">
+    <div
+      id="about"
+      class="scroll-snap-section flex flex-col h-screen bg-white gap-x-4 pt-10"
+    >
       <div class="flex flex-col text-center px-3">
-        <h2 class="text-3xl sm:text-4xl font-bold pt-10">
+        <h2 class="text-3xl sm:text-4xl font-bold pt-16 sm:pt-10">
           Tokiwa Calendarとは？
         </h2>
 
@@ -187,10 +199,21 @@
 import { ref, onMounted } from "vue";
 import Card from "~/components/welcome/Card.vue";
 import Carousel from "~/components/welcome/Carousel.vue";
+import WelcomeHeader from "~/components/header/WelcomeHeader.vue";
 
 const isLoaded = ref(false);
 const typewriterFinished = ref(false);
 const showNightSky = ref(false);
+const isTopSectionVisible = ref(true);
+const topSection = ref<HTMLElement | null>(null);
+
+const checkTopSectionVisibility = () => {
+  if (!topSection.value) return;
+
+  const rect = topSection.value.getBoundingClientRect();
+  const isVisible = rect.top <= 0 && rect.bottom > 0;
+  isTopSectionVisible.value = isVisible;
+};
 
 const onTypewriterStart = () => {
   console.log("Typewriter animation started");
@@ -230,6 +253,12 @@ onMounted(() => {
   setTimeout(() => {
     isLoaded.value = true;
   }, 100);
+
+  // スクロールイベントリスナーを追加
+  const scrollContainer = document.querySelector(".scroll-container");
+  if (scrollContainer) {
+    scrollContainer.addEventListener("scroll", checkTopSectionVisibility);
+  }
 
   // フォールバック: アニメーション終了を確実に検知
   setTimeout(() => {
