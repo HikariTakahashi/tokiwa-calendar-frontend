@@ -11,8 +11,13 @@
         <h1 class="text-green-500 font-mono text-lg sm:text-2xl">Wa</h1>
         <h1 class="pl-1 font-mono text-lg sm:text-2xl">Calendar</h1>
       </div>
-      <h2 class="pl-3 text-sm sm:text-xl font-mono">予定調整モード</h2>
-      <h2 v-if="isSync" class="text-blue-500 pl-3 sm:text-xl font-mono">
+      <h2 class="pl-3 text-sm sm:text-xl font-bold font-mono">
+        予定調整モード
+      </h2>
+      <h2
+        v-if="isSync"
+        class="text-blue-500 pl-3 sm:text-xl font-bold font-mono"
+      >
         同期中
       </h2>
     </div>
