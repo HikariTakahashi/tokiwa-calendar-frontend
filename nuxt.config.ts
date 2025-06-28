@@ -10,7 +10,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: "TokiWa | シンプルなカレンダーアプリ",
+      title: "TokiWa | タスク管理カレンダー",
       htmlAttrs: {
         lang: "ja",
       },
@@ -24,7 +24,7 @@ export default defineNuxtConfig({
       meta: [
         {
           name: "description",
-          content: "TokiWa-Calendar | シンプルで使いやすいカレンダーアプリ",
+          content: "TokiWa-Calendar | タスク管理に特化したカレンダーアプリ",
         },
         {
           name: "keywords",
