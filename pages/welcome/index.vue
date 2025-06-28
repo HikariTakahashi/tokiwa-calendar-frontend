@@ -150,43 +150,48 @@
               v-if="index === 0"
               title="日程調整"
               description="チームの日程を、&#10;わかりやすく調整。"
+              img="/background-img.png"
               :is-active="index === activeIndex"
-              page-transition="/"
+              page-transition="/welcome"
             />
             <Card
               v-else-if="index === 1"
               title="コピー＆ペースト"
               description="あなたの時間を、&#10;素早く共有。"
+              img="/background-copy-paste.png"
               :is-active="index === activeIndex"
-              page-transition="/"
+              page-transition="/welcome"
             />
             <Card
               v-else-if="index === 2"
               title="コピーモード"
               description="入力したデータを、&#10;簡単にコピー。"
+              img="/background-copymode.png"
               :is-active="index === activeIndex"
-              page-transition="/"
+              page-transition="/welcome"
             />
             <Card
               v-else-if="index === 3"
               title="タスク管理"
               description="日々のタスクを、&#10;可視化して整理。"
+              img="/todolist.jpg"
               :is-active="index === activeIndex"
-              page-transition="/"
+              page-transition="/task"
             />
             <Card
               v-else-if="index === 4"
               title="リマインド"
               description="部屋全体が、&#10;あなたにリマインド。"
+              img="/board.png"
               :is-active="index === activeIndex"
-              page-transition="/"
+              page-transition="/task"
             />
             <Card
               v-else-if="index === 5"
               title="カスタマイズ"
               description="リマインド方法を、&#10;あなた好みに。"
               :is-active="index === activeIndex"
-              page-transition="/"
+              page-transition="/task"
             />
           </template>
         </Carousel>
