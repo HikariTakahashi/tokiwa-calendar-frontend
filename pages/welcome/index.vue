@@ -90,37 +90,103 @@
             Wa
           </p>
         </div>
-        <h1
+        <p
           class="text-4xl font-bold font-mono text-white"
           style="-webkit-text-stroke: 2px black"
         >
           Calendar
-        </h1>
+        </p>
       </div>
 
-      <h2
+      <p
         class="sm:text-xl font-bold font-mono text-white"
         :class="showNightSky ? 'opacity-100' : 'opacity-0'"
       >
         「部屋を丸ごとリマインダーにする」
-      </h2>
-      <h2
+      </p>
+      <p
         class="sm:text-xl font-bold font-mono text-white"
         :class="showNightSky ? 'opacity-100' : 'opacity-0'"
       >
-        タスク管理カレンダーアプリ
-      </h2>
+        タスク管理に特化したカレンダーアプリ
+      </p>
       <!--SEO対策-->
-      <h1 class="text-[0px]">welcome to tokiwa calendar</h1>
+      <h2 class="text-[0px]">
+        「部屋を丸ごとリマインダーにする」タスク管理に特化したカレンダーアプリ
+      </h2>
     </div>
-    <div
-      class="scroll-snap-section flex flex-row justify-center items-center h-screen bg-white gap-x-4"
-    ></div>
+    <div class="scroll-snap-section flex flex-col h-screen bg-white gap-x-4">
+      <div class="flex flex-col text-center px-3">
+        <h2 class="text-3xl sm:text-4xl font-bold pt-10">
+          Tokiwa Calendarとは？
+        </h2>
+
+        <h5 class="sm:text-xl pt-5">
+          TokiWa
+          Calendarは、「部屋を丸ごとリマインダーにする」ことをテーマとした、
+          タスク管理特化のカレンダーアプリです。
+        </h5>
+        <h5 class="sm:text-xl">
+          忘れてはならない数々の「タスク」を部屋全体があなたにリマインドします。
+        </h5>
+      </div>
+      <h3 class="text-3xl font-bold pt-10 pl-10">TokiWaの魅力</h3>
+      <div class="flex flex-row px-5 pb-10 flex-1">
+        <Carousel :items="6">
+          <template #default="{ index, activeIndex }">
+            <Card
+              v-if="index === 0"
+              title="日程調整"
+              description="チームの日程を、&#10;わかりやすく調整。"
+              :is-active="index === activeIndex"
+              page-transition="/"
+            />
+            <Card
+              v-else-if="index === 1"
+              title="コピー＆ペースト"
+              description="あなたの時間を、&#10;素早く共有。"
+              :is-active="index === activeIndex"
+              page-transition="/"
+            />
+            <Card
+              v-else-if="index === 2"
+              title="コピーモード"
+              description="入力したデータを、&#10;簡単にコピー。"
+              :is-active="index === activeIndex"
+              page-transition="/"
+            />
+            <Card
+              v-else-if="index === 3"
+              title="タスク管理"
+              description="日々のタスクを、&#10;可視化して整理。"
+              :is-active="index === activeIndex"
+              page-transition="/"
+            />
+            <Card
+              v-else-if="index === 4"
+              title="リマインド"
+              description="部屋全体が、&#10;あなたにリマインド。"
+              :is-active="index === activeIndex"
+              page-transition="/"
+            />
+            <Card
+              v-else-if="index === 5"
+              title="カスタマイズ"
+              description="リマインド方法を、&#10;あなた好みに。"
+              :is-active="index === activeIndex"
+              page-transition="/"
+            />
+          </template>
+        </Carousel>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import Card from "~/components/welcome/Card.vue";
+import Carousel from "~/components/welcome/Carousel.vue";
 
 const isLoaded = ref(false);
 const typewriterFinished = ref(false);
