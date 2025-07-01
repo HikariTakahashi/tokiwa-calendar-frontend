@@ -43,9 +43,11 @@
 
 <script setup>
 const openFeedbackForm = () => {
-  if (process) {
-    open(
-      "https://docs.google.com/forms/d/e/1FAIpQLSduAOVCp2FszfpvPr-noE76hLOXq3TluBUiz8VNDO8GnCAOpA/viewform?usp=dialog"
+  if (typeof window !== "undefined") {
+    window.open(
+      "https://docs.google.com/forms/d/e/1FAIpQLSduAOVCp2FszfpvPr-noE76hLOXq3TluBUiz8VNDO8GnCAOpA/viewform?usp=dialog",
+      "_blank",
+      "noopener,noreferrer"
     );
   }
 };
