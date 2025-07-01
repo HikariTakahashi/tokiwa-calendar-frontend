@@ -26,7 +26,7 @@
             description="チームの日程を、&#10;わかりやすく調整。"
             img="/background-img.png"
             :is-active="index === activeIndex"
-            page-transition="/welcome"
+            page-transition="/welcome#schedule-adjust"
           />
           <Card
             v-else-if="index === 1"
@@ -34,7 +34,7 @@
             description="あなたの時間を、&#10;素早く共有。"
             img="/background-copy-paste.png"
             :is-active="index === activeIndex"
-            page-transition="/welcome"
+            page-transition="/welcome#copy-and-paste"
           />
           <Card
             v-else-if="index === 2"
@@ -42,7 +42,7 @@
             description="入力したデータを、&#10;簡単にコピー。"
             img="/background-copymode.png"
             :is-active="index === activeIndex"
-            page-transition="/welcome"
+            page-transition="/welcome#copy-mode"
           />
           <Card
             v-else-if="index === 3"
@@ -50,7 +50,7 @@
             description="日々のタスクを、&#10;可視化して整理。"
             img="/todolist.jpg"
             :is-active="index === activeIndex"
-            page-transition="/task"
+            page-transition="/welcome#task-management"
           />
           <Card
             v-else-if="index === 4"
@@ -58,14 +58,14 @@
             description="部屋全体が、&#10;あなたにリマインド。"
             img="/board.png"
             :is-active="index === activeIndex"
-            page-transition="/task"
+            page-transition="/welcome#reminder"
           />
           <Card
             v-else-if="index === 5"
             title="カスタマイズ"
             description="リマインド方法を、&#10;あなた好みに。"
             :is-active="index === activeIndex"
-            page-transition="/task"
+            page-transition="/welcome#customization"
           />
         </template>
       </Carousel>
