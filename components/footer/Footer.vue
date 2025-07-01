@@ -2,13 +2,7 @@
   <div class="flex flex-col w-screen h-52 sm:h-36 bg-gray-100">
     <div class="flex flex-col sm:flex-row py-5 px-8 sm:px-16">
       <div class="flex flex-col pb-5 sm:pb-0 sm:mr-20">
-        <div class="flex justify-center items-center text-2xl font-bold">
-          <h1 class="text-blue-500 font-mono text-lg sm:text-2xl">Toki</h1>
-          <h1 class="text-green-500 font-mono text-lg sm:text-2xl">Wa</h1>
-          <h1 class="pl-1 text-black font-mono text-lg sm:text-2xl">
-            Calendar
-          </h1>
-        </div>
+        <Title />
         <p class="text-sm text-center sm:text-left text-gray-500">
           「部屋を丸ごとリマインダーにする」
         </p>
@@ -48,5 +42,5 @@
 </template>
 
 <script setup lang="ts">
-// Footer component
+import Title from "@/components/calendar/Title.vue";
 </script>
