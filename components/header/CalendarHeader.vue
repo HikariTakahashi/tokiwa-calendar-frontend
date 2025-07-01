@@ -2,7 +2,7 @@
   <div
     class="flex flex-col sm:flex-row justify-between items-center py-2 sx:py-1 px-2"
   >
-    <div class="flex flex-row">
+    <div class="flex flex-row items-center">
       <Title />
       <h2 class="pl-3 text-sm sm:text-xl font-bold font-mono">
         予定調整モード
