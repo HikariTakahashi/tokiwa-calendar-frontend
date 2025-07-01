@@ -16,15 +16,16 @@
         class="relative cursor-pointer transition-all duration-300 ease-in-out group px-1.5 sm:px-4 border-x-2 border-gray-300"
         @click="navigateTo('/')"
       >
-        予定調整モード
+        <h6 class="text-xs sm:text-base">予定調整モード</h6>
         <div
           class="absolute bottom-[-9px] left-1/2 w-0 h-1 bg-blue-500 transition-all duration-300 ease-in-out transform -translate-x-1/2 group-hover:w-full"
         />
       </button>
       <button
         class="relative cursor-pointer transition-all duration-300 ease-in-out group mr-1.5 sm:mr-4 px-1.5 sm:px-4 border-r-2 border-gray-300"
+        @click="navigateTo('/task')"
       >
-        タスク管理モード
+        <h6 class="text-xs sm:text-base">タスク管理モード</h6>
         <div
           class="absolute bottom-[-9px] left-1/2 w-0 h-1 bg-green-500 transition-all duration-300 ease-in-out transform -translate-x-1/2 group-hover:w-full"
         />
@@ -33,7 +34,8 @@
         @click="openFeedbackForm"
         class="flex items-center gap-x-1 border border-gray-300 rounded-md px-2 py-1 hover:bg-green-300"
       >
-        フィードバック<UIcon name="ic:baseline-expand-more" class="size-3" />
+        <h6 class="text-xs sm:text-base">フィードバック</h6>
+        <UIcon name="ic:baseline-expand-more" class="size-3" />
       </button>
     </div>
   </div>
