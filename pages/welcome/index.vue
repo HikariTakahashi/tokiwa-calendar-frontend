@@ -24,10 +24,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from "vue";
-import HeroSection from "~/components/welcome/HeroSection.vue";
-import AboutSection from "~/components/welcome/AboutSection.vue";
+import HeroSection from "~/components/welcome/sections/HeroSection.vue";
+import AboutSection from "~/components/welcome/sections/AboutSection.vue";
 import WelcomeHeader from "~/components/header/WelcomeHeader.vue";
-import FeatureSection from "~/components/welcome/FeatureSection.vue";
+import FeatureSection from "~/components/welcome/sections/FeatureSection.vue";
 import Footer from "~/components/footer/Footer.vue";
 
 const isTopSectionVisible = ref(true);
