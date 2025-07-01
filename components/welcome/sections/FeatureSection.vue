@@ -47,5 +47,5 @@
 </template>
 
 <script setup lang="ts">
-import Feature from "./Feature.vue";
+import Feature from "../Feature.vue";
 </script>
