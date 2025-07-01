@@ -5,10 +5,10 @@
     style="scroll-snap-align: start; scroll-snap-stop: always"
   >
     <div class="flex flex-col sm:w-1/2 justify-center gap-y-5 sm:pr-6">
-      <h2 class="flex justify-center text-3xl sm:text-4xl font-bold">
+      <h2 class="flex justify-center text-3xl sm:text-2xl font-bold">
         {{ title }}
       </h2>
-      <h5 class="sm:text-xl">
+      <h5 class="sm:text-lg whitespace-pre-wrap">
         {{ description }}
       </h5>
       <div class="flex">
