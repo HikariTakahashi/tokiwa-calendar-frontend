@@ -7,40 +7,20 @@
       <WelcomeHeader />
     </div>
 
-    <!-- <HeroSection ref="heroSection" />
+    <HeroSection ref="heroSection" />
 
-    <AboutSection /> -->
+    <AboutSection />
 
-    <div
-      id="schedule-adjust"
-      class="flex flex-col sm:flex-row h-screen px-10"
-      style="scroll-snap-align: start; scroll-snap-stop: always"
-    >
-      <div class="flex flex-col sm:w-1/2 justify-center items-center">
-        <h2 class="text-3xl sm:text-4xl font-bold pt-16 sm:pt-10">日程調整</h2>
-        <h5 class="sm:text-xl pt-5">
-          TokiWa
-          Calendarは、「部屋を丸ごとリマインダーにする」ことをテーマとした、
-          タスク管理特化のカレンダーアプリです。
-        </h5>
-        <h5 class="sm:text-xl">
-          忘れてはならない数々の「タスク」を部屋全体があなたにリマインドします。
-        </h5>
-      </div>
-      <div class="flex sm:w-1/2 justify-center items-center">
-        <div class="flex-1 border-8 border-gray-300 rounded-lg">
-          <img src="/schedule-adjust.png" alt="日程調整" />
-        </div>
-      </div>
-    </div>
+    <FeatureSection />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import HeroSection from "~/components/welcome/HeroSection.vue";
 import AboutSection from "~/components/welcome/AboutSection.vue";
 import WelcomeHeader from "~/components/header/WelcomeHeader.vue";
+import FeatureSection from "~/components/welcome/FeatureSection.vue";
 
 const isTopSectionVisible = ref(true);
 const heroSection = ref<InstanceType<typeof HeroSection> | null>(null);
@@ -55,9 +35,24 @@ const checkTopSectionVisibility = () => {
 
 onMounted(() => {
   // スクロールイベントリスナーを追加
-  const scrollContainer = document.querySelector(".scroll-container");
+  const scrollContainer = document.querySelector(".h-screen.overflow-y-scroll");
   if (scrollContainer) {
     scrollContainer.addEventListener("scroll", checkTopSectionVisibility);
   }
+
+  // windowのスクロールイベントも追加（フォールバック）
+  window.addEventListener("scroll", checkTopSectionVisibility);
+
+  // 初期状態でもチェック
+  checkTopSectionVisibility();
+});
+
+onUnmounted(() => {
+  // イベントリスナーをクリーンアップ
+  const scrollContainer = document.querySelector(".h-screen.overflow-y-scroll");
+  if (scrollContainer) {
+    scrollContainer.removeEventListener("scroll", checkTopSectionVisibility);
+  }
+  window.removeEventListener("scroll", checkTopSectionVisibility);
 });
 </script>
