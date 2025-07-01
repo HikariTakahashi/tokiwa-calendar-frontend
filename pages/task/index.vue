@@ -10,6 +10,7 @@
     <h1 class="flex text-4xl font-bold font-mono">Coming Soon...</h1>
     <h2 class="flex text-2xl font-mono">2025.08.28 Page Release</h2>
   </div>
+  <Footer />
 </template>
 
 <script setup lang="ts">
