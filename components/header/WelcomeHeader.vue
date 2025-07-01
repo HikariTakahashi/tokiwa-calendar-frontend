@@ -3,13 +3,7 @@
     class="flex flex-col sm:flex-row justify-between items-center py-2 sx:py-1 px-2 border-b border-gray-300"
   >
     <div class="flex flex-row">
-      <div
-        class="flex items-center text-2xl font-bold mb-2 sm:mb-0 cursor-pointer"
-      >
-        <h1 class="text-blue-500 font-mono text-lg sm:text-2xl">Toki</h1>
-        <h1 class="text-green-500 font-mono text-lg sm:text-2xl">Wa</h1>
-        <h1 class="pl-1 font-mono text-lg sm:text-2xl">Calendar</h1>
-      </div>
+      <Title />
     </div>
     <div class="flex flex-row">
       <button
@@ -42,6 +36,8 @@
 </template>
 
 <script setup>
+import Title from "@/components/calendar/Title.vue";
+
 const openFeedbackForm = () => {
   if (typeof window !== "undefined") {
     window.open(
