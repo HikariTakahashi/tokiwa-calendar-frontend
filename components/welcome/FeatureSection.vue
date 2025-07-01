@@ -3,21 +3,21 @@
     id="schedule-adjust"
     title="日程調整"
     description="ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力"
-    url="/welcome/howtouse"
+    url="/welcome/getting-started"
     src="/schedule-adjust.png"
   />
   <Feature
     id="copy-and-paste"
     title="コピー＆ペースト"
     description="ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力"
-    url="/welcome/howtouse"
+    url="/welcome/getting-started"
     src="/copy-and-paste.png"
   />
   <Feature
     id="copy-mode"
     title="コピーモード"
     description="ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力"
-    url="/welcome/howtouse"
+    url="/welcome/getting-started"
     src="/copy-mode.png"
   />
   <Feature
@@ -38,7 +38,7 @@
     id="customization"
     title="カスタマイズ"
     description="ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力ここにテキストを入力"
-    url="/taskS"
+    url="/task"
     src="/board.png"
   />
 </template>
