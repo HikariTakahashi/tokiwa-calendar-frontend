@@ -49,6 +49,21 @@ const backgroundStyle = computed(() => {
 });
 
 const handlePageTransition = () => {
+  // pageTransitionからハッシュ部分を抽出してセクションIDを取得
+  const hashIndex = props.pageTransition.indexOf("#");
+  if (hashIndex !== -1) {
+    const sectionId = props.pageTransition.substring(hashIndex + 1);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      return;
+    }
+  }
+
+  // セクションが見つからない場合は従来のページ遷移
   navigateTo(props.pageTransition);
 };
 </script>
