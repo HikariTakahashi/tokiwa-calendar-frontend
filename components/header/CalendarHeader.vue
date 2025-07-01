@@ -3,14 +3,7 @@
     class="flex flex-col sm:flex-row justify-between items-center py-2 sx:py-1 px-2"
   >
     <div class="flex flex-row">
-      <div
-        class="flex items-center text-2xl font-bold mb-2 sm:mb-0 cursor-pointer"
-        @click="navigateToWelcome"
-      >
-        <h1 class="text-blue-500 font-mono text-lg sm:text-2xl">Toki</h1>
-        <h1 class="text-green-500 font-mono text-lg sm:text-2xl">Wa</h1>
-        <h1 class="pl-1 font-mono text-lg sm:text-2xl">Calendar</h1>
-      </div>
+      <Title />
       <h2 class="pl-3 text-sm sm:text-xl font-bold font-mono">
         予定調整モード
       </h2>
@@ -57,7 +50,7 @@ import { ref } from "vue";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import UploadForm from "@/components/forms/UploadForm.vue";
 import { useRouter } from "vue-router";
-
+import Title from "@/components/calendar/Title.vue";
 const props = defineProps<{
   currentYear: number;
   currentMonth: number;
@@ -96,9 +89,5 @@ const prevMonth = () => {
 
 const nextMonth = () => {
   emit("nextMonth");
-};
-
-const navigateToWelcome = () => {
-  router.push("/welcome");
 };
 </script>
