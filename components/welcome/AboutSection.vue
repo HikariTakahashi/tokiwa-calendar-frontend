@@ -1,13 +1,11 @@
 <template>
   <div
     id="about"
-    class="flex flex-col h-screen bg-white gap-x-4 pt-10"
+    class="flex flex-col h-screen bg-white gap-x-4 pt-24 sm:pt-16"
     style="scroll-snap-align: start; scroll-snap-stop: always"
   >
     <div class="flex flex-col text-center px-3">
-      <h2 class="text-3xl sm:text-4xl font-bold pt-16 sm:pt-10">
-        Tokiwa Calendarとは？
-      </h2>
+      <h2 class="text-3xl sm:text-4xl font-bold">Tokiwa Calendarとは？</h2>
 
       <h5 class="sm:text-xl pt-5">
         TokiWa
