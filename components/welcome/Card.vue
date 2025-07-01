@@ -30,7 +30,7 @@ interface Props {
   description: string;
   isActive?: boolean;
   pageTransition: string;
-  img?: string; // 背景画像のパス
+  img?: string;
 }
 
 const props = defineProps<Props>();
