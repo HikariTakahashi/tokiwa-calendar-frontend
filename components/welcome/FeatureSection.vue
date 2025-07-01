@@ -41,6 +41,9 @@
     url="/task"
     src="/board.png"
   />
+
+  <!-- Footerの高さ分の余白を追加 -->
+  <div class="h-36"></div>
 </template>
 
 <script setup lang="ts">
