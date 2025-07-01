@@ -12,7 +12,11 @@
         {{ description }}
       </h5>
       <div class="flex">
-        <buttons-square @click="navigateTo(url)" class="w-36">
+        <buttons-square
+          @click="navigateTo(url)"
+          color="bg-green-200"
+          class="w-36"
+        >
           使い方を見る
         </buttons-square>
       </div>
