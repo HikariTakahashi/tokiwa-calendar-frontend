@@ -11,8 +11,8 @@
       @prev-month="handlePrevMonth"
       @close-copy-mode="closeCopyMode"
       @cancel-copy-mode="handleCancelCopyMode"
+      @toggle-side-menu="toggleSideMenu"
     />
-    <CalendarWeeks />
     <div class="h-full overflow-y-auto">
       <Calendar
         :calendar-days="calendarDays"
@@ -21,6 +21,7 @@
         :is-copy-mode="isCopyMode"
         :space-id="spaceId"
         :time-data="timeData"
+        :show-side-menu="showSideMenu"
         @save="saveTime"
         @delete="deleteTime"
         @update:time-data="updateTimeData"
@@ -57,6 +58,7 @@ const timeData = ref<TimeData>({
   userColor: "",
 });
 const isCopyMode = ref(false);
+const showSideMenu = ref(false);
 const spaceId = ref<string | undefined>(undefined);
 const calendarDays = ref(
   getCalendarDays(currentYear.value, currentMonth.value)
@@ -100,5 +102,9 @@ const deleteTime = (data: { date: string }) => {
 
 const handleCancelCopyMode = () => {
   isCopyMode.value = false;
+};
+
+const toggleSideMenu = () => {
+  showSideMenu.value = !showSideMenu.value;
 };
 </script>
