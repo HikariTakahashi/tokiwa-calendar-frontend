@@ -67,6 +67,11 @@
           タスク管理モードは、2025.08.28にリリース予定です。
         </h5>
       </div>
+      <div class="flex justify-end px-10 pt-8">
+        <div class="flex justify-center items-start p-10 border-2 rounded-lg">
+          ここにウンタラカンタラ
+        </div>
+      </div>
     </div>
   </div>
   <Footer />
