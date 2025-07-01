@@ -23,7 +23,7 @@
               Tokiwa Calendar
             </h5>
           </button>
-          <button @click="navigateTo('/get-started')">
+          <button @click="navigateTo('/welcome/getting-started')">
             <h5 class="text-sm text-gray-500 hover:underline">Get Started</h5>
           </button>
         </div>
