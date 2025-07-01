@@ -2,15 +2,16 @@
   <div
     class="flex flex-col sm:flex-row justify-between items-center py-2 sx:py-1 px-2"
   >
-    <div class="flex flex-row items-center">
-      <Title />
-      <h2 class="pl-3 text-sm sm:text-xl font-bold font-mono">
-        予定調整モード
-      </h2>
-      <h2
-        v-if="isSync"
-        class="text-blue-500 pl-3 sm:text-xl font-bold font-mono"
+    <div class="flex flex-row items-center gap-x-2">
+      <button
+        @click="openMenu"
+        class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200"
       >
+        <UIcon name="ic:sharp-density-medium" class="size-5" />
+      </button>
+      <Title />
+      <h2 class="text-sm sm:text-xl font-bold font-mono">予定調整モード</h2>
+      <h2 v-if="isSync" class="text-blue-500 sm:text-xl font-bold font-mono">
         同期中
       </h2>
     </div>
@@ -72,6 +73,7 @@ const emit = defineEmits<{
   (e: "nextMonth"): void;
   (e: "closeCopyMode"): void;
   (e: "cancelCopyMode"): void;
+  (e: "toggleSideMenu"): void;
 }>();
 
 const openForm = () => {
@@ -89,5 +91,9 @@ const prevMonth = () => {
 
 const nextMonth = () => {
   emit("nextMonth");
+};
+
+const openMenu = () => {
+  emit("toggleSideMenu");
 };
 </script>
