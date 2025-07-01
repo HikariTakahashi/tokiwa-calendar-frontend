@@ -33,17 +33,12 @@
         <h5 class="text-sm text-gray-600">
           ときには優しく、ときには厳しく、TokiWaはあなたのタスク管理をサポートします。
         </h5>
+
         <button
-          id="schedule-adjust"
           @click="navigateTo('/')"
           class="flex justify-start hover:underline hover:text-blue-700"
         >
-          <button
-            @click="navigateTo('/')"
-            class="flex justify-start hover:underline hover:text-blue-700"
-          >
-            <h4 class="text-2xl font-bold">日程調整</h4>
-          </button>
+          <h4 class="text-2xl font-bold">日程調整</h4>
         </button>
         <h5 class="text-sm text-gray-600">
           あなたは、遊びに行く、プロジェクトを進める、あるいはオンラインでの重要な会議をを行うとき、どのように日程を調整しますか？
