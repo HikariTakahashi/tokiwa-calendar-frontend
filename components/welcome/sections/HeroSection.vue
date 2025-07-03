@@ -5,55 +5,15 @@
     style="scroll-snap-align: start; scroll-snap-stop: always"
     ref="topSection"
   >
-    <div v-show="showNightSky" class="night-sky">
-      <div
-        v-for="star in stars"
-        :key="star.id"
-        class="star"
-        :style="{
-          left: star.left + '%',
-          top: star.top + '%',
-          width: star.size + 'px',
-          height: star.size + 'px',
-          animationDelay: star.delay + 's',
-        }"
-      ></div>
+    <div v-show="showNightSky" class="night-sky-container">
+      <NightSky />
     </div>
-    <div
-      v-show="isLoaded"
-      class="fade-in absolute left-[-80vh] sm:left-[-50vh] z-[-10] w-[120vh] h-[120vh] rounded-full border-4 sm:border-8"
-      :class="showNightSky ? 'border-gray-800' : 'border-black'"
-    />
-    <div
-      v-show="isLoaded"
-      class="fade-in absolute left-[30vh] top-[20vh] sm:left-[57vh] sm:top-[15vh] z-[-9] w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-red-500"
-      :class="showNightSky ? 'bg-opacity-60' : 'bg-opacity-100'"
-    />
-    <div
-      v-show="isLoaded"
-      class="fade-in absolute left-[-80vh] sm:left-[-50vh] z-[-10] w-[110vh] h-[110vh] rounded-full border-4 sm:border-8"
-      :class="showNightSky ? 'border-gray-800' : 'border-black'"
-    />
-    <div
-      v-show="isLoaded"
-      class="fade-in absolute left-[26vh] sm:left-[47vh] sm:top-[75vh] z-[-9] w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-green-500"
-      :class="showNightSky ? 'bg-opacity-60' : 'bg-opacity-100'"
-    />
-    <div
-      v-show="isLoaded"
-      class="fade-in absolute left-[-80vh] sm:left-[-50vh] z-[-10] w-[100vh] h-[100vh] rounded-full border-4 sm:border-8"
-      :class="showNightSky ? 'border-gray-800' : 'border-black'"
-    />
-    <div
-      v-show="isLoaded"
-      class="fade-in absolute left-[11vh] top-[70vh] sm:left-[45vh] sm:top-[50vh] z-[-9] w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-blue-500"
-      :class="showNightSky ? 'bg-opacity-60' : 'bg-opacity-100'"
-    />
+    <TokiwaIcon :isLoaded="isLoaded" />
 
     <!-- タイプライター効果用のh1 -->
     <h1
       v-show="isLoaded && !typewriterFinished"
-      class="typewriter text-4xl font-bold font-mono text-white"
+      class="typewriter text-4xl font-bold font-mono text-white relative z-10"
       style="-webkit-text-stroke: 2px black"
       @animationend="onTypewriterEnd"
       @animationstart="onTypewriterStart"
@@ -64,7 +24,7 @@
     <!-- タイプライター効果終了後に表示される個別のテキスト -->
     <div
       v-show="isLoaded && typewriterFinished"
-      class="flex flex-col sm:flex-row items-center gap-x-4 gap-y-10"
+      class="flex flex-col sm:flex-row items-center gap-x-4 gap-y-10 relative z-10"
     >
       <p
         class="text-4xl font-bold font-mono text-white"
@@ -99,13 +59,13 @@
     </div>
 
     <p
-      class="sm:text-xl font-bold font-mono text-white"
+      class="sm:text-xl font-bold font-mono text-white relative z-10"
       :class="showNightSky ? 'opacity-100' : 'opacity-0'"
     >
       「部屋を丸ごとリマインダーにする」
     </p>
     <p
-      class="sm:text-xl font-bold font-mono text-white"
+      class="sm:text-xl font-bold font-mono text-white relative z-10"
       :class="showNightSky ? 'opacity-100' : 'opacity-0'"
     >
       タスク管理に特化したカレンダーアプリ
@@ -119,6 +79,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import NightSky from "~/components/background/NightSky.vue";
+import TokiwaIcon from "~/components/background/TokiwaIcon.vue";
 
 const isLoaded = ref(false);
 const typewriterFinished = ref(false);
@@ -137,26 +99,6 @@ const onTypewriterEnd = () => {
     showNightSky.value = true;
   }, 500);
 };
-
-const createStars = () => {
-  const stars = [];
-  const numStars = 100;
-
-  for (let i = 0; i < numStars; i++) {
-    const star = {
-      id: i,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      size: Math.random() * 3 + 1,
-      delay: Math.random() * 3,
-    };
-    stars.push(star);
-  }
-
-  return stars;
-};
-
-const stars = createStars();
 
 onMounted(() => {
   // ページロード完了後にフェードイン開始
@@ -183,20 +125,6 @@ defineExpose({
 </script>
 
 <style scoped>
-.fade-in {
-  opacity: 0;
-  animation: fadeIn 1s ease-in-out forwards;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 .typewriter {
   overflow: hidden;
   white-space: nowrap;
@@ -242,14 +170,7 @@ defineExpose({
   }
 }
 
-.night-sky {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, #0f0f23, #1a1a2e, #495470);
-  z-index: -20;
+.night-sky-container {
   opacity: 0;
   animation: fadeInNight 2s ease-in-out forwards;
 }
@@ -261,37 +182,5 @@ defineExpose({
   to {
     opacity: 1;
   }
-}
-
-.star {
-  position: absolute;
-  background: white;
-  border-radius: 50%;
-  animation: twinkle 3s infinite;
-  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
-}
-
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-}
-
-.star:nth-child(3n) {
-  animation-duration: 4s;
-}
-
-.star:nth-child(3n + 1) {
-  animation-duration: 2.5s;
-}
-
-.star:nth-child(3n + 2) {
-  animation-duration: 3.5s;
 }
 </style>
