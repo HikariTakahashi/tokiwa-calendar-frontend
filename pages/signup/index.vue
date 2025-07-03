@@ -182,12 +182,15 @@ const handleSignup = async () => {
 
   try {
     // Turnstileトークンの検証
-    const verificationResult = await $fetch("/api/verify-turnstile", {
-      method: "POST",
-      body: {
-        token: turnstileToken.value,
-      },
-    });
+    const verificationResult = await $fetch<{ success: boolean }>(
+      "/api/verify-turnstile",
+      {
+        method: "POST",
+        body: {
+          token: turnstileToken.value,
+        },
+      }
+    );
 
     if (!verificationResult?.success) {
       turnstileError.value = true;
