@@ -1,7 +1,7 @@
 <template>
   <div
     id="about"
-    class="flex flex-col h-screen bg-white gap-x-4 pt-24 sm:pt-16"
+    class="flex flex-col h-screen bg-white gap-x-4 pt-24 sm:pt-16 relative z-10"
     style="scroll-snap-align: start; scroll-snap-stop: always"
   >
     <div class="flex flex-col text-center px-3">
