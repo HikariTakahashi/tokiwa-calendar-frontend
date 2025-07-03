@@ -3,7 +3,7 @@
     <SideMenu :show="showSideMenu" @close="closeSideMenu" />
     <div
       class="flex-1 flex flex-col transition-all duration-300 ease-in-out"
-      :class="showSideMenu ? 'ml-80' : 'ml-0'"
+      :class="showSideMenu && !isMobile ? 'ml-80' : 'ml-0'"
     >
       <CalendarWeek />
       <div
@@ -102,7 +102,7 @@
 
 <script setup lang="ts">
 import TimeForm from "@/components/forms/TimeForm.vue";
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
@@ -135,11 +135,28 @@ const emit = defineEmits<{
   (e: "update:is-copy-mode", value: boolean): void;
   (e: "cancel-copy-mode"): void;
   (e: "toggle-side-menu"): void;
+  (e: "close-side-menu"): void;
 }>();
 
 const { formatTimeForDisplay } = useTimeUtils();
 const showModal = ref(false);
 const selectedDate = ref<string>("");
+const isMobile = ref(false);
+
+// レスポンシブ判定
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768; // md breakpoint
+};
+
+// コンポーネントマウント時とリサイズ時に判定
+onMounted(() => {
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", checkMobile);
+});
 
 const {
   copiedTimeData,
@@ -303,6 +320,11 @@ const isDateDisabled = (date: string): boolean => {
 };
 
 const closeSideMenu = () => {
-  emit("toggle-side-menu");
+  // スマホの場合は必ず閉じる、デスクトップの場合はトグル
+  if (isMobile.value) {
+    emit("close-side-menu");
+  } else {
+    emit("toggle-side-menu");
+  }
 };
 </script>
