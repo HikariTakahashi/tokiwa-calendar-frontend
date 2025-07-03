@@ -76,6 +76,10 @@ const toggleSideMenu = () => {
   showSideMenu.value = !showSideMenu.value;
 };
 
+const closeSideMenu = () => {
+  showSideMenu.value = false;
+};
+
 const handleNextMonth = () => {
   nextMonth();
   updateCalendarDays();
@@ -174,6 +178,7 @@ onMounted(() => {
         @update:time-data="updateTimeData"
         @update:is-copy-mode="updateIsCopyMode"
         @cancel-copy-mode="handleCancelCopyMode"
+        @close-side-menu="closeSideMenu"
       />
     </div>
   </div>
