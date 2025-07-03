@@ -1,12 +1,12 @@
 <template>
-  <div class="bg-white bg-opacity-80 z-10">
+  <div class="bg-white bg-opacity-0 sm:bg-opacity-80 z-10">
     <WelcomeHeader />
   </div>
   <div class="flex flex-col h-screen mb-[-50px]">
     <NightSky class="z-[-10]" />
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 z-50 flex items-center justify-center p-4">
       <div
-        class="bg-white rounded-lg shadow-xl w-full max-w-sm max-h-[80vh] overflow-y-auto"
+        class="bg-white rounded-lg shadow-xl w-full max-w-sm max-h-[98vh] sm:max-h-[80vh] overflow-y-auto"
       >
         <div class="p-6">
           <div class="flex flex-row items-center justify-between mb-2">
@@ -27,12 +27,7 @@
             </div>
             <div class="flex flex-col gap-y-2">
               <h5 class="text-sm text-gray-500">パスワード</h5>
-              <input
-                type="password"
-                v-model="password"
-                class="w-full p-2 border border-gray-300 rounded-md"
-                placeholder="8文字以上で入力"
-              />
+              <PassInput v-model="password" placeholder="8文字以上で入力" />
               <p
                 v-if="password && !isPasswordValid"
                 class="text-red-500 text-xs"
@@ -40,7 +35,31 @@
                 パスワードは8文字以上で入力してください
               </p>
             </div>
-
+            <div class="flex flex-col gap-y-2">
+              <h5 class="text-sm text-gray-500">パスワードの再入力</h5>
+              <PassInput
+                v-model="passwordConfirm"
+                placeholder="パスワードを再入力"
+              />
+              <p
+                v-if="passwordConfirm && passwordConfirm !== password"
+                class="text-red-500 text-xs"
+              >
+                パスワードが一致しません
+              </p>
+            </div>
+            <div class="flex flex-col gap-y-2">
+              <h5 class="text-sm text-gray-500">セキュリティ確認</h5>
+              <Turnstile
+                ref="turnstileRef"
+                @success="onTurnstileSuccess"
+                @expired="onTurnstileExpired"
+                @error="onTurnstileError"
+              />
+              <p v-if="turnstileError" class="text-red-500 text-xs">
+                セキュリティ確認に失敗しました。もう一度お試しください。
+              </p>
+            </div>
             <h5 class="text-sm text-gray-500 text-center">
               <button
                 @click="navigateTo('/welcome/getting-started/signup')"
@@ -52,14 +71,19 @@
             <div class="flex flex-row items-center gap-x-2">
               <input type="checkbox" id="terms" v-model="isUseTerms" />
               <h5 class="text-sm text-gray-500">
-                利用規約・プライバシーポリシーに同意する
+                <button
+                  @click="navigateTo('/welcome/getting-started')"
+                  class="text-blue-500 hover:underline"
+                >
+                  利用規約・プライバシーポリシー</button
+                >に同意する
               </h5>
             </div>
-
             <buttons-square
               color="bg-blue-200"
               :isUse="isFormValid"
               class="w-full text-lg"
+              @click="handleSignup"
             >
               新規登録
             </buttons-square>
@@ -70,19 +94,19 @@
               </h3>
             </div>
             <div class="flex flex-row items-center gap-x-2">
-              <buttons-circle>
+              <buttons-circle @click="handleGoogleLogin">
                 <UIcon name="logos:google-icon" class="size-5" />
               </buttons-circle>
-              <buttons-circle>
+              <buttons-circle @click="handleDiscordLogin">
                 <UIcon name="logos:discord-icon" class="size-5" />
               </buttons-circle>
-              <buttons-circle>
+              <buttons-circle @click="handleFacebookLogin">
                 <UIcon name="logos:facebook" class="size-5" />
               </buttons-circle>
-              <buttons-circle>
+              <buttons-circle @click="handleTwitterLogin">
                 <UIcon name="logos:x" class="size-5" />
               </buttons-circle>
-              <buttons-circle>
+              <buttons-circle @click="handleGitHubLogin">
                 <UIcon name="logos:github-icon" class="size-5" />
               </buttons-circle>
             </div>
@@ -99,10 +123,16 @@
 import NightSky from "~/components/background/NightSky.vue";
 import WelcomeHeader from "~/components/header/WelcomeHeader.vue";
 import Footer from "~/components/footer/Footer.vue";
+import Turnstile from "~/components/Turnstile.vue";
+import PassInput from "~/components/buttons/PassInput.vue";
 
 const email = ref("");
 const password = ref("");
+const passwordConfirm = ref("");
 const isUseTerms = ref(false);
+const turnstileRef = ref();
+const turnstileToken = ref("");
+const turnstileError = ref(false);
 
 // メールアドレスのバリデーション
 const isEmailValid = computed(() => {
@@ -122,6 +152,80 @@ const isTermsValid = computed(() => {
 
 // フォーム全体のバリデーション
 const isFormValid = computed(() => {
-  return isEmailValid.value && isPasswordValid.value && isTermsValid.value;
+  return (
+    isEmailValid.value &&
+    isPasswordValid.value &&
+    isTermsValid.value &&
+    !!turnstileToken.value
+  );
 });
+
+// Turnstileのコールバック関数
+const onTurnstileSuccess = (token: string) => {
+  turnstileToken.value = token;
+  turnstileError.value = false;
+};
+
+const onTurnstileExpired = () => {
+  turnstileToken.value = "";
+  turnstileError.value = true;
+};
+
+const onTurnstileError = () => {
+  turnstileToken.value = "";
+  turnstileError.value = true;
+};
+
+// サインアップ処理
+const handleSignup = async () => {
+  if (!isFormValid.value) return;
+
+  try {
+    // Turnstileトークンの検証
+    const verificationResult = await $fetch("/api/verify-turnstile", {
+      method: "POST",
+      body: {
+        token: turnstileToken.value,
+      },
+    });
+
+    if (!verificationResult?.success) {
+      turnstileError.value = true;
+      return;
+    }
+
+    // ここで実際のサインアップ処理を実装
+    console.log("Signup with:", {
+      email: email.value,
+      password: password.value,
+      turnstileToken: turnstileToken.value,
+    });
+
+    // サインアップ成功後の処理（例：ログインページにリダイレクト）
+    // await navigateTo('/login');
+  } catch (error) {
+    console.error("Signup error:", error);
+    turnstileError.value = true;
+  }
+};
+
+const handleGoogleLogin = () => {
+  navigateTo("/login/google");
+};
+
+const handleDiscordLogin = () => {
+  navigateTo("/login/discord");
+};
+
+const handleFacebookLogin = () => {
+  navigateTo("/login/facebook");
+};
+
+const handleTwitterLogin = () => {
+  navigateTo("/login/x");
+};
+
+const handleGitHubLogin = () => {
+  navigateTo("/login/github");
+};
 </script>
