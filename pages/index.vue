@@ -27,6 +27,7 @@
         @update:time-data="updateTimeData"
         @update:is-copy-mode="updateIsCopyMode"
         @cancel-copy-mode="handleCancelCopyMode"
+        @close-side-menu="closeSideMenu"
       />
     </div>
   </div>
@@ -106,5 +107,9 @@ const handleCancelCopyMode = () => {
 
 const toggleSideMenu = () => {
   showSideMenu.value = !showSideMenu.value;
+};
+
+const closeSideMenu = () => {
+  showSideMenu.value = false;
 };
 </script>
