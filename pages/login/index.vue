@@ -3,7 +3,7 @@
     <WelcomeHeader />
   </div>
   <div class="flex flex-col h-screen mb-[-50px]">
-    <NightSky class="z-[-10]" />
+    <NightSky class="z-[-10]" :seed="456" />
     <div class="absolute inset-0 z-50 flex items-center justify-center p-4">
       <div
         class="bg-white rounded-lg shadow-xl w-full max-w-sm max-h-[98vh] sm:max-h-[80vh] overflow-y-auto"
