@@ -8,13 +8,29 @@
     <div
       class="flex h-screen w-full justify-center items-center flex-col gap-y-4"
     >
-      <h1 class="flex text-4xl font-bold font-mono">404 Not Found</h1>
-      <h2 class="flex text-2xl font-mono">
-        このページは存在しない、もしくは削除されました。
+      <h1 class="flex text-4xl font-bold font-mono">
+        {{
+          error?.statusCode === 404 ? "404 Not Found" : "エラーが発生しました"
+        }}
+      </h1>
+      <h2 class="flex text-2xl font-mono text-center px-4">
+        {{
+          error?.statusCode === 404
+            ? "このページは存在しない、もしくは削除されました。"
+            : "予期しないエラーが発生しました。ブラウザの拡張機能を無効にしてから再試行してください。"
+        }}
       </h2>
-      <ButtonsSquare @click="handleError" color="bg-gray-300" class="w-36">
-        ホームに戻る
-      </ButtonsSquare>
+      <div class="flex flex-col gap-y-2">
+        <ButtonsSquare @click="handleError" color="bg-gray-300" class="w-36">
+          ホームに戻る
+        </ButtonsSquare>
+        <button
+          @click="reloadPage"
+          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          ページを再読み込み
+        </button>
+      </div>
     </div>
     <Footer />
   </div>
@@ -24,7 +40,14 @@
 import WelcomeHeader from "@/components/header/WelcomeHeader.vue";
 import Footer from "@/components/footer/Footer.vue";
 
+// Nuxt.jsのエラーオブジェクトを取得
+const error = useError();
+
 const handleError = () => {
   clearError({ redirect: "/welcome" });
+};
+
+const reloadPage = () => {
+  window.location.reload();
 };
 </script>
