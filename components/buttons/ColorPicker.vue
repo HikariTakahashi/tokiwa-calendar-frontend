@@ -441,7 +441,6 @@ const updateColorFromPosition = (event) => {
 
     updateUserColor();
   } catch (error) {
-    console.warn("Failed to update color from position:", error);
   }
 };
 
