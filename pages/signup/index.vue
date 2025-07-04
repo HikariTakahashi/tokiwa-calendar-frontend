@@ -3,7 +3,7 @@
     <WelcomeHeader />
   </div>
   <div class="flex flex-col h-screen mb-[-50px]">
-    <NightSky class="z-[-10]" />
+    <NightSky class="z-[-10]" :seed="123" />
     <div class="absolute inset-0 z-50 flex items-center justify-center p-4">
       <div
         class="bg-white rounded-lg shadow-xl w-full max-w-sm max-h-[98vh] sm:max-h-[80vh] overflow-y-auto"
@@ -60,6 +60,11 @@
                 セキュリティ確認に失敗しました。もう一度お試しください。
               </p>
             </div>
+            <div v-if="signupError" class="flex flex-col gap-y-2">
+              <p class="text-red-500 text-xs">
+                {{ signupError }}
+              </p>
+            </div>
             <h5 class="text-sm text-gray-500 text-center">
               <button
                 @click="navigateTo('/welcome/getting-started/signup')"
@@ -81,11 +86,11 @@
             </div>
             <buttons-square
               color="bg-blue-200"
-              :isUse="isFormValid"
+              :isUse="isFormValid && !isLoading"
               class="w-full text-lg"
               @click="handleSignup"
             >
-              新規登録
+              {{ isLoading ? "登録中..." : "新規登録" }}
             </buttons-square>
             <div class="h-0.5 w-full bg-gray-200" />
             <div class="flex flex-row items-center justify-between">
@@ -126,6 +131,8 @@ import Footer from "~/components/footer/Footer.vue";
 import Turnstile from "~/components/Turnstile.vue";
 import PassInput from "~/components/buttons/PassInput.vue";
 
+const { signup } = useAPI();
+
 const email = ref("");
 const password = ref("");
 const passwordConfirm = ref("");
@@ -133,6 +140,8 @@ const isUseTerms = ref(false);
 const turnstileRef = ref();
 const turnstileToken = ref("");
 const turnstileError = ref(false);
+const signupError = ref("");
+const isLoading = ref(false);
 
 // メールアドレスのバリデーション
 const isEmailValid = computed(() => {
@@ -180,6 +189,9 @@ const onTurnstileError = () => {
 const handleSignup = async () => {
   if (!isFormValid.value) return;
 
+  isLoading.value = true;
+  signupError.value = "";
+
   try {
     // Turnstileトークンの検証
     const verificationResult = await $fetch<{ success: boolean }>(
@@ -197,18 +209,29 @@ const handleSignup = async () => {
       return;
     }
 
-    // ここで実際のサインアップ処理を実装
-    console.log("Signup with:", {
-      email: email.value,
-      password: password.value,
-      turnstileToken: turnstileToken.value,
-    });
+    // バックエンドAPIにサインアップリクエストを送信
+    const signupResult = await signup(email.value, password.value);
 
-    // サインアップ成功後の処理（例：ログインページにリダイレクト）
-    // await navigateTo('/login');
-  } catch (error) {
+    if (signupResult.error) {
+      console.error("サインアップエラー:", signupResult.error);
+      signupError.value = signupResult.error;
+      return;
+    }
+
+    console.log("サインアップ成功:", signupResult);
+
+    // サインアップ成功後の処理（ログインページにリダイレクト）
+    await navigateTo("/login");
+  } catch (error: any) {
     console.error("Signup error:", error);
-    turnstileError.value = true;
+    if (error.data?.error) {
+      signupError.value = error.data.error;
+    } else {
+      signupError.value =
+        "サインアップ中にエラーが発生しました。もう一度お試しください。";
+    }
+  } finally {
+    isLoading.value = false;
   }
 };
 
