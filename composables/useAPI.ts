@@ -1,4 +1,5 @@
 import type { TimeSlot } from "@/utils/TimeUtils";
+import { encryptPassword } from "@/utils/CryptoUtils";
 
 export interface TimeData {
   events: {
@@ -51,6 +52,34 @@ interface BackendAPIRequest {
   spaceId: string;
 }
 
+// サインアップリクエストの型定義
+interface SignupRequest {
+  email: string;
+  password: string;
+}
+
+// サインアップレスポンスの型定義
+interface SignupResponse {
+  message: string;
+  uid?: string;
+  error?: string;
+}
+
+// ログインリクエストの型定義
+interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+// ログインレスポンスの型定義
+interface LoginResponse {
+  message: string;
+  uid?: string;
+  email?: string;
+  customToken?: string;
+  error?: string;
+}
+
 export const useAPI = () => {
   const config = useRuntimeConfig();
   const API_BASE_URL = config.public.apiBaseUrl;
@@ -58,20 +87,17 @@ export const useAPI = () => {
   //[id].vue用 スペースデータ取得
   const fetchSpaceData = async (spaceId: string): Promise<TimeData> => {
     try {
-      const rawResponse = await $fetch(
-        `${API_BASE_URL}/api/time/${spaceId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-        }
-      );
+      const rawResponse = await $fetch(`${API_BASE_URL}/api/time/${spaceId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
 
       // レスポンスが文字列の場合はJSONとしてパース
       let response: BackendAPIResponse;
-      if (typeof rawResponse === 'string') {
+      if (typeof rawResponse === "string") {
         response = JSON.parse(rawResponse);
       } else {
         response = rawResponse as BackendAPIResponse;
@@ -157,7 +183,12 @@ export const useAPI = () => {
       // 新しいリクエスト構造に変換
       const events: { [key: string]: APITimeSlot[] } = {};
       Object.entries(requestData).forEach(([key, value]) => {
-        if (key !== "spaceId" && key !== "startDate" && key !== "endDate" && key !== "allowOtherEdit") {
+        if (
+          key !== "spaceId" &&
+          key !== "startDate" &&
+          key !== "endDate" &&
+          key !== "allowOtherEdit"
+        ) {
           const slots = Array.isArray(value) ? value : [value];
           events[key] = slots.map((slot: any, index: number) => ({
             start: slot.start,
@@ -192,9 +223,85 @@ export const useAPI = () => {
     }
   };
 
+  // サインアップ機能
+  const signup = async (
+    email: string,
+    password: string
+  ): Promise<SignupResponse> => {
+    try {
+      // パスワードを暗号化
+      const encryptedPassword = await encryptPassword(password);
+
+      // セキュリティログ（本番環境では削除）
+      console.log("サインアップリクエスト送信:", { email, password: "***" });
+
+      const response = await $fetch<SignupResponse>(
+        `${API_BASE_URL}/api/signup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: {
+            email,
+            password: encryptedPassword,
+          } as SignupRequest,
+        }
+      );
+      return response;
+    } catch (error: any) {
+      console.error("サインアップエラー:", error);
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as SignupResponse;
+      }
+      throw error;
+    }
+  };
+
+  // ログイン機能
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<LoginResponse> => {
+    try {
+      // パスワードを暗号化
+      const encryptedPassword = await encryptPassword(password);
+
+      // セキュリティログ（本番環境では削除）
+      console.log("ログインリクエスト送信:", { email, password: "***" });
+
+      const response = await $fetch<LoginResponse>(
+        `${API_BASE_URL}/api/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: {
+            email,
+            password: encryptedPassword,
+          } as LoginRequest,
+        }
+      );
+      return response;
+    } catch (error: any) {
+      console.error("ログインエラー:", error);
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as LoginResponse;
+      }
+      throw error;
+    }
+  };
+
   return {
     fetchSpaceData,
     syncTimeData,
     createNewSpace,
+    signup,
+    login,
   };
 };
