@@ -88,11 +88,11 @@ const showNightSky = ref(false);
 const topSection = ref<HTMLElement | null>(null);
 
 const onTypewriterStart = () => {
-  console.log("Typewriter animation started");
+  
 };
 
 const onTypewriterEnd = () => {
-  console.log("Typewriter animation ended");
+  
   typewriterFinished.value = true;
   // タイプライター終了後に夜空を表示
   setTimeout(() => {
@@ -109,7 +109,7 @@ onMounted(() => {
   // フォールバック: アニメーション終了を確実に検知
   setTimeout(() => {
     if (!typewriterFinished.value) {
-      console.log("Fallback: Setting typewriter finished");
+      
       typewriterFinished.value = true;
       setTimeout(() => {
         showNightSky.value = true;
