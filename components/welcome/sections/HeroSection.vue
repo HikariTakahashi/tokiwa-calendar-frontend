@@ -6,7 +6,7 @@
     ref="topSection"
   >
     <div v-show="showNightSky" class="night-sky-container">
-      <NightSky />
+      <NightSky :seed="789" />
     </div>
     <TokiwaIcon :isLoaded="isLoaded" />
 
