@@ -54,10 +54,6 @@ const initTurnstile = async () => {
 
   const siteKey = props.siteKey || config.public.turnstileSiteKey;
 
-  if (!siteKey) {
-    console.error("Turnstile site key is not configured");
-    return;
-  }
 
   window.turnstile.render(turnstileContainer.value, {
     sitekey: siteKey,
