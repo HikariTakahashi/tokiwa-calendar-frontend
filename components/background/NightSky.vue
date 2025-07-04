@@ -28,22 +28,34 @@ interface Star {
 
 interface Props {
   numStars?: number;
+  seed?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   numStars: 100,
+  seed: 42, // デフォルトのシード値
 });
 
-const createStars = (count: number): Star[] => {
+// シードベースのランダム生成関数
+const seededRandom = (seed: number) => {
+  let value = seed;
+  return () => {
+    value = (value * 9301 + 49297) % 233280;
+    return value / 233280;
+  };
+};
+
+const createStars = (count: number, seed: number): Star[] => {
+  const random = seededRandom(seed);
   const stars = [];
 
   for (let i = 0; i < count; i++) {
     const star = {
       id: i,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      size: Math.random() * 3 + 1,
-      delay: Math.random() * 3,
+      left: random() * 100,
+      top: random() * 100,
+      size: random() * 3 + 1,
+      delay: random() * 3,
     };
     stars.push(star);
   }
@@ -51,7 +63,7 @@ const createStars = (count: number): Star[] => {
   return stars;
 };
 
-const stars = computed(() => createStars(props.numStars));
+const stars = computed(() => createStars(props.numStars, props.seed));
 </script>
 
 <style scoped>
