@@ -47,6 +47,18 @@
                 セキュリティ確認に失敗しました。もう一度お試しください。
               </p>
             </div>
+            <div v-if="loginError" class="flex flex-col gap-y-2">
+              <div
+                :class="`flex items-center gap-x-2 p-3 border rounded-md ${getErrorClasses(
+                  loginErrorType
+                )}`"
+              >
+                <UIcon :name="getErrorIcon(loginErrorType)" class="size-4" />
+                <p class="text-sm">
+                  {{ loginError }}
+                </p>
+              </div>
+            </div>
             <h5 class="text-sm text-gray-500 text-center">
               <button
                 @click="navigateTo('/login/password-reset')"
@@ -64,10 +76,11 @@
             </h5>
             <buttons-square
               color="bg-blue-200"
-              :isUse="isFormValid"
+              :isUse="isFormValid && !isLoading"
               class="w-full text-lg mb-2"
+              @click="handleLogin"
             >
-              ログイン
+              {{ isLoading ? "ログイン中..." : "ログイン" }}
             </buttons-square>
             <buttons-square
               @click="navigateTo('/signup')"
@@ -114,10 +127,23 @@ import WelcomeHeader from "~/components/header/WelcomeHeader.vue";
 import Footer from "~/components/footer/Footer.vue";
 import Turnstile from "~/components/Turnstile.vue";
 import PassInput from "~/components/buttons/PassInput.vue";
+import {
+  getLoginErrorMessage,
+  getErrorIcon,
+  getErrorClasses,
+} from "~/utils/ErrorMessages";
+
+const { login } = useAPI();
+const { login: authLogin } = useAuth();
 
 const turnstileRef = ref();
 const turnstileToken = ref("");
 const turnstileError = ref(false);
+const loginError = ref("");
+const loginErrorType = ref<
+  "auth" | "network" | "server" | "rate-limit" | "unknown"
+>("unknown");
+const isLoading = ref(false);
 
 const email = ref("");
 const password = ref("");
@@ -172,5 +198,69 @@ const handleTwitterLogin = () => {
 
 const handleGitHubLogin = () => {
   navigateTo("/login/github");
+};
+
+// ログイン処理
+const handleLogin = async () => {
+  if (!isFormValid.value) return;
+
+  isLoading.value = true;
+  loginError.value = "";
+
+  try {
+    // Turnstileトークンの検証（開発中は一時的にスキップ可能）
+    if (turnstileToken.value) {
+      const verificationResult = await $fetch<{ success: boolean }>(
+        "/api/verify-turnstile",
+        {
+          method: "POST",
+          body: {
+            token: turnstileToken.value,
+          },
+        }
+      );
+
+      if (!verificationResult?.success) {
+        turnstileError.value = true;
+        return;
+      }
+    }
+
+    // メールアドレスの前処理（空白除去、小文字化）
+    const cleanEmail = email.value.trim().toLowerCase();
+
+    // バックエンドAPIにログインリクエストを送信
+    const loginResult = await login(cleanEmail, password.value);
+
+    if (loginResult.error) {
+      loginError.value = loginResult.error;
+      return;
+    }
+
+    // ログイン成功後の処理
+    if (loginResult.customToken && loginResult.uid && loginResult.email) {
+      // useAuthでログイン状態を管理
+      authLogin({
+        uid: loginResult.uid,
+        email: loginResult.email,
+        customToken: loginResult.customToken,
+      });
+    }
+
+    // メインページにリダイレクト
+    await navigateTo("/");
+  } catch (error: any) {
+    // デバッグ用：エラーオブジェクトの構造をログ出力
+    console.log("Login error object:", error);
+    console.log("Error data:", error.data);
+    console.log("Error status:", error.status);
+
+    // エラーメッセージユーティリティを使用してエラーを処理
+    const errorInfo = getLoginErrorMessage(error);
+    loginError.value = errorInfo.message;
+    loginErrorType.value = errorInfo.type;
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
