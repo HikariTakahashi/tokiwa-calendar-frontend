@@ -7,6 +7,7 @@ export default defineNuxtConfig({
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL,
       turnstileSiteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY,
+      encryptionKey: process.env.NUXT_PUBLIC_ENCRYPTION_KEY,
     },
     turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY,
   },
