@@ -35,4 +35,12 @@ export default defineNuxtConfig({
       ],
     },
   },
+  // エラーハンドリングの設定
+  experimental: {
+    payloadExtraction: false,
+  },
+  // 開発時のエラー表示を改善
+  devServer: {
+    port: 3000,
+  },
 });
