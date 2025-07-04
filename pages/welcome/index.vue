@@ -41,11 +41,20 @@ const scrollSnapStyle = computed(() => ({
 }));
 
 const checkTopSectionVisibility = () => {
-  if (!heroSection.value?.topSection) return;
+  if (
+    !heroSection.value?.topSection ||
+    !heroSection.value.topSection.getBoundingClientRect
+  )
+    return;
 
-  const rect = heroSection.value.topSection.getBoundingClientRect();
-  const isVisible = rect.top <= 0 && rect.bottom > 0;
-  isTopSectionVisible.value = isVisible;
+  try {
+    const rect = heroSection.value.topSection.getBoundingClientRect();
+    const isVisible = rect.top <= 0 && rect.bottom > 0;
+    isTopSectionVisible.value = isVisible;
+  } catch (error) {
+    console.warn("Failed to check top section visibility:", error);
+    isTopSectionVisible.value = true; // フォールバック値
+  }
 };
 
 const checkFooterVisibility = () => {
