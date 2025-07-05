@@ -269,9 +269,6 @@ export const useAPI = () => {
       // パスワードを暗号化
       const encryptedPassword = await encryptPassword(password);
 
-      // セキュリティログ（本番環境では削除）
-      console.log("ログインリクエスト送信:", { email, password: "***" });
-
       const response = await $fetch<LoginResponse>(
         `${API_BASE_URL}/api/login`,
         {
@@ -288,7 +285,6 @@ export const useAPI = () => {
       );
       return response;
     } catch (error: any) {
-      console.error("ログインエラー:", error);
       // エラーレスポンスを適切に処理
       if (error.data) {
         return error.data as LoginResponse;
