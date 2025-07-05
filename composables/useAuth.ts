@@ -4,25 +4,32 @@ export interface User {
   customToken: string;
 }
 
-export const useAuth = () => {
-  const user = ref<User | null>(null);
-  const isAuthenticated = ref(false);
+// グローバルな状態管理
+const globalUser = ref<User | null>(null);
+const globalIsAuthenticated = ref(false);
+const isInitialized = ref(false);
 
+export const useAuth = () => {
   // 初期化時にローカルストレージから認証情報を読み込み
   const initializeAuth = () => {
-    if (process.client) {
+    if (process.client && !isInitialized.value) {
       const token = localStorage.getItem("authToken");
       const uid = localStorage.getItem("userUID");
       const email = localStorage.getItem("userEmail");
 
       if (token && uid && email) {
-        user.value = {
+        globalUser.value = {
           uid,
           email,
           customToken: token,
         };
-        isAuthenticated.value = true;
+        globalIsAuthenticated.value = true;
+        console.log("認証状態を初期化しました:", { uid, email });
+      } else {
+        console.log("ローカルストレージに認証情報が見つかりません");
       }
+
+      isInitialized.value = true;
     }
   };
 
@@ -33,8 +40,8 @@ export const useAuth = () => {
       localStorage.setItem("userUID", userData.uid);
       localStorage.setItem("userEmail", userData.email);
 
-      user.value = userData;
-      isAuthenticated.value = true;
+      globalUser.value = userData;
+      globalIsAuthenticated.value = true;
     }
   };
 
@@ -45,8 +52,8 @@ export const useAuth = () => {
       localStorage.removeItem("userUID");
       localStorage.removeItem("userEmail");
 
-      user.value = null;
-      isAuthenticated.value = false;
+      globalUser.value = null;
+      globalIsAuthenticated.value = false;
     }
   };
 
@@ -60,22 +67,29 @@ export const useAuth = () => {
 
   // ユーザー情報を取得
   const getCurrentUser = (): User | null => {
-    return user.value;
+    return globalUser.value;
   };
 
   // 認証状態をチェック
   const checkAuth = (): boolean => {
-    return isAuthenticated.value;
+    return globalIsAuthenticated.value;
+  };
+
+  // 初期化完了状態を取得
+  const getIsInitialized = (): boolean => {
+    return isInitialized.value;
   };
 
   return {
-    user: readonly(user),
-    isAuthenticated: readonly(isAuthenticated),
+    user: readonly(globalUser),
+    isAuthenticated: readonly(globalIsAuthenticated),
+    isInitialized: readonly(isInitialized),
     initializeAuth,
     login,
     logout,
     getAuthToken,
     getCurrentUser,
     checkAuth,
+    getIsInitialized,
   };
 };
