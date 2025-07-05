@@ -23,7 +23,10 @@
               <UIcon name="ic:baseline-settings" class="size-5" />
             </button>
           </div>
-          <div v-if="!isLoggedIn" class="flex flex-col gap-y-4 items-center">
+          <div
+            v-if="!isAuthenticated"
+            class="flex flex-col gap-y-4 items-center"
+          >
             <h5 class="text-sm text-gray-500">
               メニューの機能にアクセスするためには、ログイン・サインアップが必要です。
             </h5>
@@ -47,6 +50,22 @@
                 インタロダクション</button
               >をご覧ください。
             </h5>
+          </div>
+          <div v-else class="flex flex-col gap-y-4">
+            <div class="flex flex-col gap-y-2">
+              <h5 class="text-sm text-gray-500">ログイン中</h5>
+              <p class="text-sm font-medium text-gray-800">{{ user?.email }}</p>
+            </div>
+            <div class="flex flex-col gap-y-2">
+              <h5 class="text-sm text-gray-500">ユーザーID</h5>
+              <p class="text-xs text-gray-600 font-mono">{{ user?.uid }}</p>
+            </div>
+            <buttons-square
+              @click="handleLogout"
+              color="bg-red-200"
+              class="w-full text-lg"
+              >ログアウト</buttons-square
+            >
           </div>
         </div>
       </div>
@@ -103,7 +122,10 @@
                 </button>
               </div>
             </div>
-            <div v-if="!isLoggedIn" class="flex flex-col gap-y-4 items-center">
+            <div
+              v-if="!isAuthenticated"
+              class="flex flex-col gap-y-4 items-center"
+            >
               <h5 class="text-sm text-gray-500 text-center">
                 メニューの機能にアクセスするためには、ログイン・サインアップが必要です。
               </h5>
@@ -127,6 +149,24 @@
                   インタロダクション</button
                 >をご覧ください。
               </h5>
+            </div>
+            <div v-else class="flex flex-col gap-y-4">
+              <div class="flex flex-col gap-y-2">
+                <h5 class="text-sm text-gray-500">ログイン中</h5>
+                <p class="text-sm font-medium text-gray-800">
+                  {{ user?.email }}
+                </p>
+              </div>
+              <div class="flex flex-col gap-y-2">
+                <h5 class="text-sm text-gray-500">ユーザーID</h5>
+                <p class="text-xs text-gray-600 font-mono">{{ user?.uid }}</p>
+              </div>
+              <buttons-square
+                @click="handleLogout"
+                color="bg-red-200"
+                class="w-full text-lg"
+                >ログアウト</buttons-square
+              >
             </div>
           </div>
         </div>
@@ -152,14 +192,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, watchEffect } from "vue";
 
 interface Props {
   show: boolean;
 }
 
-const isLoggedIn = ref(false);
+const { user, isAuthenticated, logout } = useAuth();
 const isMobile = ref(false);
+
+// デバッグ用：認証状態の監視
+watchEffect(() => {
+  console.log("SideMenu - 認証状態:", {
+    isAuthenticated: isAuthenticated.value,
+    user: user.value,
+  });
+});
+
+// ログアウト処理
+const handleLogout = () => {
+  logout();
+  navigateTo("/");
+};
 
 // レスポンシブ判定
 const checkMobile = () => {
