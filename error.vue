@@ -24,12 +24,6 @@
         <ButtonsSquare @click="handleError" color="bg-gray-300" class="w-36">
           ホームに戻る
         </ButtonsSquare>
-        <button
-          @click="reloadPage"
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-        >
-          ページを再読み込み
-        </button>
       </div>
     </div>
     <Footer />
@@ -45,9 +39,5 @@ const error = useError();
 
 const handleError = () => {
   clearError({ redirect: "/welcome" });
-};
-
-const reloadPage = () => {
-  window.location.reload();
 };
 </script>
