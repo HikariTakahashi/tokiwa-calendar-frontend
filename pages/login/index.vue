@@ -35,7 +35,7 @@
                 パスワードを入力してください
               </p>
             </div>
-            <div class="flex flex-col gap-y-2">
+            <div v-if="!isDevelopment" class="flex flex-col gap-y-2">
               <h5 class="text-sm text-gray-500">セキュリティ確認</h5>
               <Turnstile
                 ref="turnstileRef"
@@ -148,6 +148,17 @@ const isLoading = ref(false);
 const email = ref("");
 const password = ref("");
 
+// 開発環境かどうかを判定
+const isDevelopment = computed(() => process.env.NODE_ENV === "development");
+
+// コンポーネントマウント時にエラー状態をリセット
+onMounted(() => {
+  loginError.value = "";
+  loginErrorType.value = "unknown";
+  turnstileError.value = false;
+  isLoading.value = false;
+});
+
 // メールアドレスのバリデーション
 const isEmailValid = computed(() => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -162,6 +173,14 @@ const isPasswordValid = computed(() => {
 // フォーム全体のバリデーション
 const isFormValid = computed(() => {
   return isEmailValid.value && isPasswordValid.value;
+});
+
+// 入力フィールドの変更を監視してエラー状態をクリア
+watch([email, password], () => {
+  if (loginError.value) {
+    loginError.value = "";
+    loginErrorType.value = "unknown";
+  }
 });
 
 // Turnstileのコールバック関数
@@ -204,26 +223,43 @@ const handleGitHubLogin = () => {
 const handleLogin = async () => {
   if (!isFormValid.value) return;
 
+  // 既存のログイン処理をキャンセル（もし実行中の場合）
+  if (isLoading.value) {
+    return;
+  }
+
+  // 新しいログイン試行時にエラー状態を完全にクリア
   isLoading.value = true;
   loginError.value = "";
+  loginErrorType.value = "unknown";
+  turnstileError.value = false;
 
   try {
-    // Turnstileトークンの検証（開発中は一時的にスキップ可能）
-    if (turnstileToken.value) {
-      const verificationResult = await $fetch<{ success: boolean }>(
-        "/api/verify-turnstile",
-        {
-          method: "POST",
-          body: {
-            token: turnstileToken.value,
-          },
-        }
-      );
+    // Turnstileトークンの検証（開発環境ではスキップ）
+    if (turnstileToken.value && !isDevelopment.value) {
+      try {
+        const verificationResult = await $fetch<{ success: boolean }>(
+          "/api/verify-turnstile",
+          {
+            method: "POST",
+            body: {
+              token: turnstileToken.value,
+            },
+          }
+        );
 
-      if (!verificationResult?.success) {
+        if (!verificationResult?.success) {
+          turnstileError.value = true;
+          isLoading.value = false;
+          return;
+        }
+      } catch (error) {
+        console.warn("Turnstile検証エラー:", error);
         turnstileError.value = true;
+        isLoading.value = false;
         return;
       }
+    } else if (isDevelopment.value) {
     }
 
     // メールアドレスの前処理（空白除去、小文字化）
@@ -234,6 +270,8 @@ const handleLogin = async () => {
 
     if (loginResult.error) {
       loginError.value = loginResult.error;
+      loginErrorType.value = "auth";
+      isLoading.value = false;
       return;
     }
 
@@ -245,16 +283,19 @@ const handleLogin = async () => {
         email: loginResult.email,
         customToken: loginResult.customToken,
       });
+
+      // 成功時にエラー状態を確実にクリア
+      loginError.value = "";
+      loginErrorType.value = "unknown";
+
+      // メインページにリダイレクト
+      await navigateTo("/");
+    } else {
+      console.error("ログイン成功だが必要なデータが不足:", loginResult);
+      loginError.value = "ログイン処理中にエラーが発生しました";
+      loginErrorType.value = "unknown";
     }
-
-    // メインページにリダイレクト
-    await navigateTo("/");
   } catch (error: any) {
-    // デバッグ用：エラーオブジェクトの構造をログ出力
-    console.log("Login error object:", error);
-    console.log("Error data:", error.data);
-    console.log("Error status:", error.status);
-
     // エラーメッセージユーティリティを使用してエラーを処理
     const errorInfo = getLoginErrorMessage(error);
     loginError.value = errorInfo.message;
