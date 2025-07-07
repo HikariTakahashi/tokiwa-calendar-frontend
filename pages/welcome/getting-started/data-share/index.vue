@@ -7,37 +7,94 @@
   <div class="flex flex-row w-full pt-10">
     <NavigationSection />
     <div
-      class="flex flex-col w-5/6 h-auto min-h-screen py-6 sm:px-10 border-l-2 border-gray-200"
+      class="flex flex-col w-5/6 h-auto min-h-screen py-10 sm:px-10 border-l-2 border-gray-200"
     >
-      <div class="flex flex-col gap-y-2">
-        <h1 class="pl-2 text-3xl sm:text-4xl font-bold">カレンダーの共有</h1>
-        <h3 class="pl-4 text-sm text-gray-500">
-          このページでは、カレンダーアプリ「Tokiwa
-          Calendar」のカレンダーの共有方法を紹介します。
-        </h3>
-      </div>
-      <div class="flex w-full h-0.5 bg-gray-200 my-10" />
-      <div class="flex flex-col gap-y-8 px-4">
-        <p class="text-base text-gray-700 leading-relaxed">
-          Tokiwaで作成したカレンダーは、共有機能によってチーム間の連携をサポートします。
+      <!-- ヘッダーセクション -->
+      <div class="flex flex-col gap-y-2 px-4">
+        <h1 class="text-3xl sm:text-4xl font-bold">カレンダーの共有方法</h1>
+        <p class="text-gray-600">
+          作成したカレンダーを他のユーザーに共有し、複数人で日程調整を行う方法を紹介します。
         </p>
+      </div>
 
-        <div class="flex flex-col gap-y-3">
-          <h2 class="text-2xl font-bold border-b-2 border-blue-500 pb-2">
-            専用URLで簡単アクセス
-          </h2>
-          <p class="text-base text-gray-700 leading-relaxed pt-2">
-            カレンダーの作成者がスケジュールを同期・確定すると、そのカレンダー専用のユニークなURLが自動的に生成されます。このURLを共有するだけで、招待された他のユーザーは即座にカレンダーにアクセスし、参加することが可能です。煩雑な招待手続きは一切不要で、すぐに全員が最新のスケジュールを確認できます。
-          </p>
+      <div class="w-full h-0.5 bg-gray-200 my-10" />
+
+      <!-- ステップ・バイ・ステップガイド -->
+      <div class="flex flex-col gap-y-16 px-4">
+        <!-- ステップ1: 主催者がカレンダーを作成 -->
+        <div class="flex flex-col md:flex-row items-center gap-8">
+          <div class="md:w-1/2">
+            <h2 class="text-2xl font-bold mb-3">
+              ステップ1：主催者がカレンダーを作成
+            </h2>
+            <p class="text-gray-700 leading-relaxed">
+              まず、日程調整の主催者が、自身の空き時間などをカレンダーに入力し、設定を確定・同期します。
+            </p>
+          </div>
+          <div class="md:w-1/2">
+            <img
+              src="/images/共有_1.gif"
+              alt="主催者がカレンダーを作成し、同期するまでの操作GIF"
+              class="rounded-lg shadow-lg border"
+            />
+          </div>
         </div>
 
-        <div class="flex flex-col gap-y-3">
-          <h2 class="text-2xl font-bold border-b-2 border-blue-500 pb-2">
-            チーム間での連携を円滑に
-          </h2>
-          <p class="text-base text-gray-700 leading-relaxed pt-2">
-            この共有機能は、特にチームでのプロジェクトやイベントの立ち上げに最適です。例えば、新しいプロジェクトのキックオフミーティングや、メンバー全員の空き状況を把握したいタスク管理など、迅速な日程調整が求められる場面で真価を発揮します。URL一つで全員が同じ情報を共有できるため、認識の齟齬を防ぎ、スムーズなコミュニケーションと意思決定を促進します。
-          </p>
+        <!-- ステップ2: 専用URLの発行 -->
+        <div class="flex flex-col md:flex-row-reverse items-center gap-8">
+          <div class="md:w-1/2">
+            <h2 class="text-2xl font-bold mb-3">
+              ステップ2：専用URLが発行される
+            </h2>
+            <p class="text-gray-700 leading-relaxed">
+              同期が完了すると、そのカレンダー専用のURLがブラウザのアドレスバーに自動で生成されます。このURLが共有用のリンクになります。
+            </p>
+          </div>
+          <div class="md:w-1/2">
+            <img
+              src="/images/共有_2.png"
+              alt="ブラウザのアドレスバーに表示された専用URL"
+              class="rounded-lg shadow-lg border"
+            />
+          </div>
+        </div>
+
+        <!-- ステップ3: 参加者にURLを共有 -->
+        <div class="flex flex-col md:flex-row items-center gap-8">
+          <div class="md:w-1/2">
+            <h2 class="text-2xl font-bold mb-3">
+              ステップ3：参加者にURLを共有する
+            </h2>
+            <p class="text-gray-700 leading-relaxed">
+              主催者は、発行された専用URLをコピーし、LineやDiscordなどのチャットツールで参加者に共有します。
+            </p>
+          </div>
+          <div class="md:w-1/2">
+            <img
+              src="/images/共有_3.png"
+              alt="DiscordでカレンダーのURLを共有している様子"
+              class="rounded-lg shadow-lg border"
+            />
+          </div>
+        </div>
+
+        <!-- ステップ4: 参加者が予定を入力 -->
+        <div class="flex flex-col md:flex-row-reverse items-center gap-8">
+          <div class="md:w-1/2">
+            <h2 class="text-2xl font-bold mb-3">
+              ステップ4：参加者が予定を入力する
+            </h2>
+            <p class="text-gray-700 leading-relaxed">
+              共有されたURLにアクセスした参加者は、自身の空き時間をカレンダーに入力します。入力されたデータは、リアルタイムで全員に共有されます。
+            </p>
+          </div>
+          <div class="md:w-1/2">
+            <img
+              src="/images/共有_4.gif"
+              alt="参加者が共有されたカレンダーに予定を入力する操作GIF"
+              class="rounded-lg shadow-lg border"
+            />
+          </div>
         </div>
       </div>
     </div>
