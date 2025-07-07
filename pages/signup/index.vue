@@ -251,7 +251,7 @@ const handleFacebookLogin = () => {
 };
 
 const handleTwitterLogin = () => {
-  navigateTo("/login/x");
+  navigateTo("/login/twitter  ");
 };
 
 const handleGitHubLogin = () => {
