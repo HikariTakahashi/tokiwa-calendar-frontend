@@ -7,56 +7,91 @@
   <div class="flex flex-row w-full pt-10">
     <NavigationSection />
     <div
-      class="flex flex-col w-5/6 h-auto min-h-screen py-6 sm:px-10 border-l-2 border-gray-200"
+      class="flex flex-col w-5/6 h-auto min-h-screen py-10 sm:px-10 border-l-2 border-gray-200"
     >
-      <div class="flex flex-col gap-y-2">
-        <h1 class="pl-2 text-3xl sm:text-4xl font-bold">予定の入力</h1>
-        <h3 class="pl-4 text-sm text-gray-500">
-          このページでは、カレンダーアプリ「Tokiwa
-          Calendar」の予定の入力方法を紹介します。
-        </h3>
+      <div class="flex flex-col gap-y-2 px-4">
+        <h1 class="text-3xl sm:text-4xl font-bold">予定の入力方法</h1>
+        <p class="text-gray-600">
+          このページでは、Tokiwa
+          Calendarにおける予定の入力、及び共有方法について解説します。
+        </p>
       </div>
-      <div class="flex w-full h-0.5 bg-gray-200 my-10" />
-      <div class="flex flex-col gap-y-8 px-4">
-        <p class="text-base text-gray-700 leading-relaxed">
-          Tokiwaでは、あなたの予定や空き時間を簡単かつ正確に入力し、共有することができます。
-        </p>
 
-        <div class="flex flex-col gap-y-3">
-          <h2 class="text-2xl font-bold border-b-2 border-blue-500 pb-2">
-            スケジュール設定はシンプルに
-          </h2>
-          <p class="text-base text-gray-700 leading-relaxed pt-2">
-            カレンダー上で希望の日付を選択し、次に時間を設定します。複数の日付にわたる時間も、まとめて選択・設定が可能です。すべての設定が完了したら、画面上部の同期ボタンをタップしてください。これにより、あなたの入力したスケジュールが、安全なオンライン環境に瞬時に反映されます。
-          </p>
+      <div class="w-full h-0.5 bg-gray-200 my-10" />
+
+      <div class="flex flex-col gap-y-16 px-4">
+        <div class="flex flex-col md:flex-row items-center gap-8">
+          <div class="md:w-1/2">
+            <h2 class="text-2xl font-bold mb-3">ステップ1：希望時間帯の入力</h2>
+            <p class="text-gray-700 leading-relaxed">
+              カレンダーから希望の日付を選択し、時間帯を指定します。同じ日付に複数の時間帯候補を設定することも可能です。
+            </p>
+          </div>
+          <div class="md:w-1/2">
+            <img
+              src="/images/入力_ステップ１.gif"
+              alt="単一・複数の両方の時間帯を入力する操作のGIFアニメーション"
+              class="rounded-lg shadow-lg border"
+            />
+          </div>
         </div>
 
-        <div class="flex flex-col gap-y-3">
-          <h2 class="text-2xl font-bold border-b-2 border-blue-500 pb-2">
-            詳細設定で、より柔軟な運用を
-          </h2>
-          <p class="text-base text-gray-700 leading-relaxed pt-2">
-            さらに、Tokiwaの詳細設定を活用すれば、カレンダーの運用をより柔軟にカスタマイズできます。
-          </p>
-          <ul class="list-disc list-inside space-y-4 pt-2 pl-2 text-gray-700">
-            <li>
-              <span class="font-bold">入力可能期間の制限:</span>
-              <p class="inline leading-relaxed">
-                特定のイベントやプロジェクトのために、メンバーにスケジュールを入力してほしい期間を限定できます。これにより、該当期間内のミーティング調整などがスムーズに進みます。
-              </p>
-            </li>
-            <li>
-              <span class="font-bold">他ユーザーへの編集権限付与:</span>
-              <p class="inline leading-relaxed">
-                チームメンバーや共同作業者に対して、あなたのカレンダーの編集権限を付与することができます。これにより、複数人でのカレンダー管理や、代理でのスケジュール入力が可能になり、チーム全体の連携が強化されます。
-              </p>
-            </li>
-          </ul>
+        <div class="flex flex-col md:flex-row-reverse items-center gap-8">
+          <div class="md:w-1/2">
+            <h2 class="text-2xl font-bold mb-3">ステップ2：共有設定の開始</h2>
+            <p class="text-gray-700 leading-relaxed">
+              入力が完了したら、共有設定を開始します。画面右上の<b
+                class="text-blue-600"
+                >上向き矢印アイコン</b
+              >をクリックし、表示された画面で<b class="text-blue-600"
+                >「共有」</b
+              >ボタンを選択してください。
+            </p>
+          </div>
+          <div class="md:w-1/2">
+            <img
+              src="/images/入力_ステップ３.png"
+              alt="共有準備の操作手順を示したスクリーンショット"
+              class="rounded-lg shadow-lg border"
+            />
+          </div>
         </div>
 
-        <p class="text-base text-gray-700 leading-relaxed pt-4">
-          Tokiwaは、あなたのスケジュール管理をより効率的で、よりパーソナルなものにするための機能を提供します。
-        </p>
+        <div class="flex flex-col md:flex-row items-center gap-8">
+          <div class="md:w-1/2">
+            <h2 class="text-2xl font-bold mb-3">
+              ステップ3：ユーザー名と識別色の設定
+            </h2>
+            <p class="text-gray-700 leading-relaxed">
+              共有カレンダー上で誰の予定かを識別するため、ユーザー名と任意の識別色を設定します。「ユーザー名」を入力後、カラーパレットから表示色を選択してください。
+            </p>
+          </div>
+          <div class="md:w-1/2">
+            <img
+              src="/images/入力_ステップ４.png"
+              alt="名前とカラー設定画面のスクリーンショット"
+              class="rounded-lg shadow-lg border"
+            />
+          </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row-reverse items-center gap-8">
+          <div class="md:w-1/2">
+            <h2 class="text-2xl font-bold mb-3">
+              ステップ4：設定の確定とURLの共有
+            </h2>
+            <p class="text-gray-700 leading-relaxed">
+              最後に「確定」ボタンをクリックすると、設定が同期・保存されます。自動生成された専用URLをコピーし、共有先の相手に通知してください。
+            </p>
+          </div>
+          <div class="md:w-1/2">
+            <img
+              src="/images/入力_ステップ５.gif"
+              alt="設定を保存してURLを共有する操作のGIFアニメーション"
+              class="rounded-lg shadow-lg border"
+            />
+          </div>
+        </div>
       </div>
     </div>
   </div>
