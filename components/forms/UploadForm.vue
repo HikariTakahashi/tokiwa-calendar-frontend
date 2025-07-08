@@ -17,10 +17,12 @@
           <h2 class="text-xl font-bold border-b-2 border-gray-200">
             時間データ一覧
           </h2>
-          <Switch
-            v-model="showOverlappingTime"
-            label="重なる時間のみ表示する"
-          />
+          <div v-if="isSync">
+            <Switch
+              v-model="showOverlappingTime"
+              label="重なる時間のみ表示する"
+            />
+          </div>
         </div>
         <button
           @click="emit('close')"
