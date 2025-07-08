@@ -7,7 +7,7 @@
   <div class="flex flex-row w-full pt-10">
     <NavigationSection />
     <div
-      class="flex flex-col w-5/6 h-auto min-h-screen py-10 sm:px-10 border-l-2 border-gray-200"
+      class="flex flex-col w-full md:w-5/6 h-auto min-h-screen py-10 sm:px-10 md:border-l-2 border-gray-200 md:pt-10 pt-20"
     >
       <!-- ヘッダーセクション -->
       <div class="flex flex-col gap-y-2 px-4">
@@ -35,7 +35,13 @@
             <img
               src="/images/共有_1.gif"
               alt="主催者がカレンダーを作成し、同期するまでの操作GIF"
-              class="rounded-lg shadow-lg border"
+              class="rounded-lg shadow-lg border cursor-pointer hover:opacity-80 transition-opacity"
+              @click="
+                openPopup(
+                  '/images/共有_1.gif',
+                  '主催者がカレンダーを作成し、同期するまでの操作GIF'
+                )
+              "
             />
           </div>
         </div>
@@ -54,7 +60,13 @@
             <img
               src="/images/共有_2.png"
               alt="ブラウザのアドレスバーに表示された専用URL"
-              class="rounded-lg shadow-lg border"
+              class="rounded-lg shadow-lg border cursor-pointer hover:opacity-80 transition-opacity"
+              @click="
+                openPopup(
+                  '/images/共有_2.png',
+                  'ブラウザのアドレスバーに表示された専用URL'
+                )
+              "
             />
           </div>
         </div>
@@ -73,7 +85,13 @@
             <img
               src="/images/共有_3.png"
               alt="DiscordでカレンダーのURLを共有している様子"
-              class="rounded-lg shadow-lg border"
+              class="rounded-lg shadow-lg border cursor-pointer hover:opacity-80 transition-opacity"
+              @click="
+                openPopup(
+                  '/images/共有_3.png',
+                  'DiscordでカレンダーのURLを共有している様子'
+                )
+              "
             />
           </div>
         </div>
@@ -92,7 +110,13 @@
             <img
               src="/images/共有_4.gif"
               alt="参加者が共有されたカレンダーに予定を入力する操作GIF"
-              class="rounded-lg shadow-lg border"
+              class="rounded-lg shadow-lg border cursor-pointer hover:opacity-80 transition-opacity"
+              @click="
+                openPopup(
+                  '/images/共有_4.gif',
+                  '参加者が共有されたカレンダーに予定を入力する操作GIF'
+                )
+              "
             />
           </div>
         </div>
@@ -100,10 +124,31 @@
     </div>
   </div>
   <Footer />
+  <PopupImg
+    :is-visible="popupVisible"
+    :image-src="popupImageSrc"
+    :image-alt="popupImageAlt"
+    @close="closePopup"
+  />
 </template>
 
 <script setup lang="ts">
 import WelcomeHeader from "~/components/header/WelcomeHeader.vue";
 import Footer from "~/components/footer/Footer.vue";
 import NavigationSection from "~/components/welcome/sections/NavigationSection.vue";
+import PopupImg from "~/components/welcome/PopupImg.vue";
+
+const popupVisible = ref(false);
+const popupImageSrc = ref("");
+const popupImageAlt = ref("");
+
+const openPopup = (src: string, alt: string) => {
+  popupImageSrc.value = src;
+  popupImageAlt.value = alt;
+  popupVisible.value = true;
+};
+
+const closePopup = () => {
+  popupVisible.value = false;
+};
 </script>
