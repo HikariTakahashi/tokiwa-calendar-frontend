@@ -190,7 +190,6 @@ onMounted(() => {
 
     <!-- カレンダー部分 -->
     <template v-if="!isLoading">
-      <CalendarWeeks />
       <div class="h-full overflow-y-auto">
         <Calendar
           :calendar-days="calendarDays"
