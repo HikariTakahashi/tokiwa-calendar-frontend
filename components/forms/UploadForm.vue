@@ -13,9 +13,17 @@
       <div
         class="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pt-6"
       >
-        <h2 class="text-xl font-bold border-b-2 border-gray-200">
-          時間データ一覧
-        </h2>
+        <div class="flex flex-col sm:flex-row items-center gap-8">
+          <h2 class="text-xl font-bold border-b-2 border-gray-200">
+            時間データ一覧
+          </h2>
+          <div v-if="isSync">
+            <Switch
+              v-model="showOverlappingTime"
+              label="重なる時間のみ表示する"
+            />
+          </div>
+        </div>
         <button
           @click="emit('close')"
           class="text-gray-500 hover:text-gray-700"
@@ -38,6 +46,13 @@
           v-else
           v-for="[date, timeSlots] in Object.entries(displayData)
             .filter(([date, slots]) => date && slots)
+            .filter(([date, slots]) => {
+              // 重複時刻表示モードの場合、重複する時刻が存在する日付のみを表示
+              if (showOverlappingTime) {
+                return getOverlapData(date).length > 0;
+              }
+              return true;
+            })
             .sort(([dateA], [dateB]) => {
               const dateAObj = new Date(dateA);
               const dateBObj = new Date(dateB);
@@ -69,29 +84,57 @@
             </span>
           </div>
           <div class="text-black whitespace-pre-line">
-            <template v-if="Array.isArray(timeSlots) && timeSlots.length > 0">
-              <div v-for="(slot, index) in timeSlots" :key="index">
-                <span
-                  v-if="slot && slot.username"
-                  class="font-bold px-1.5 rounded-md text-white"
-                  :style="{ backgroundColor: slot.userColor || '#3b82f6' }"
-                >
-                  {{ slot.username }}
-                </span>
-                {{ slot ? formatTimeForDisplay([slot]) : "無効なデータ" }}
+            <!-- 重複時刻表示モード -->
+            <template v-if="showOverlappingTime">
+              <div
+                v-for="(overlapSlot, index) in getOverlapData(date)"
+                :key="index"
+                class="mb-2"
+              >
+                <div class="flex flex-wrap gap-1 mb-1">
+                  <span
+                    v-for="(username, userIndex) in overlapSlot.usernames"
+                    :key="userIndex"
+                    class="font-bold px-1.5 rounded-md text-white text-sm"
+                    :style="{
+                      backgroundColor:
+                        overlapSlot.userColors[userIndex] || '#3b82f6',
+                    }"
+                  >
+                    {{ username }}
+                  </span>
+                </div>
+                <div class="text-blue-600 font-semibold">
+                  {{ formatOverlapTimeForDisplay(overlapSlot) }}
+                </div>
               </div>
             </template>
-            <template v-else-if="timeSlots && typeof timeSlots === 'object'">
-              <span
-                v-if="timeSlots.username"
-                :style="{ color: timeSlots.userColor || '#3b82f6' }"
-              >
-                {{ timeSlots.username }}:
-              </span>
-              {{ formatTimeForDisplay([timeSlots]) }}
-            </template>
+            <!-- 通常表示モード -->
             <template v-else>
-              <span class="text-red-500">無効なデータ</span>
+              <template v-if="Array.isArray(timeSlots) && timeSlots.length > 0">
+                <div v-for="(slot, index) in timeSlots" :key="index">
+                  <span
+                    v-if="slot && slot.username"
+                    class="font-bold px-1.5 rounded-md text-white"
+                    :style="{ backgroundColor: slot.userColor || '#3b82f6' }"
+                  >
+                    {{ slot.username }}
+                  </span>
+                  {{ slot ? formatTimeForDisplay([slot]) : "無効なデータ" }}
+                </div>
+              </template>
+              <template v-else-if="timeSlots && typeof timeSlots === 'object'">
+                <span
+                  v-if="timeSlots.username"
+                  :style="{ color: timeSlots.userColor || '#3b82f6' }"
+                >
+                  {{ timeSlots.username }}:
+                </span>
+                {{ formatTimeForDisplay([timeSlots]) }}
+              </template>
+              <template v-else>
+                <span class="text-red-500">無効なデータ</span>
+              </template>
             </template>
           </div>
         </div>
@@ -114,11 +157,7 @@
           >
             共有
           </buttons-square>
-          <buttons-square
-            v-else
-            @click="syncData"
-            color="bg-blue-300"
-          >
+          <buttons-square v-else @click="syncData" color="bg-blue-300">
             再同期
           </buttons-square>
         </div>
@@ -195,20 +234,25 @@
                   maxlength="40"
                 />
                 <!-- 警告欄 -->
-                 <div class="flex flex-row gap-x-2 items-center justify-between">
-                  
-                <div v-if="usernameErrors.length > 0" class="text-red-500 text-sm mt-1">
-                  <div v-for="error in usernameErrors" :key="error" class="flex items-center gap-1">
-                    <UIcon name="ic:sharp-error" class="size-4" />
-                    <span>{{ error }}</span>
+                <div class="flex flex-row gap-x-2 items-center justify-between">
+                  <div
+                    v-if="usernameErrors.length > 0"
+                    class="text-red-500 text-sm mt-1"
+                  >
+                    <div
+                      v-for="error in usernameErrors"
+                      :key="error"
+                      class="flex items-center gap-1"
+                    >
+                      <UIcon name="ic:sharp-error" class="size-4" />
+                      <span>{{ error }}</span>
+                    </div>
+                  </div>
+                  <div class="text-gray-500 text-xs text-right">
+                    {{ username.length }}/40
                   </div>
                 </div>
-                <div class="text-gray-500 text-xs text-right">
-                  {{ username.length }}/40
-                </div>
-              </div>
                 <!-- 文字数表示 -->
-                
               </div>
               <div class="flex flex-col gap-y-1 w-full">
                 <p class="font-bold border-b-2 border-gray-600 sm:w-1/4">
@@ -220,9 +264,16 @@
                     <buttons-square
                       @click="confirmSync"
                       color="bg-green-300"
-                      :isUse="username.length > 0 && !isConfirming && usernameErrors.length === 0"
+                      :isUse="
+                        username.length > 0 &&
+                        !isConfirming &&
+                        usernameErrors.length === 0
+                      "
                     >
-                      <div v-if="isConfirming" class="flex items-center justify-center">
+                      <div
+                        v-if="isConfirming"
+                        class="flex items-center justify-center"
+                      >
                         <UIcon name="line-md:loading-loop" class="size-6" />
                       </div>
                       <span v-else>確定</span>
@@ -243,7 +294,11 @@ import { onMounted, onUnmounted, ref, watch } from "vue";
 import { copyToClipboard } from "@/utils/CopyDate";
 import { useAPI } from "@/composables/useAPI";
 import { useTimeUtils } from "@/utils/TimeUtils";
-import { validateUsername, applyUsernameRestrictions } from "@/utils/ArrayString";
+import { useOverlapTimeUtils } from "@/utils/OverlapTimeUtils";
+import {
+  validateUsername,
+  applyUsernameRestrictions,
+} from "@/utils/ArrayString";
 import ColorPicker from "@/components/buttons/ColorPicker.vue";
 import Switch from "~/components/buttons/Switch.vue";
 
@@ -273,6 +328,8 @@ const showSyncInput = ref(false);
 const username = ref("");
 const userColor = ref("#3b82f6");
 const { formatTimeForDisplay } = useTimeUtils();
+const { generateOverlapDisplayData, formatOverlapTimeForDisplay } =
+  useOverlapTimeUtils();
 const { createNewSpace } = useAPI();
 const enablePeriodSetting = ref(false);
 const allowOtherUserEdit = ref(false);
@@ -280,6 +337,8 @@ const startDate = ref("");
 const endDate = ref("");
 const isConfirming = ref(false);
 const usernameErrors = ref([]);
+// showOverlapsは削除し、showOverlappingTimeを使用
+const showOverlappingTime = ref(false);
 
 watch(
   () => props.timeData,
@@ -354,7 +413,26 @@ const formatDate = (dateString) => {
 };
 
 const handleCopy = () => {
-  copyToClipboard(displayData.value);
+  if (showOverlappingTime.value) {
+    // 重複時刻表示モードの場合、重複データのみをコピー
+    const overlapData = {};
+    for (const [date, timeSlots] of Object.entries(displayData.value)) {
+      if (Array.isArray(timeSlots) && timeSlots.length > 0) {
+        const overlaps = getOverlapData(date);
+        if (overlaps.length > 0) {
+          overlapData[date] = overlaps.map((overlap) => ({
+            start: overlap.start,
+            end: overlap.end,
+            usernames: overlap.usernames,
+            userColors: overlap.userColors,
+          }));
+        }
+      }
+    }
+    copyToClipboard(overlapData);
+  } else {
+    copyToClipboard(displayData.value);
+  }
 };
 
 const generateRandomString = (length = 8) => {
@@ -459,10 +537,21 @@ const handleUsernameInput = () => {
   if (restrictedUsername !== username.value) {
     username.value = restrictedUsername;
   }
-  
+
   // バリデーションを実行
   const validation = validateUsername(username.value);
   usernameErrors.value = validation.errors;
+};
+
+const getOverlapData = (date) => {
+  if (!displayData.value[date] || !Array.isArray(displayData.value[date])) {
+    return [];
+  }
+
+  const overlapData = generateOverlapDisplayData({
+    [date]: displayData.value[date],
+  });
+  return overlapData[date]?.overlaps || [];
 };
 
 onMounted(() => {
