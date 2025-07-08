@@ -7,7 +7,7 @@
   <div class="flex flex-row w-full pt-10">
     <NavigationSection />
     <div
-      class="flex flex-col w-5/6 h-auto min-h-screen py-10 sm:px-10 border-l-2 border-gray-200"
+      class="flex flex-col w-full md:w-5/6 h-auto min-h-screen py-10 sm:px-10 md:border-l-2 border-gray-200 md:pt-10 pt-20"
     >
       <div class="flex flex-col gap-y-2 px-4">
         <h1 class="text-3xl sm:text-4xl font-bold">コピーモードの使い方</h1>
@@ -32,7 +32,13 @@
             <img
               src="/images/コピーモード_1.png"
               alt="コピーしたい予定が入力されたカレンダー"
-              class="rounded-lg shadow-lg border"
+              class="rounded-lg shadow-lg border cursor-pointer hover:opacity-80 transition-opacity"
+              @click="
+                openPopup(
+                  '/images/コピーモード_1.png',
+                  'コピーしたい予定が入力されたカレンダー'
+                )
+              "
             />
           </div>
         </div>
@@ -50,7 +56,13 @@
             <img
               src="/images/コピーモード_2.png"
               alt="コピーアイコンをクリックする箇所の説明"
-              class="rounded-lg shadow-lg border"
+              class="rounded-lg shadow-lg border cursor-pointer hover:opacity-80 transition-opacity"
+              @click="
+                openPopup(
+                  '/images/コピーモード_2.png',
+                  'コピーアイコンをクリックする箇所の説明'
+                )
+              "
             />
           </div>
         </div>
@@ -66,7 +78,13 @@
             <img
               src="/images/コピーモード_3.gif"
               alt="他の日付に予定を貼り付ける操作のGIFアニメーション"
-              class="rounded-lg shadow-lg border"
+              class="rounded-lg shadow-lg border cursor-pointer hover:opacity-80 transition-opacity"
+              @click="
+                openPopup(
+                  '/images/コピーモード_3.gif',
+                  '他の日付に予定を貼り付ける操作のGIFアニメーション'
+                )
+              "
             />
           </div>
         </div>
@@ -74,10 +92,31 @@
     </div>
   </div>
   <Footer />
+  <PopupImg
+    :is-visible="popupVisible"
+    :image-src="popupImageSrc"
+    :image-alt="popupImageAlt"
+    @close="closePopup"
+  />
 </template>
 
 <script setup lang="ts">
 import WelcomeHeader from "~/components/header/WelcomeHeader.vue";
 import Footer from "~/components/footer/Footer.vue";
 import NavigationSection from "~/components/welcome/sections/NavigationSection.vue";
+import PopupImg from "~/components/welcome/PopupImg.vue";
+
+const popupVisible = ref(false);
+const popupImageSrc = ref("");
+const popupImageAlt = ref("");
+
+const openPopup = (src: string, alt: string) => {
+  popupImageSrc.value = src;
+  popupImageAlt.value = alt;
+  popupVisible.value = true;
+};
+
+const closePopup = () => {
+  popupVisible.value = false;
+};
 </script>
