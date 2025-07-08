@@ -7,7 +7,7 @@
   <div class="flex flex-row w-full pt-10">
     <NavigationSection />
     <div
-      class="flex flex-col w-5/6 h-auto min-h-screen py-12 sm:px-16 border-l-2 border-gray-200"
+      class="flex flex-col w-full md:w-5/6 h-auto min-h-screen py-12 sm:px-16 md:border-l-2 border-gray-200 md:pt-12 pt-20"
     >
       <div class="flex flex-col gap-y-2">
         <h1 class="text-3xl sm:text-4xl font-bold">Introduction</h1>
