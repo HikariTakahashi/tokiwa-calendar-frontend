@@ -6,8 +6,10 @@ import { useDateUtils } from "@/utils/DateUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import CalendarHeader from "@/components/header/CalendarHeader.vue";
 import CopyModeHeader from "@/components/header/CopyModeHeader.vue";
+import LoadingHeader from "@/components/header/LoadingHeader.vue";
 import Calendar from "@/components/calendar/Calendar.vue";
 import CalendarWeeks from "@/components/calendar/CalendarWeeks.vue";
+import Loading from "@/components/background/loading.vue";
 import { useAPI, type TimeData } from "@/composables/useAPI";
 
 interface CalendarDay {
@@ -17,6 +19,7 @@ interface CalendarDay {
 
 const route = useRoute();
 const showIDsUploadForm = ref(false);
+const isLoading = ref(true);
 const timeData = ref<TimeData>({
   events: {},
   spaceId: "",
@@ -84,6 +87,7 @@ const handlePrevMonth = () => {
 
 const fetchSpaceDataFromServer = async () => {
   try {
+    isLoading.value = true;
     const spaceId = route.params.id as string;
     const response = await fetchSpaceDataFromAPI(spaceId);
 
@@ -130,6 +134,8 @@ const fetchSpaceDataFromServer = async () => {
       allowOtherEdit: false,
     };
     updateCalendarDays();
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -140,7 +146,20 @@ onMounted(() => {
 
 <template>
   <div class="h-screen flex flex-col">
+    <!-- ローディング中のヘッダー -->
+    <LoadingHeader
+      v-if="isLoading"
+      :current-year="currentYear"
+      :current-month="currentMonth"
+      :current-day="currentDay"
+      :current-week="currentWeek"
+      :time-data="timeData.events"
+      :space-id="route.params.id as string"
+    />
+
+    <!-- 通常のヘッダー -->
     <component
+      v-else
       :is="isCopyMode ? CopyModeHeader : CalendarHeader"
       :current-year="currentYear"
       :current-month="currentMonth"
@@ -155,21 +174,28 @@ onMounted(() => {
       @close-copy-mode="closeCopyMode"
       @cancel-copy-mode="handleCancelCopyMode"
     />
-    <CalendarWeeks />
-    <div class="h-full overflow-y-auto">
-      <Calendar
-        :calendar-days="calendarDays"
-        :year="currentYear"
-        :month="currentMonth"
-        :is-copy-mode="isCopyMode"
-        :space-id="route.params.id as string"
-        :time-data="timeData"
-        @save="handleCalendarSave"
-        @delete="deleteTimeData"
-        @update:time-data="updateTimeData"
-        @update:is-copy-mode="updateIsCopyMode"
-        @cancel-copy-mode="handleCancelCopyMode"
-      />
-    </div>
+
+    <!-- ローディング中のオーバーレイ -->
+    <Loading v-if="isLoading" />
+
+    <!-- カレンダー部分 -->
+    <template v-if="!isLoading">
+      <CalendarWeeks />
+      <div class="h-full overflow-y-auto">
+        <Calendar
+          :calendar-days="calendarDays"
+          :year="currentYear"
+          :month="currentMonth"
+          :is-copy-mode="isCopyMode"
+          :space-id="route.params.id as string"
+          :time-data="timeData"
+          @save="handleCalendarSave"
+          @delete="deleteTimeData"
+          @update:time-data="updateTimeData"
+          @update:is-copy-mode="updateIsCopyMode"
+          @cancel-copy-mode="handleCancelCopyMode"
+        />
+      </div>
+    </template>
   </div>
 </template>
