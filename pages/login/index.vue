@@ -35,7 +35,7 @@
                 パスワードを入力してください
               </p>
             </div>
-            <div v-if="!isDevelopment" class="flex flex-col gap-y-2">
+            <div class="flex flex-col gap-y-2">
               <h5 class="text-sm text-gray-500">セキュリティ確認</h5>
               <Turnstile
                 ref="turnstileRef"
@@ -148,9 +148,6 @@ const isLoading = ref(false);
 const email = ref("");
 const password = ref("");
 
-// 開発環境かどうかを判定
-const isDevelopment = computed(() => process.env.NODE_ENV === "development");
-
 // コンポーネントマウント時にエラー状態をリセット
 onMounted(() => {
   loginError.value = "";
@@ -235,8 +232,8 @@ const handleLogin = async () => {
   turnstileError.value = false;
 
   try {
-    // Turnstileトークンの検証（開発環境ではスキップ）
-    if (turnstileToken.value && !isDevelopment.value) {
+    // Turnstileトークンの検証
+    if (turnstileToken.value) {
       try {
         const verificationResult = await $fetch<{ success: boolean }>(
           "/api/verify-turnstile",
@@ -259,7 +256,6 @@ const handleLogin = async () => {
         isLoading.value = false;
         return;
       }
-    } else if (isDevelopment.value) {
     }
 
     // メールアドレスの前処理（空白除去、小文字化）
