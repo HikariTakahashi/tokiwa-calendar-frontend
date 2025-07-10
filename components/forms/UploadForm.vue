@@ -154,7 +154,7 @@
           <buttons-square
             @click="handleCopy"
             color="bg-gray-300"
-            :isUse="Object.keys(displayData).length > 0"
+            :isUse="hasOwnInputData()"
           >
             コピー
           </buttons-square>
@@ -162,11 +162,16 @@
             v-if="!isSync"
             @click="syncData"
             color="bg-blue-300"
-            :isUse="Object.keys(displayData).length > 0"
+            :isUse="hasOwnInputData()"
           >
             共有
           </buttons-square>
-          <buttons-square v-else @click="syncData" color="bg-blue-300">
+          <buttons-square
+            v-else
+            @click="syncData"
+            color="bg-blue-300"
+            :isUse="hasOwnInputData() && !showSyncInput"
+          >
             再同期
           </buttons-square>
         </div>
@@ -542,6 +547,20 @@ const getOverlapData = (date) => {
     [date]: displayData.value[date],
   });
   return overlapData[date]?.overlaps || [];
+};
+
+// 自身の入力データの有無を判定する関数
+const hasOwnInputData = () => {
+  for (const [date, timeSlots] of Object.entries(displayData.value)) {
+    if (Array.isArray(timeSlots) && timeSlots.length > 0) {
+      // ユーザーネームが存在しないスロットがあるかチェック
+      const hasOwnInput = timeSlots.some((slot) => slot && !slot.username);
+      if (hasOwnInput) {
+        return true;
+      }
+    }
+  }
+  return false;
 };
 
 onMounted(() => {
