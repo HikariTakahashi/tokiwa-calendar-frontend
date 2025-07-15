@@ -2,22 +2,16 @@
   <div
     class="flex flex-col sm:flex-row justify-between items-center py-2 sx:py-1 px-2"
   >
-    <div class="flex flex-row">
-      <div
-        class="flex items-center text-2xl font-bold mb-2 sm:mb-0 cursor-pointer"
-        @click="navigateToWelcome"
+    <div class="flex flex-row items-center gap-x-2">
+      <button
+        @click="openMenu"
+        class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200"
       >
-        <h1 class="text-blue-500 font-mono text-lg sm:text-2xl">Toki</h1>
-        <h1 class="text-green-500 font-mono text-lg sm:text-2xl">Wa</h1>
-        <h1 class="pl-1 font-mono text-lg sm:text-2xl">Calendar</h1>
-      </div>
-      <h2 class="pl-3 text-sm sm:text-xl font-bold font-mono">
-        予定調整モード
-      </h2>
-      <h2
-        v-if="isSync"
-        class="text-blue-500 pl-3 sm:text-xl font-bold font-mono"
-      >
+        <UIcon name="ic:sharp-density-medium" class="size-5" />
+      </button>
+      <Title />
+      <h2 class="text-sm sm:text-xl font-bold font-mono">予定調整モード</h2>
+      <h2 v-if="isSync" class="text-blue-500 sm:text-xl font-bold font-mono">
         同期中
       </h2>
     </div>
@@ -57,6 +51,7 @@ import { ref } from "vue";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import UploadForm from "@/components/forms/UploadForm.vue";
 import { useRouter } from "vue-router";
+import Title from "@/components/calendar/Title.vue";
 
 const props = defineProps<{
   currentYear: number;
@@ -79,6 +74,7 @@ const emit = defineEmits<{
   (e: "nextMonth"): void;
   (e: "closeCopyMode"): void;
   (e: "cancelCopyMode"): void;
+  (e: "toggleSideMenu"): void;
 }>();
 
 const openForm = () => {
@@ -100,5 +96,8 @@ const nextMonth = () => {
 
 const navigateToWelcome = () => {
   router.push("/welcome");
+};
+const openMenu = () => {
+  emit("toggleSideMenu");
 };
 </script>
