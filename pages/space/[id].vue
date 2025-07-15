@@ -8,7 +8,6 @@ import CalendarHeader from "@/components/header/CalendarHeader.vue";
 import CopyModeHeader from "@/components/header/CopyModeHeader.vue";
 import LoadingHeader from "@/components/header/LoadingHeader.vue";
 import Calendar from "@/components/calendar/Calendar.vue";
-import CalendarWeeks from "@/components/calendar/CalendarWeeks.vue";
 import Loading from "@/components/background/loading.vue";
 import { useAPI, type TimeData } from "@/composables/useAPI";
 
@@ -19,6 +18,7 @@ interface CalendarDay {
 
 const route = useRoute();
 const showIDsUploadForm = ref(false);
+const showSideMenu = ref(false);
 const isLoading = ref(true);
 const timeData = ref<TimeData>({
   events: {},
@@ -69,6 +69,10 @@ const updateIsCopyMode = (value: boolean) => {
 
 const closeCopyMode = () => {
   isCopyMode.value = false;
+};
+
+const toggleSideMenu = () => {
+  showSideMenu.value = !showSideMenu.value;
 };
 
 const handleCancelCopyMode = () => {
@@ -173,6 +177,7 @@ onMounted(() => {
       @open-form="openForm"
       @close-copy-mode="closeCopyMode"
       @cancel-copy-mode="handleCancelCopyMode"
+      @toggle-side-menu="toggleSideMenu"
     />
 
     <!-- ローディング中のオーバーレイ -->
@@ -180,7 +185,6 @@ onMounted(() => {
 
     <!-- カレンダー部分 -->
     <template v-if="!isLoading">
-      <CalendarWeeks />
       <div class="h-full overflow-y-auto">
         <Calendar
           :calendar-days="calendarDays"
@@ -189,6 +193,7 @@ onMounted(() => {
           :is-copy-mode="isCopyMode"
           :space-id="route.params.id as string"
           :time-data="timeData"
+          :show-side-menu="showSideMenu"
           @save="handleCalendarSave"
           @delete="deleteTimeData"
           @update:time-data="updateTimeData"
