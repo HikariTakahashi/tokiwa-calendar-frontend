@@ -23,10 +23,10 @@
               <UIcon name="ic:baseline-settings" class="size-5" />
             </button> -->
           </div>
-          <div class="flex flex-row mb-2">
+          <div class="flex items-center  flex-row pb-2">
             <h4 class="text-lg text-gray-800">日付をインポートする</h4>
             <h6
-              class="font-bold ml-2 mr-4 bg-blue-500 rounded-sm px-1.5 text-white font-mono"
+              class="font-bold ml-2 mr-4 mt-1 bg-blue-500 rounded-sm px-1.5 text-white font-mono"
             >
               Beta
             </h6>
