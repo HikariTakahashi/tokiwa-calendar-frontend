@@ -1,0 +1,115 @@
+/* ダークモードを完全に無効化するグローバルスタイル */
+
+/* ルート要素の強制ライトモード設定 */
+:root {
+  color-scheme: light !important;
+}
+
+html {
+  color-scheme: light !important;
+}
+
+html.dark {
+  color-scheme: light !important;
+}
+
+html.light {
+  color-scheme: light !important;
+}
+
+/* ダークモードクラスを無効化 */
+.dark {
+  color-scheme: light !important;
+}
+
+/* すべての要素でライトモードを強制 */
+* {
+  color-scheme: light !important;
+}
+
+/* Nuxt UIのダークモードスタイルを上書き */
+.dark * {
+  color-scheme: light !important;
+}
+
+/* 背景色を強制的にライトに */
+.dark {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.dark body {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* テキストカラーを強制的にダークに */
+.dark * {
+  color: inherit !important;
+}
+
+/* 特定のコンポーネントのダークモードスタイルを上書き */
+.dark .bg-gray-900 {
+  background-color: #ffffff !important;
+}
+
+.dark .text-white {
+  color: #000000 !important;
+}
+
+.dark .text-gray-100 {
+  color: #000000 !important;
+}
+
+.dark .text-gray-200 {
+  color: #000000 !important;
+}
+
+.dark .text-gray-300 {
+  color: #000000 !important;
+}
+
+.dark .border-gray-700 {
+  border-color: #d1d5db !important;
+}
+
+.dark .border-gray-800 {
+  border-color: #d1d5db !important;
+}
+
+/* ボタンやフォーム要素のダークモードスタイルを上書き */
+.dark button {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #d1d5db !important;
+}
+
+.dark input {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #d1d5db !important;
+}
+
+.dark textarea {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #d1d5db !important;
+}
+
+/* カードやコンテナのダークモードスタイルを上書き */
+.dark .bg-gray-800 {
+  background-color: #ffffff !important;
+}
+
+.dark .bg-gray-700 {
+  background-color: #f9fafb !important;
+}
+
+/* ホバー状態もライトモードに */
+.dark .hover\:bg-gray-700:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.dark .hover\:bg-gray-800:hover {
+  background-color: #f9fafb !important;
+}
