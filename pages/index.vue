@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen flex flex-col">
+  <div class="h-full flex flex-col">
     <component
       :is="isCopyMode ? CopyModeHeader : CalendarHeader"
       :current-year="currentYear"
@@ -13,9 +13,9 @@
       @prev-month="handlePrevMonth"
       @close-copy-mode="closeCopyMode"
       @cancel-copy-mode="handleCancelCopyMode"
-      @toggle-side-menu="toggleSideMenu"
+      @toggleSideMenu="toggleSideMenu"
     />
-    <div class="h-full overflow-y-auto">
+    <div class="flex-1 min-h-0">
       <Calendar
         :calendar-days="calendarDays"
         :year="currentYear"
@@ -30,6 +30,7 @@
         @update:is-copy-mode="updateIsCopyMode"
         @cancel-copy-mode="handleCancelCopyMode"
         @close-side-menu="toggleSideMenu"
+        @import-complete="handleImportComplete"
       />
     </div>
   </div>
@@ -40,6 +41,7 @@ import { ref } from "vue";
 import CalendarHeader from "@/components/header/CalendarHeader.vue";
 import CopyModeHeader from "@/components/header/CopyModeHeader.vue";
 import Calendar from "@/components/calendar/Calendar.vue";
+
 import { useDateUtils } from "@/utils/DateUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import type { TimeData } from "@/composables/useAPI";
@@ -111,4 +113,19 @@ const toggleSideMenu = () => {
   showSideMenu.value = !showSideMenu.value;
 };
 
+const handleImportComplete = (importedData: any[]) => {
+  const updatedEvents = { ...timeData.value.events };
+
+  importedData.forEach((item) => {
+    const { date, timeSlots } = item;
+    if (timeSlots && timeSlots.length > 0) {
+      updatedEvents[date] = timeSlots;
+    }
+  });
+
+  timeData.value = {
+    ...timeData.value,
+    events: updatedEvents,
+  };
+};
 </script>
