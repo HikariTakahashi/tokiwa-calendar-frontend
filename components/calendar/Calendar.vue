@@ -1,12 +1,19 @@
 <template>
-  <div class="flex h-full">
-    <SideMenu :show="showSideMenu" @close="closeSideMenu" />
+  <div class="relative h-full flex flex-col">
+    <!-- サイドメニューをヘッダーの下、カレンダーの左側に配置 -->
+    <SideMenu
+      :show="props.showSideMenu"
+      @toggleSideMenu="toggleSideMenu"
+      @import-complete="handleImportComplete"
+    />
+
     <div
       class="flex-1 flex flex-col transition-all duration-300 ease-in-out"
-      :class="showSideMenu && !isMobile ? 'ml-80' : 'ml-0'">
+      :class="props.showSideMenu && !isMobile ? 'ml-80' : 'ml-0'"
+    >
       <CalendarWeek />
       <div
-        class="grid grid-cols-7 grid-rows-6 gap-0.5 sm:gap-2 flex-1 sm:p-1.5"
+        class="grid grid-cols-7 grid-rows-6 gap-0.5 sm:gap-2 flex-1 sm:p-1.5 min-h-0"
       >
         <div
           v-for="date in calendarDays"
@@ -106,8 +113,8 @@ import { useTimeUtils } from "@/utils/TimeUtils";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import { useAPI, type TimeData } from "@/composables/useAPI";
-import SideMenu from "@/components/calendar/SideMenu.vue";
 import CalendarWeek from "@/components/calendar/CalendarWeeks.vue";
+import SideMenu from "@/components/calendar/SideMenu.vue";
 
 interface CalendarDay {
   date: string;
@@ -133,7 +140,8 @@ const emit = defineEmits<{
   (e: "update:time-data", data: TimeData): void;
   (e: "update:is-copy-mode", value: boolean): void;
   (e: "cancel-copy-mode"): void;
-  (e: "toggle-side-menu"): void;
+  (e: "toggleSideMenu"): void;
+  (e: "import-complete", data: any[]): void;
 }>();
 
 const { formatTimeForDisplay } = useTimeUtils();
@@ -176,6 +184,24 @@ const onDelete = async (data: {
   userTimeSlots?: TimeSlot[];
 }) => {
   emit("delete", data);
+};
+
+const handleImportComplete = (importedData: any[]) => {
+  const updatedEvents = { ...props.timeData.events };
+
+  importedData.forEach((item) => {
+    const { date, timeSlots } = item;
+    if (timeSlots && timeSlots.length > 0) {
+      updatedEvents[date] = timeSlots;
+    }
+  });
+
+  const updatedTimeData = {
+    ...props.timeData,
+    events: updatedEvents,
+  };
+
+  emit("update:time-data", updatedTimeData);
 };
 
 const isCurrentMonth = (dateString: string): boolean => {
@@ -239,40 +265,6 @@ const getTimeSlots = (date: string): TimeSlot[] => {
   }));
 };
 
-const getTimeSlotStyle = (date: string) => {
-  return {};
-};
-
-const fetchDataFromAPI = async () => {
-  if (!props.spaceId) return;
-
-  try {
-    const response = await fetchSpaceData(props.spaceId);
-    emit("update:time-data", response);
-  } catch (error) {
-    console.error("データの取得に失敗しました:", error);
-  }
-};
-
-const syncDataToAPI = async () => {
-  if (!props.spaceId) return;
-
-  try {
-    const response = await syncTimeData(
-      {
-        events: props.timeData.events,
-        spaceId: props.spaceId,
-        username: "",
-        userColor: "",
-      },
-      props.spaceId
-    );
-    console.log("データの同期が完了しました:", response);
-  } catch (error) {
-    console.error("データの同期に失敗しました:", error);
-  }
-};
-
 const hasUsernameInDate = (date: string): boolean => {
   const timeSlot = props.timeData.events[date];
   if (!timeSlot) return false;
@@ -317,29 +309,7 @@ const isDateDisabled = (date: string): boolean => {
   return false;
 };
 
-const closeSideMenu = () => {
-  // スマホの場合は必ず閉じる、デスクトップの場合はトグル
-  if (isMobile.value) {
-    emit("toggle-side-menu");
-  }
-};
-
-const handleImportComplete = (importedData: any[]) => {
-  // インポートされたデータを既存のtimeDataに統合
-  const updatedEvents = { ...props.timeData.events };
-
-  importedData.forEach((item) => {
-    const { date, timeSlots } = item;
-    if (timeSlots && timeSlots.length > 0) {
-      updatedEvents[date] = timeSlots;
-    }
-  });
-
-  const updatedTimeData = {
-    ...props.timeData,
-    events: updatedEvents,
-  };
-
-  emit("update:time-data", updatedTimeData);
+const toggleSideMenu = () => {
+  emit("toggleSideMenu");
 };
 </script>
