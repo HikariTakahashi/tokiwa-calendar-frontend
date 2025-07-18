@@ -51,6 +51,7 @@
               if (showOverlappingTime) {
                 return getOverlapData(date).length > 0;
               }
+              // 通常モードの場合、全ての日付データを表示
               return true;
             })
             .sort(([dateA], [dateB]) => {
@@ -113,24 +114,32 @@
             <template v-else>
               <template v-if="Array.isArray(timeSlots) && timeSlots.length > 0">
                 <div v-for="(slot, index) in timeSlots" :key="index">
-                  <span
-                    v-if="slot && slot.username"
-                    class="font-bold px-1.5 rounded-md text-white"
-                    :style="{ backgroundColor: slot.userColor || '#3b82f6' }"
-                  >
-                    {{ slot.username }}
-                  </span>
-                  {{ slot ? formatTimeForDisplay([slot]) : "無効なデータ" }}
+                  <template v-if="slot && slot.username">
+                    <span
+                      class="font-bold px-1.5 rounded-md text-white"
+                      :style="{ backgroundColor: slot.userColor || '#3b82f6' }"
+                    >
+                      {{ slot.username }}
+                    </span>
+                    {{ slot ? formatTimeForDisplay([slot]) : "無効なデータ" }}
+                  </template>
+                  <template v-else-if="slot && !slot.username">
+                    <span class="text-blue-500 font-semibold"> あなた </span>
+                    {{ slot ? formatTimeForDisplay([slot]) : "無効なデータ" }}
+                  </template>
                 </div>
               </template>
               <template v-else-if="timeSlots && typeof timeSlots === 'object'">
-                <span
-                  v-if="timeSlots.username"
-                  :style="{ color: timeSlots.userColor || '#3b82f6' }"
-                >
-                  {{ timeSlots.username }}:
-                </span>
-                {{ formatTimeForDisplay([timeSlots]) }}
+                <template v-if="timeSlots.username">
+                  <span :style="{ color: timeSlots.userColor || '#3b82f6' }">
+                    {{ timeSlots.username }}:
+                  </span>
+                  {{ formatTimeForDisplay([timeSlots]) }}
+                </template>
+                <template v-else-if="!timeSlots.username">
+                  <span class="text-blue-500 font-semibold"> あなた </span>
+                  {{ formatTimeForDisplay([timeSlots]) }}
+                </template>
               </template>
               <template v-else>
                 <span class="text-red-500">無効なデータ</span>
@@ -145,7 +154,7 @@
           <buttons-square
             @click="handleCopy"
             color="bg-gray-300"
-            :isUse="Object.keys(displayData).length > 0"
+            :isUse="hasOwnInputData()"
           >
             コピー
           </buttons-square>
@@ -153,11 +162,16 @@
             v-if="!isSync"
             @click="syncData"
             color="bg-blue-300"
-            :isUse="Object.keys(displayData).length > 0"
+            :isUse="hasOwnInputData()"
           >
             共有
           </buttons-square>
-          <buttons-square v-else @click="syncData" color="bg-blue-300">
+          <buttons-square
+            v-else
+            @click="syncData"
+            color="bg-blue-300"
+            :isUse="hasOwnInputData() && !showSyncInput"
+          >
             再同期
           </buttons-square>
         </div>
@@ -343,17 +357,13 @@ const showOverlappingTime = ref(false);
 watch(
   () => props.timeData,
   (newValue) => {
-    console.log("UploadForm: timeData changed", newValue);
     // TimeDataの新しい構造に対応
     if (newValue && newValue.events) {
       displayData.value = { ...newValue.events };
-      console.log("UploadForm: using events from TimeData", displayData.value);
     } else if (newValue && typeof newValue === "object") {
       displayData.value = { ...newValue };
-      console.log("UploadForm: using direct timeData", displayData.value);
     } else {
       displayData.value = {};
-      console.log("UploadForm: no valid data, using empty object");
     }
   },
   { immediate: true }
@@ -414,24 +424,9 @@ const formatDate = (dateString) => {
 
 const handleCopy = () => {
   if (showOverlappingTime.value) {
-    // 重複時刻表示モードの場合、重複データのみをコピー
-    const overlapData = {};
-    for (const [date, timeSlots] of Object.entries(displayData.value)) {
-      if (Array.isArray(timeSlots) && timeSlots.length > 0) {
-        const overlaps = getOverlapData(date);
-        if (overlaps.length > 0) {
-          overlapData[date] = overlaps.map((overlap) => ({
-            start: overlap.start,
-            end: overlap.end,
-            usernames: overlap.usernames,
-            userColors: overlap.userColors,
-          }));
-        }
-      }
-    }
-    copyToClipboard(overlapData);
+    copyToClipboard(displayData.value, true);
   } else {
-    copyToClipboard(displayData.value);
+    copyToClipboard(displayData.value, false);
   }
 };
 
@@ -552,6 +547,20 @@ const getOverlapData = (date) => {
     [date]: displayData.value[date],
   });
   return overlapData[date]?.overlaps || [];
+};
+
+// 自身の入力データの有無を判定する関数
+const hasOwnInputData = () => {
+  for (const [date, timeSlots] of Object.entries(displayData.value)) {
+    if (Array.isArray(timeSlots) && timeSlots.length > 0) {
+      // ユーザーネームが存在しないスロットがあるかチェック
+      const hasOwnInput = timeSlots.some((slot) => slot && !slot.username);
+      if (hasOwnInput) {
+        return true;
+      }
+    }
+  }
+  return false;
 };
 
 onMounted(() => {

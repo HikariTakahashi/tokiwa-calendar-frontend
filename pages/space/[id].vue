@@ -8,7 +8,6 @@ import CalendarHeader from "@/components/header/CalendarHeader.vue";
 import CopyModeHeader from "@/components/header/CopyModeHeader.vue";
 import LoadingHeader from "@/components/header/LoadingHeader.vue";
 import Calendar from "@/components/calendar/Calendar.vue";
-import CalendarWeeks from "@/components/calendar/CalendarWeeks.vue";
 import Loading from "@/components/background/loading.vue";
 import { useAPI, type TimeData } from "@/composables/useAPI";
 
@@ -70,6 +69,10 @@ const updateIsCopyMode = (value: boolean) => {
 
 const closeCopyMode = () => {
   isCopyMode.value = false;
+};
+
+const toggleSideMenu = () => {
+  showSideMenu.value = !showSideMenu.value;
 };
 
 const handleCancelCopyMode = () => {

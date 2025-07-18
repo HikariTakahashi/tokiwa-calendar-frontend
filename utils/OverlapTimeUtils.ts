@@ -91,48 +91,40 @@ export const useOverlapTimeUtils = () => {
 
     if (validSlots.length < 2) return overlaps;
 
-    // ユーザー名ごとにグループ化
-    const userGroups = new Map<string, TimeSlot[]>();
-    validSlots.forEach((slot) => {
-      if (!userGroups.has(slot.username!)) {
-        userGroups.set(slot.username!, []);
-      }
-      userGroups.get(slot.username!)!.push(slot);
-    });
+    // 全ての時間スロットの組み合わせで重複を検出
+    for (let i = 0; i < validSlots.length; i++) {
+      for (let j = i + 1; j < validSlots.length; j++) {
+        const slot1 = validSlots[i];
+        const slot2 = validSlots[j];
+        const overlapRange = getOverlapRange(slot1, slot2);
 
-    const usernames = Array.from(userGroups.keys());
-    if (usernames.length < 2) return overlaps;
+        if (overlapRange) {
+          // 重複範囲が有効な場合のみ追加
+          const overlapStart = timeToMinutes(overlapRange.start);
+          const overlapEnd =
+            overlapRange.end === "24:00"
+              ? 24 * 60
+              : timeToMinutes(overlapRange.end);
 
-    // 全てのユーザーの組み合わせで重複をチェック
-    for (let i = 0; i < usernames.length; i++) {
-      for (let j = i + 1; j < usernames.length; j++) {
-        const user1 = usernames[i];
-        const user2 = usernames[j];
-        const slots1 = userGroups.get(user1)!;
-        const slots2 = userGroups.get(user2)!;
-
-        // 各スロットの組み合わせで重複をチェック
-        for (const slot1 of slots1) {
-          for (const slot2 of slots2) {
-            const overlapRange = getOverlapRange(slot1, slot2);
-            if (overlapRange) {
-              overlaps.push({
-                start: overlapRange.start,
-                end: overlapRange.end,
-                usernames: [user1, user2],
-                userColors: [
-                  slot1.userColor || "#3b82f6",
-                  slot2.userColor || "#3b82f6",
-                ],
-              });
-            }
+          // 重複範囲が実際に存在する場合のみ追加
+          if (overlapStart < overlapEnd) {
+            const overlapSlot = {
+              start: overlapRange.start,
+              end: overlapRange.end,
+              usernames: [slot1.username!, slot2.username!],
+              userColors: [
+                slot1.userColor || "#3b82f6",
+                slot2.userColor || "#3b82f6",
+              ],
+            };
+            overlaps.push(overlapSlot);
           }
         }
       }
     }
 
-    // 重複する時間範囲をマージ
-    return mergeOverlappingRanges(overlaps);
+    const merged = mergeOverlappingRanges(overlaps);
+    return merged;
   };
 
   /**
@@ -157,25 +149,25 @@ export const useOverlapTimeUtils = () => {
       const next = sorted[i];
 
       // 現在の範囲と次の範囲が重複しているかチェック
-      if (
-        isTimeOverlap(
-          { start: current.start, end: current.end },
-          { start: next.start, end: next.end }
-        )
-      ) {
-        // 重複している場合、範囲をマージ
-        const startA = timeToMinutes(current.start);
-        const endA =
-          current.end === "24:00" ? 24 * 60 : timeToMinutes(current.end);
-        const startB = timeToMinutes(next.start);
-        const endB = next.end === "24:00" ? 24 * 60 : timeToMinutes(next.end);
+      const currentStart = timeToMinutes(current.start);
+      const currentEnd =
+        current.end === "24:00" ? 24 * 60 : timeToMinutes(current.end);
+      const nextStart = timeToMinutes(next.start);
+      const nextEnd = next.end === "24:00" ? 24 * 60 : timeToMinutes(next.end);
 
-        const mergedStart = Math.min(startA, startB);
-        const mergedEnd = Math.max(endA, endB);
+      // 重複の定義: 時間的に重なっている場合のみ
+      // より厳密な重複チェック: 実際に時間的に重なっている場合のみ
+      const hasTimeOverlap =
+        Math.max(currentStart, nextStart) < Math.min(currentEnd, nextEnd);
+
+      if (hasTimeOverlap) {
+        // 重複している場合、実際の重複範囲のみを抽出
+        const overlapStart = Math.max(currentStart, nextStart);
+        const overlapEnd = Math.min(currentEnd, nextEnd);
 
         current = {
-          start: minutesToTime(mergedStart),
-          end: mergedEnd === 24 * 60 ? "24:00" : minutesToTime(mergedEnd),
+          start: minutesToTime(overlapStart),
+          end: overlapEnd === 24 * 60 ? "24:00" : minutesToTime(overlapEnd),
           usernames: [...new Set([...current.usernames, ...next.usernames])],
           userColors: [...new Set([...current.userColors, ...next.userColors])],
         };

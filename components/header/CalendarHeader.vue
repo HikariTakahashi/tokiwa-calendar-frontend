@@ -59,6 +59,7 @@ import type { TimeSlot } from "@/utils/TimeUtils";
 import UploadForm from "@/components/forms/UploadForm.vue";
 import { useRouter } from "vue-router";
 import Title from "@/components/calendar/Title.vue";
+
 const props = defineProps<{
   currentYear: number;
   currentMonth: number;

@@ -3,8 +3,7 @@
     <SideMenu :show="showSideMenu" @close="closeSideMenu" />
     <div
       class="flex-1 flex flex-col transition-all duration-300 ease-in-out"
-      :class="showSideMenu && !isMobile ? 'ml-80' : 'ml-0'"
-    >
+      :class="showSideMenu && !isMobile ? 'ml-80' : 'ml-0'">
       <CalendarWeek />
       <div
         class="grid grid-cols-7 grid-rows-6 gap-0.5 sm:gap-2 flex-1 sm:p-1.5"
@@ -135,7 +134,6 @@ const emit = defineEmits<{
   (e: "update:is-copy-mode", value: boolean): void;
   (e: "cancel-copy-mode"): void;
   (e: "toggle-side-menu"): void;
-  (e: "close-side-menu"): void;
 }>();
 
 const { formatTimeForDisplay } = useTimeUtils();
@@ -322,9 +320,26 @@ const isDateDisabled = (date: string): boolean => {
 const closeSideMenu = () => {
   // スマホの場合は必ず閉じる、デスクトップの場合はトグル
   if (isMobile.value) {
-    emit("close-side-menu");
-  } else {
     emit("toggle-side-menu");
   }
+};
+
+const handleImportComplete = (importedData: any[]) => {
+  // インポートされたデータを既存のtimeDataに統合
+  const updatedEvents = { ...props.timeData.events };
+
+  importedData.forEach((item) => {
+    const { date, timeSlots } = item;
+    if (timeSlots && timeSlots.length > 0) {
+      updatedEvents[date] = timeSlots;
+    }
+  });
+
+  const updatedTimeData = {
+    ...props.timeData,
+    events: updatedEvents,
+  };
+
+  emit("update:time-data", updatedTimeData);
 };
 </script>

@@ -4,7 +4,7 @@
     class="flex flex-col h-screen bg-white gap-x-4 pt-24 sm:pt-16 relative z-10"
     style="scroll-snap-align: start; scroll-snap-stop: always"
   >
-    <div class="flex flex-col text-center px-3">
+    <div class="flex flex-col items-center px-3">
       <h2 class="text-3xl sm:text-4xl font-bold">Tokiwa Calendarとは？</h2>
 
       <h5 class="sm:text-xl pt-5">
@@ -15,9 +15,16 @@
       <h5 class="sm:text-xl">
         忘れてはならない数々の「タスク」を部屋全体があなたにリマインドします。
       </h5>
+      <ButtonsSquare
+        class="w-36 my-2"
+        color="bg-blue-200"
+        @click="navigateTo('/')"
+      >
+        使ってみる
+      </ButtonsSquare>
     </div>
     <h3 class="text-3xl font-bold pt-10 pl-10">TokiWaの魅力</h3>
-    <div class="flex flex-row px-5 pb-10 flex-1">
+    <div class="flex flex-row px-5 py-2 flex-1">
       <Carousel :items="6">
         <template #default="{ index, activeIndex }">
           <Card
