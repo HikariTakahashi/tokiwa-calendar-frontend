@@ -16,7 +16,7 @@
           <div class="flex flex-row items-center justify-between mb-4">
             <h3 class="text-xl font-bold text-gray-800">メニュー</h3>
             <button
-              @click.stop="emit('settings')"
+              @click.stop="navigateTo('/settings')"
               class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 cursor-pointer"
             >
               <UIcon name="ic:baseline-settings" class="size-5" />
@@ -169,7 +169,7 @@
             <h3 class="text-xl font-bold text-gray-800">メニュー</h3>
             <div class="flex items-center gap-2">
               <button
-                @click.stop="emit('settings')"
+                @click.stop="navigateTo('/settings')"
                 class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 cursor-pointer relative z-10"
               >
                 <UIcon name="ic:baseline-settings" class="size-5" />
