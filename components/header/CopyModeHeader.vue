@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { onMounted, onBeforeUnmount } from "vue";
 import UploadForm from "@/components/forms/UploadForm.vue";
 
 defineProps({
@@ -53,27 +53,11 @@ defineProps({
   },
 });
 
-const emit = defineEmits([
-  "next-month",
-  "prev-month",
-  "close-copy-mode",
-  "cancel-copy-mode",
-]);
-
-const showModal = ref(false);
-
-const openForm = () => {
-  showModal.value = true;
-};
+const emit = defineEmits(["next-month", "prev-month", "close-copy-mode"]);
 
 const CloseCopyMode = () => {
-  showModal.value = false;
   emit("close-copy-mode");
 };
-
-// const cancelCopyMode = () => {
-//   emit("cancel-copy-mode");
-// };
 
 const handleKeyDown = (e) => {
   if (e.key === "Enter") {
