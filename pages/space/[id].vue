@@ -217,7 +217,7 @@ onMounted(() => {
           @update:time-data="updateTimeData"
           @update:is-copy-mode="updateIsCopyMode"
           @cancel-copy-mode="handleCancelCopyMode"
-          @close-side-menu="toggleSideMenu"
+          @toggleSideMenu="toggleSideMenu"
           @import-complete="handleImportComplete"
         />
       </div>
