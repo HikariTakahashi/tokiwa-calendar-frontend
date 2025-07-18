@@ -4,8 +4,9 @@
   >
     <div class="flex flex-row items-center gap-x-2 w-full sm:w-auto">
       <button
-        @click="openMenu"
-        class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200 flex-shrink-0 order-1"
+        @click="toggleSideMenu"
+        class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200 flex-shrink-0 order-1 relative z-50"
+        type="button"
       >
         <UIcon name="ic:sharp-density-medium" class="size-5" />
       </button>
@@ -57,7 +58,6 @@
 import { ref } from "vue";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import UploadForm from "@/components/forms/UploadForm.vue";
-import { useRouter } from "vue-router";
 import Title from "@/components/calendar/Title.vue";
 
 const props = defineProps<{
@@ -73,7 +73,6 @@ const props = defineProps<{
 }>();
 
 const showModal = ref(false);
-const router = useRouter();
 
 const emit = defineEmits<{
   (e: "openForm"): void;
@@ -101,7 +100,7 @@ const nextMonth = () => {
   emit("nextMonth");
 };
 
-const openMenu = () => {
+const toggleSideMenu = () => {
   emit("toggleSideMenu");
 };
 </script>
