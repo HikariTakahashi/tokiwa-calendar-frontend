@@ -5,10 +5,6 @@
     <div
       class="bg-white px-6 rounded-lg w-full sm:w-4/5 max-h-full sm:max-h-[80vh] overflow-y-auto"
     >
-      <!-- デバッグ用表示
-      <div class="text-red-500 font-bold mb-2">
-        現在のspaceId: {{ props.spaceId }}
-      </div> -->
 
       <div
         class="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pt-6"
