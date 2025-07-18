@@ -1,5 +1,3 @@
-// plugins/auth.client.ts - クライアントサイド認証初期化
-
 export default defineNuxtPlugin(() => {
   const { initializeAuth } = useAuth();
 
@@ -14,10 +12,5 @@ export default defineNuxtPlugin(() => {
         initializeAuth();
       });
     }
-
-    // onMountedでも初期化を実行
-    onMounted(() => {
-      initializeAuth();
-    });
   }
 });
