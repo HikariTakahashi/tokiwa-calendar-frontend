@@ -49,7 +49,7 @@ interface BackendAPIRequest {
   endDate: string | null;
   startDate: string | null;
   allowOtherEdit: boolean;
-  spaceId: string;
+  spaceId?: string; // オプショナルに変更（バックエンドで自動生成されるため）
 }
 
 // サインアップリクエストの型定義
@@ -205,7 +205,6 @@ export const useAPI = () => {
         endDate: requestData.endDate || null,
         startDate: requestData.startDate || null,
         allowOtherEdit: allowOtherEdit,
-        spaceId: requestData.spaceId,
       };
 
       const response = await $fetch<APIResponse>(`${API_BASE_URL}/api/time`, {
