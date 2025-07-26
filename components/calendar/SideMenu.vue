@@ -334,10 +334,12 @@ onMounted(() => {
   initializeAuth();
   checkMobile();
   window.addEventListener("resize", checkMobile);
+  window.addEventListener("keydown", handleEscapeKey);
 });
 
 onUnmounted(() => {
   window.removeEventListener("resize", checkMobile);
+  window.removeEventListener("keydown", handleEscapeKey);
 });
 
 const props = defineProps<Props>();
@@ -389,6 +391,12 @@ const handleImport = () => {
   } else {
     importError.value = result.error || "インポートに失敗しました";
     importSuccess.value = false;
+  }
+};
+
+const handleEscapeKey = (event: KeyboardEvent) => {
+  if (event.key === "Escape") {
+    emit("toggleSideMenu");
   }
 };
 </script>
