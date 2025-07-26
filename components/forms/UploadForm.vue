@@ -426,15 +426,7 @@ const handleCopy = () => {
   }
 };
 
-const generateRandomString = (length = 8) => {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
+
 
 const syncData = async () => {
   showSyncInput.value = true;
@@ -446,8 +438,6 @@ const confirmSync = async () => {
       alert("同期するデータがありません");
       return;
     }
-
-    const spaceId = props.isSync ? props.spaceId : generateRandomString();
 
     const processedData = Object.entries(displayData.value).reduce(
       (acc, [date, slots]) => {
@@ -467,10 +457,9 @@ const confirmSync = async () => {
       {}
     );
 
-    // リクエストデータの構造を変更
+    // リクエストデータの構造を変更（spaceIdはバックエンドで自動生成されるため削除）
     const requestData = {
       ...processedData, // 直接日付をキーとしたオブジェクト
-      spaceId: spaceId,
       allowOtherEdit: allowOtherUserEdit.value,
     };
 
@@ -501,9 +490,13 @@ const confirmSync = async () => {
       displayData.value = response.events;
     }
 
+    // バックエンドから返されたspaceIdを使用
+    const spaceId = response.spaceId;
+
     if (props.isSync) {
       window.location.reload();
     } else {
+      // バックエンドから取得したspaceIdでページ遷移
       await navigateTo(`/space/${spaceId}`);
     }
 
