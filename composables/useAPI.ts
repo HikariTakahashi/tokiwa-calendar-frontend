@@ -80,6 +80,19 @@ interface LoginResponse {
   error?: string;
 }
 
+// 認証リクエストの型定義
+interface VerifyRequest {
+  token: string;
+}
+
+// 認証レスポンスの型定義
+interface VerifyResponse {
+  message: string;
+  success: boolean;
+  already_verified?: boolean;
+  error?: string;
+}
+
 export const useAPI = () => {
   const config = useRuntimeConfig();
   const API_BASE_URL = config.public.apiBaseUrl;
@@ -292,11 +305,36 @@ export const useAPI = () => {
     }
   };
 
+  // 認証機能
+  const verifyEmailToken = async (token: string): Promise<VerifyResponse> => {
+    try {
+      const response = await $fetch<VerifyResponse>(`${API_BASE_URL}/api/verify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: {
+          token: token,
+        } as VerifyRequest,
+      });
+      return response;
+    } catch (error: any) {
+      console.error("認証エラー:", error);
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as VerifyResponse;
+      }
+      throw error;
+    }
+  };
+
   return {
     fetchSpaceData,
     syncTimeData,
     createNewSpace,
     signup,
     login,
+    verifyEmailToken,
   };
 };
