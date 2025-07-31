@@ -26,62 +26,41 @@
             v-if="!isAuthenticated"
             class="flex flex-col gap-y-4 items-center"
           ></div>
-          <div class="border border-gray-200 rounded-lg mb-4">
-            <button
-              @click="toggleImportAccordion"
-              class="w-full flex items-center justify-between p-2 text-left hover:bg-gray-50 rounded-lg transition-colors"
-            >
-              <div class="flex items-center">
-                <h4 class="text-gray-800">日付をインポートする</h4>
-                <h6
-                  class="font-bold ml-2 mr-4 mt-1 bg-blue-500 rounded-sm px-1.5 text-white font-mono"
-                >
-                  Beta
-                </h6>
-              </div>
-              <UIcon
-                :name="
-                  isImportAccordionOpen
-                    ? 'ic:baseline-expand-less'
-                    : 'ic:baseline-expand-more'
-                "
-                class="size-5 text-gray-600 transition-transform"
-              />
-            </button>
-
-            <Transition
-              enter-active-class="transition-all duration-200 ease-out"
-              enter-from-class="opacity-0 max-h-0"
-              enter-to-class="opacity-100 max-h-96"
-              leave-active-class="transition-all duration-200 ease-in"
-              leave-from-class="opacity-100 max-h-96"
-              leave-to-class="opacity-0 max-h-0"
-            >
-              <div v-show="isImportAccordionOpen" class="px-4 pb-4">
-                <textarea
-                  v-model="importText"
-                  placeholder="例:&#10;7/21(月):09:45~22:00&#10;7/23(水):09:00~22:00&#10;7/24(木):09:45~22:00&#10;7/25(金):09:45~18:00"
-                  class="flex w-full h-48 border justify-start items-start border-gray-300 rounded-md p-2 resize-none cursor-text"
-                />
-                <div v-if="importError" class="text-red-500 text-sm mt-2">
-                  {{ importError }}
-                </div>
-                <div v-if="importSuccess" class="text-green-500 text-sm mt-2">
-                  インポートが完了しました
-                </div>
-                <div class="flex justify-end">
-                  <buttons-square
-                    @click="handleImport"
-                    color="bg-blue-300"
-                    class="w-32 mt-4 cursor-pointer"
-                  >
-                    インポート
-                  </buttons-square>
-                </div>
-              </div>
-            </Transition>
-          </div>
-
+          <buttons-accordion title="日付をインポートする">
+            <textarea
+              v-model="importText"
+              placeholder="例:&#10;7/21(月):09:45~22:00&#10;7/23(水):09:00~22:00&#10;7/24(木):09:45~22:00&#10;7/25(金):09:45~18:00"
+              class="flex w-full h-48 border justify-start items-start border-gray-300 rounded-md p-2 resize-none cursor-text"
+            />
+            <div v-if="importError" class="text-red-500 text-sm mt-2">
+              {{ importError }}
+            </div>
+            <div v-if="importSuccess" class="text-green-500 text-sm mt-2">
+              インポートが完了しました
+            </div>
+            <div class="flex justify-end">
+              <buttons-square
+                @click="handleImport"
+                color="bg-blue-300"
+                class="w-32 mt-4 cursor-pointer"
+              >
+                インポート
+              </buttons-square>
+            </div>
+          </buttons-accordion>
+          <buttons-accordion title="TokiWa Alarmを接続">
+            <div class="flex flex-col">
+              <p class="text-sm text-gray-600 whitespace-pre-line">
+                TokiWa Alarmを接続し、部屋全体をリマインダーに。
+              </p>
+              <buttons-square
+                @click="handleConnectTokiWaAlarm"
+                color="bg-blue-200"
+                class="w-4/5 text-lg cursor-pointer"
+                >TokiWa Alarmを接続</buttons-square
+              >
+            </div>
+          </buttons-accordion>
           <div
             v-if="!isLoggedIn"
             class="flex flex-col items-center gap-y-4 px-4"
@@ -110,14 +89,14 @@
               >をご覧ください。
             </h5>
           </div>
-          <div v-else class="flex flex-col gap-y-4">
+          <div v-else class="flex flex-col gap-y-4 px-4">
             <div class="flex flex-col gap-y-2">
               <h5 class="text-sm text-gray-500">ログイン中</h5>
-              <p class="text-sm font-medium text-gray-800">{{ user?.email }}</p>
+              <p class="text-sm text-gray-600">{{ user?.email }}</p>
             </div>
             <div class="flex flex-col gap-y-2">
               <h5 class="text-sm text-gray-500">ユーザーID</h5>
-              <p class="text-xs text-gray-600 font-mono">{{ user?.uid }}</p>
+              <p class="text-xs text-gray-600">{{ user?.uid }}</p>
             </div>
             <buttons-square
               @click="handleLogout"
@@ -183,61 +162,28 @@
             </div>
           </div>
           <!-- アコーディオンメニュー: 日付をインポートする -->
-          <div class="border border-gray-200 rounded-lg mb-4">
-            <button
-              @click="toggleImportAccordion"
-              class="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 rounded-lg transition-colors"
-            >
-              <div class="flex items-center">
-                <h4 class="text-lg text-gray-800">日付をインポートする</h4>
-                <h6
-                  class="font-bold ml-2 mr-4 mt-1 bg-blue-500 rounded-sm px-1.5 text-white font-mono"
-                >
-                  Beta
-                </h6>
-              </div>
-              <UIcon
-                :name="
-                  isImportAccordionOpen
-                    ? 'ic:baseline-expand-less'
-                    : 'ic:baseline-expand-more'
-                "
-                class="size-5 text-gray-600 transition-transform"
-              />
-            </button>
-
-            <Transition
-              enter-active-class="transition-all duration-200 ease-out"
-              enter-from-class="opacity-0 max-h-0"
-              enter-to-class="opacity-100 max-h-96"
-              leave-active-class="transition-all duration-200 ease-in"
-              leave-from-class="opacity-100 max-h-96"
-              leave-to-class="opacity-0 max-h-0"
-            >
-              <div v-show="isImportAccordionOpen" class="px-4 pb-4">
-                <textarea
-                  v-model="importText"
-                  placeholder="例:&#10;7/21(月):09:45~22:00&#10;7/23(水):09:00~22:00&#10;7/24(木):09:45~22:00&#10;7/25(金):09:45~18:00"
-                  class="flex w-full h-48 border justify-start items-start border-gray-300 rounded-md p-2 resize-none cursor-text"
-                />
-                <div v-if="importError" class="text-red-500 text-sm mt-2">
-                  {{ importError }}
-                </div>
-                <div v-if="importSuccess" class="text-green-500 text-sm mt-2">
-                  インポートが完了しました
-                </div>
-                <div class="flex justify-end">
-                  <buttons-square
-                    @click="handleImport"
-                    color="bg-blue-300"
-                    class="w-24 mt-4 cursor-pointer"
-                  >
-                    インポート
-                  </buttons-square>
-                </div>
-              </div>
-            </Transition>
-          </div>
+          <buttons-accordion title="日付をインポートする" :show-beta="true">
+            <textarea
+              v-model="importText"
+              placeholder="例:&#10;7/21(月):09:45~22:00&#10;7/23(水):09:00~22:00&#10;7/24(木):09:45~22:00&#10;7/25(金):09:45~18:00"
+              class="flex w-full h-48 border justify-start items-start border-gray-300 rounded-md p-2 resize-none cursor-text"
+            />
+            <div v-if="importError" class="text-red-500 text-sm mt-2">
+              {{ importError }}
+            </div>
+            <div v-if="importSuccess" class="text-green-500 text-sm mt-2">
+              インポートが完了しました
+            </div>
+            <div class="flex justify-end">
+              <buttons-square
+                @click="handleImport"
+                color="bg-blue-300"
+                class="w-24 mt-4 cursor-pointer"
+              >
+                インポート
+              </buttons-square>
+            </div>
+          </buttons-accordion>
 
           <div
             v-if="!isAuthenticated"
@@ -305,6 +251,12 @@
       @click="emit('toggleSideMenu')"
     ></div>
   </Transition>
+
+  <!-- TokiWa Alarm Modal -->
+  <buttons-toki-wa-alarm-modal
+    :show="showTokiWaAlarmModal"
+    @close="closeTokiWaAlarmModal"
+  />
 </template>
 
 <script setup lang="ts">
@@ -355,15 +307,10 @@ const { importDateData } = useDateImportUtils();
 const importText = ref("");
 const importError = ref("");
 const importSuccess = ref(false);
+const showTokiWaAlarmModal = ref(false);
 
 // isLoggedInをisAuthenticatedと連動
 const isLoggedIn = computed(() => isAuthenticated.value);
-
-const isImportAccordionOpen = ref(false);
-
-const toggleImportAccordion = () => {
-  isImportAccordionOpen.value = !isImportAccordionOpen.value;
-};
 
 const handleCloseModal = () => {
   console.log("モーダルを閉じるボタンがクリックされました");
@@ -398,5 +345,13 @@ const handleEscapeKey = (event: KeyboardEvent) => {
   if (event.key === "Escape") {
     emit("toggleSideMenu");
   }
+};
+
+const handleConnectTokiWaAlarm = () => {
+  showTokiWaAlarmModal.value = true;
+};
+
+const closeTokiWaAlarmModal = () => {
+  showTokiWaAlarmModal.value = false;
 };
 </script>
