@@ -197,7 +197,9 @@ const onTurnstileError = () => {
 };
 
 const handleGoogleLogin = () => {
-  navigateTo("/login/google");
+  const { startGoogleAuth } = useGoogleAuth();
+  const redirectUri = `${window.location.origin}/auth/google/callback`;
+  startGoogleAuth(redirectUri);
 };
 
 const handleDiscordLogin = () => {
