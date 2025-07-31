@@ -6,7 +6,7 @@
     <NightSky class="z-[-10]" :seed="123" />
     <div class="absolute inset-0 z-50 flex items-center justify-center p-4">
       <div
-        class="bg-white rounded-lg shadow-xl w-full max-w-sm max-h-[98vh] sm:max-h-[80vh] overflow-y-auto"
+        class="bg-white rounded-lg shadow-xl w-full max-w-sm max-h-[98vh] sm:max-h-[84vh] overflow-y-auto"
       >
         <div class="p-6">
           <div class="flex flex-row items-center justify-between mb-2">
@@ -225,7 +225,7 @@ const handleSignup = async () => {
     }
 
     // サインアップ成功後の処理（ログインページにリダイレクト）
-    await navigateTo("/login");
+    await navigateTo("/signup/verification-email");
   } catch (error: any) {
     if (error.data?.error) {
       signupError.value = error.data.error;
