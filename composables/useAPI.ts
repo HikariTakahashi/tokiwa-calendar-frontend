@@ -93,6 +93,21 @@ interface VerifyResponse {
   error?: string;
 }
 
+// Google OAuth2.0認証リクエストの型定義
+interface GoogleAuthRequest {
+  code: string;
+  redirect_uri: string;
+}
+
+// Google OAuth2.0認証レスポンスの型定義
+interface GoogleAuthResponse {
+  message: string;
+  uid?: string;
+  email?: string;
+  customToken?: string;
+  error?: string;
+}
+
 export const useAPI = () => {
   const config = useRuntimeConfig();
   const API_BASE_URL = config.public.apiBaseUrl;
@@ -329,6 +344,37 @@ export const useAPI = () => {
     }
   };
 
+  // Google OAuth2.0認証機能
+  const googleAuth = async (
+    code: string,
+    redirectUri: string
+  ): Promise<GoogleAuthResponse> => {
+    try {
+      const response = await $fetch<GoogleAuthResponse>(
+        `${API_BASE_URL}/api/auth/google`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: {
+            code: code,
+            redirect_uri: redirectUri,
+          } as GoogleAuthRequest,
+        }
+      );
+      return response;
+    } catch (error: any) {
+      console.error("Google認証エラー:", error);
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as GoogleAuthResponse;
+      }
+      throw error;
+    }
+  };
+
   return {
     fetchSpaceData,
     syncTimeData,
@@ -336,5 +382,6 @@ export const useAPI = () => {
     signup,
     login,
     verifyEmailToken,
+    googleAuth,
   };
 };
