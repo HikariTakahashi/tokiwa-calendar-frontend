@@ -108,6 +108,21 @@ interface GoogleAuthResponse {
   error?: string;
 }
 
+// GitHub OAuth2.0認証リクエストの型定義
+interface GitHubAuthRequest {
+  code: string;
+  redirect_uri: string;
+}
+
+// GitHub OAuth2.0認証レスポンスの型定義
+interface GitHubAuthResponse {
+  message: string;
+  uid?: string;
+  email?: string;
+  customToken?: string;
+  error?: string;
+}
+
 export const useAPI = () => {
   const config = useRuntimeConfig();
   const API_BASE_URL = config.public.apiBaseUrl;
@@ -375,6 +390,37 @@ export const useAPI = () => {
     }
   };
 
+  // GitHub OAuth2.0認証機能
+  const githubAuth = async (
+    code: string,
+    redirectUri: string
+  ): Promise<GitHubAuthResponse> => {
+    try {
+      const response = await $fetch<GitHubAuthResponse>(
+        `${API_BASE_URL}/api/auth/github`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: {
+            code: code,
+            redirect_uri: redirectUri,
+          } as GitHubAuthRequest,
+        }
+      );
+      return response;
+    } catch (error: any) {
+      console.error("GitHub認証エラー:", error);
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as GitHubAuthResponse;
+      }
+      throw error;
+    }
+  };
+
   return {
     fetchSpaceData,
     syncTimeData,
@@ -383,5 +429,6 @@ export const useAPI = () => {
     login,
     verifyEmailToken,
     googleAuth,
+    githubAuth,
   };
 };
