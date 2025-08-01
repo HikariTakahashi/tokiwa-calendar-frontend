@@ -257,6 +257,8 @@ const handleTwitterLogin = () => {
 };
 
 const handleGitHubLogin = () => {
-  navigateTo("/login/github");
+  const { startGitHubAuth } = useGitHubAuth();
+  const redirectUri = `${window.location.origin}/auth/github/callback`;
+  startGitHubAuth(redirectUri);
 };
 </script>
