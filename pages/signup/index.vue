@@ -253,7 +253,9 @@ const handleFacebookLogin = () => {
 };
 
 const handleTwitterLogin = () => {
-  navigateTo("/login/twitter  ");
+  const { startTwitterAuth } = useTwitterAuth();
+  const redirectUri = `${window.location.origin}/auth/twitter/callback`;
+  startTwitterAuth(redirectUri);
 };
 
 const handleGitHubLogin = () => {

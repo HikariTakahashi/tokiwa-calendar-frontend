@@ -123,6 +123,21 @@ interface GitHubAuthResponse {
   error?: string;
 }
 
+// Twitter OAuth2.0認証リクエストの型定義
+interface TwitterAuthRequest {
+  code: string;
+  redirect_uri: string;
+}
+
+// Twitter OAuth2.0認証レスポンスの型定義
+interface TwitterAuthResponse {
+  message: string;
+  uid?: string;
+  email?: string;
+  customToken?: string;
+  error?: string;
+}
+
 export const useAPI = () => {
   const config = useRuntimeConfig();
   const API_BASE_URL = config.public.apiBaseUrl;
@@ -421,6 +436,37 @@ export const useAPI = () => {
     }
   };
 
+  // Twitter OAuth2.0認証機能
+  const twitterAuth = async (
+    code: string,
+    redirectUri: string
+  ): Promise<TwitterAuthResponse> => {
+    try {
+      const response = await $fetch<TwitterAuthResponse>(
+        `${API_BASE_URL}/api/auth/twitter`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: {
+            code: code,
+            redirect_uri: redirectUri,
+          } as TwitterAuthRequest,
+        }
+      );
+      return response;
+    } catch (error: any) {
+      console.error("Twitter認証エラー:", error);
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as TwitterAuthResponse;
+      }
+      throw error;
+    }
+  };
+
   return {
     fetchSpaceData,
     syncTimeData,
@@ -430,5 +476,6 @@ export const useAPI = () => {
     verifyEmailToken,
     googleAuth,
     githubAuth,
+    twitterAuth,
   };
 };
