@@ -132,6 +132,8 @@ import {
   getErrorIcon,
   getErrorClasses,
 } from "~/utils/ErrorMessages";
+import { useGitHubAuth } from "~/composables/useGitHubAuth";
+import { useGoogleAuth } from "~/composables/useGoogleAuth";
 
 const { login } = useAPI();
 const { login: authLogin } = useAuth();
@@ -202,6 +204,12 @@ const handleGoogleLogin = () => {
   startGoogleAuth(redirectUri);
 };
 
+const handleGitHubLogin = () => {
+  const { startGitHubAuth } = useGitHubAuth();
+  const redirectUri = `${window.location.origin}/auth/github/callback`;
+  startGitHubAuth(redirectUri);
+};
+
 const handleDiscordLogin = () => {
   navigateTo("/login/discord");
 };
@@ -212,10 +220,6 @@ const handleFacebookLogin = () => {
 
 const handleTwitterLogin = () => {
   navigateTo("/login/twitter");
-};
-
-const handleGitHubLogin = () => {
-  navigateTo("/login/github");
 };
 
 // ログイン処理
