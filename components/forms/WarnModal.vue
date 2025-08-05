@@ -39,18 +39,17 @@
       </div>
 
       <div class="flex justify-end gap-2">
-        <button
-          @click="handleClose"
-          class="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
-        >
+        <buttons-square @click="handleClose" color="bg-gray-300" class="w-32">
           色を変更する
-        </button>
-        <button
+        </buttons-square>
+
+        <buttons-square
           @click="handleContinue"
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          color="bg-blue-300"
+          class="w-32"
         >
           この色で続行
-        </button>
+        </buttons-square>
       </div>
     </div>
   </div>
