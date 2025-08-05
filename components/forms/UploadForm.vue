@@ -300,6 +300,13 @@
         </div>
       </div>
     </div>
+
+    <!-- 警告モーダル -->
+    <WarnModal
+      :show="showWarnModal"
+      @close="handleWarnModalClose"
+      @continue="handleWarnModalContinue"
+    />
   </div>
 </template>
 
@@ -315,6 +322,7 @@ import {
 } from "@/utils/ArrayString";
 import ColorPicker from "@/components/buttons/ColorPicker.vue";
 import Switch from "~/components/buttons/Switch.vue";
+import WarnModal from "@/components/forms/WarnModal.vue";
 
 const props = defineProps({
   timeData: {
@@ -353,6 +361,7 @@ const isConfirming = ref(false);
 const usernameErrors = ref([]);
 // showOverlapsは削除し、showOverlappingTimeを使用
 const showOverlappingTime = ref(false);
+const showWarnModal = ref(false);
 
 watch(
   () => props.timeData,
@@ -451,6 +460,22 @@ const confirmSync = async () => {
       return;
     }
 
+    // ユーザーカラーが#3b82f6の場合、警告モーダルを表示
+    if (userColor.value === "#3b82f6") {
+      showWarnModal.value = true;
+      return;
+    }
+
+    await proceedWithSync();
+  } catch (error) {
+    console.error("同期エラー:", error);
+    alert("同期に失敗しました");
+    isConfirming.value = false;
+  }
+};
+
+const proceedWithSync = async () => {
+  try {
     const spaceId = props.isSync ? props.spaceId : generateRandomString();
 
     const processedData = Object.entries(displayData.value).reduce(
@@ -524,6 +549,15 @@ const confirmSync = async () => {
     alert("同期に失敗しました");
     isConfirming.value = false;
   }
+};
+
+const handleWarnModalClose = () => {
+  showWarnModal.value = false;
+};
+
+const handleWarnModalContinue = async () => {
+  showWarnModal.value = false;
+  await proceedWithSync();
 };
 
 const handleUsernameInput = () => {
