@@ -162,7 +162,7 @@
             v-if="!isSync"
             @click="syncData"
             color="bg-blue-300"
-            :isUse="hasOwnInputData()"
+            :isUse="hasOwnInputData() && !showSyncInput"
           >
             共有
           </buttons-square>
