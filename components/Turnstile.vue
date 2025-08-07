@@ -56,7 +56,7 @@ const initTurnstile = async () => {
 
 
   window.turnstile.render(turnstileContainer.value, {
-    sitekey: siteKey,
+    sitekey: siteKey as string,
     theme: props.theme,
     size: props.size,
     callback: (token: string) => {
