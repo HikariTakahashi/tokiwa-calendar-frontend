@@ -293,7 +293,7 @@ const handleLogin = async () => {
       loginErrorType.value = "unknown";
 
       // メインページにリダイレクト
-      await navigateTo("/");
+      await navigateTo("/dashboard");
     } else {
       console.error("ログイン成功だが必要なデータが不足:", loginResult);
       loginError.value = "ログイン処理中にエラーが発生しました";
