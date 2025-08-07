@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import UploadForm from "@/components/forms/UploadForm.vue";
 import Title from "@/components/calendar/Title.vue";
@@ -103,4 +103,21 @@ const nextMonth = () => {
 const toggleSideMenu = () => {
   emit("toggleSideMenu");
 };
+
+// 右矢印キーで次の月に、左矢印キーで前の月に移動する
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.key === "ArrowRight") {
+    nextMonth();
+  } else if (e.key === "ArrowLeft") {
+    prevMonth();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeyDown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleKeyDown);
+});
 </script>

@@ -62,6 +62,10 @@ const CloseCopyMode = () => {
 const handleKeyDown = (e) => {
   if (e.key === "Enter") {
     CloseCopyMode();
+  } else if (e.key === "ArrowRight") {
+    emit("next-month");
+  } else if (e.key === "ArrowLeft") {
+    emit("prev-month");
   }
 };
 
