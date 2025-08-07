@@ -7,6 +7,8 @@
       :current-day="currentDay"
       :current-week="currentWeek"
       :time-data="timeData"
+      :is-sync="false"
+      :space-id="spaceId || ''"
       @next-month="handleNextMonth"
       @prev-month="handlePrevMonth"
       @close-copy-mode="closeCopyMode"
