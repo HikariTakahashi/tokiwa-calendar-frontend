@@ -16,8 +16,9 @@
 
       <div class="mb-4">
         <p class="text-gray-700 mb-3">
-          選択された色（<span class="font-bold" :style="{ color: '#3b82f6' }"
-            >#3b82f6</span
+          選択された色（<span class="font-bold" :style="{ color: userColor }">{{
+            userColor
+          }}</span
           >）は、既に他のユーザーが使用している可能性があります。
         </p>
         <p class="text-gray-700 mb-3">
@@ -60,6 +61,10 @@ const props = defineProps({
   show: {
     type: Boolean,
     default: false,
+  },
+  userColor: {
+    type: String,
+    default: "#3b82f6",
   },
 });
 
