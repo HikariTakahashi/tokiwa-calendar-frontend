@@ -59,7 +59,7 @@ onMounted(async () => {
       success.value = true;
       // 成功時は少し待ってからリダイレクト
       setTimeout(() => {
-        router.push("/");
+        router.push("/dashboard");
       }, 2000);
     } else {
       error.value = result.error || "認証に失敗しました";
