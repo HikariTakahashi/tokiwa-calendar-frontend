@@ -87,7 +87,7 @@ onMounted(async () => {
       success.value = true;
       // 3秒後にメインページにリダイレクト
       setTimeout(() => {
-        navigateTo("/");
+        navigateTo("/dashboard");
       }, 3000);
     } else {
       error.value = result.error || "認証に失敗しました。";
