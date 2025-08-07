@@ -5,7 +5,6 @@
     <div
       class="bg-white px-6 rounded-lg w-full sm:w-4/5 max-h-full sm:max-h-[80vh] overflow-y-auto"
     >
-
       <div
         class="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pt-6"
       >
@@ -300,6 +299,7 @@
     <!-- 警告モーダル -->
     <WarnModal
       :show="showWarnModal"
+      :userColor="userColor"
       @close="handleWarnModalClose"
       @continue="handleWarnModalContinue"
     />
@@ -435,13 +435,22 @@ const handleCopy = () => {
   }
 };
 
-
-
 const syncData = async () => {
   showSyncInput.value = true;
 };
 
 const confirmSync = async () => {
+  // userColorが#3b82f6の場合、警告モーダルを表示
+  if (userColor.value === "#3b82f6") {
+    showWarnModal.value = true;
+    return;
+  }
+
+  // 警告モーダルをスキップして直接同期処理を実行
+  await proceedWithSync();
+};
+
+const proceedWithSync = async () => {
   try {
     if (Object.keys(displayData.value).length === 0) {
       alert("同期するデータがありません");
