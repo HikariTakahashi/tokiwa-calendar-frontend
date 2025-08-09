@@ -16,16 +16,13 @@
           <div class="flex flex-row items-center justify-between mb-4">
             <h3 class="text-xl font-bold text-gray-800">メニュー</h3>
             <button
-              @click.stop="navigateTo('/settings')"
+              @click.stop="navigateTo('/dashboard')"
               class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 cursor-pointer"
             >
               <UIcon name="ic:baseline-settings" class="size-5" />
             </button>
           </div>
-          <div
-            v-if="!isAuthenticated"
-            class="flex flex-col gap-y-4 items-center"
-          ></div>
+
           <div class="border border-gray-200 rounded-lg mb-4">
             <button
               @click="toggleImportAccordion"
@@ -82,50 +79,80 @@
             </Transition>
           </div>
 
-          <div
-            v-if="!isLoggedIn"
-            class="flex flex-col items-center gap-y-4 px-4"
-          >
-            <h5 class="text-sm text-gray-500">
-              メニューの機能にアクセスするためには、ログイン・サインアップが必要です。
-            </h5>
-            <buttons-square
-              @click="navigateTo('/login')"
-              color="bg-blue-200"
-              class="w-4/5 text-lg cursor-pointer"
-              >ログイン</buttons-square
-            >
-            <buttons-square
-              @click="navigateTo('/signup')"
-              color="bg-blue-200"
-              class="w-4/5 text-lg cursor-pointer"
-              >サインアップ</buttons-square
-            >
-            <h5 class="text-sm text-gray-500">
-              メニューの機能に関しての詳細ついては、<button
-                @click.stop="navigateTo('/welcome/getting-started/menu')"
-                class="text-blue-500 hover:underline cursor-pointer"
+          <!-- ClientOnlyで認証状態に依存する部分をラップ -->
+          <ClientOnly :key="`desktop-auth-${isInitialized}-${isAuthenticated}`">
+            <!-- プロセスクライアントでのみレンダリング -->
+            <div v-if="isClient">
+              <!-- 認証状態初期化中はローディング表示 -->
+              <div
+                v-if="!isInitialized"
+                class="flex flex-col gap-y-4 items-center"
               >
-                インタロダクション</button
-              >をご覧ください。
-            </h5>
-          </div>
-          <div v-else class="flex flex-col gap-y-4">
-            <div class="flex flex-col gap-y-2">
-              <h5 class="text-sm text-gray-500">ログイン中</h5>
-              <p class="text-sm font-medium text-gray-800">{{ user?.email }}</p>
+                <div
+                  class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"
+                ></div>
+                <p class="text-sm text-gray-500">認証状態を確認中...</p>
+              </div>
+              <!-- 初期化完了後、未認証の場合 -->
+              <div
+                v-else-if="!isAuthenticated"
+                class="flex flex-col items-center gap-y-4 px-4"
+              >
+                <h5 class="text-sm text-gray-500">
+                  メニューの機能にアクセスするためには、ログイン・サインアップが必要です。
+                </h5>
+                <buttons-square
+                  @click="navigateTo('/login')"
+                  color="bg-blue-200"
+                  class="w-4/5 text-lg cursor-pointer"
+                  >ログイン</buttons-square
+                >
+                <buttons-square
+                  @click="navigateTo('/signup')"
+                  color="bg-blue-200"
+                  class="w-4/5 text-lg cursor-pointer"
+                  >サインアップ</buttons-square
+                >
+                <h5 class="text-sm text-gray-500">
+                  メニューの機能に関しての詳細ついては、<button
+                    @click.stop="navigateTo('/welcome/getting-started/menu')"
+                    class="text-blue-500 hover:underline cursor-pointer"
+                  >
+                    インタロダクション</button
+                  >をご覧ください。
+                </h5>
+              </div>
+              <!-- 認証済みの場合 -->
+              <div v-else class="flex flex-col gap-y-4">
+                <div class="flex flex-col gap-y-2">
+                  <h5 class="text-sm text-gray-500">ログイン中</h5>
+                  <p class="text-sm font-medium text-gray-800">
+                    {{ user?.email }}
+                  </p>
+                </div>
+                <div class="flex flex-col gap-y-2">
+                  <h5 class="text-sm text-gray-500">ユーザーID</h5>
+                  <p class="text-xs text-gray-600 font-mono">{{ user?.uid }}</p>
+                </div>
+                <buttons-square
+                  @click="handleLogout"
+                  color="bg-red-200"
+                  class="w-full text-lg cursor-pointer"
+                  >ログアウト</buttons-square
+                >
+              </div>
             </div>
-            <div class="flex flex-col gap-y-2">
-              <h5 class="text-sm text-gray-500">ユーザーID</h5>
-              <p class="text-xs text-gray-600 font-mono">{{ user?.uid }}</p>
-            </div>
-            <buttons-square
-              @click="handleLogout"
-              color="bg-red-200"
-              class="w-full text-lg cursor-pointer"
-              >ログアウト</buttons-square
-            >
-          </div>
+
+            <!-- SSR時のフォールバック表示 -->
+            <template #fallback>
+              <div class="flex flex-col gap-y-4 items-center">
+                <div
+                  class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"
+                ></div>
+                <p class="text-sm text-gray-500">読み込み中...</p>
+              </div>
+            </template>
+          </ClientOnly>
         </div>
       </div>
     </Transition>
@@ -239,52 +266,82 @@
             </Transition>
           </div>
 
-          <div
-            v-if="!isAuthenticated"
-            class="flex flex-col gap-y-4 items-center"
-          >
-            <h5 class="text-sm text-gray-500 text-center">
-              メニューの機能にアクセスするためには、ログイン・サインアップが必要です。
-            </h5>
-            <buttons-square
-              @click="navigateTo('/login')"
-              color="bg-blue-200"
-              class="w-full text-lg cursor-pointer"
-              >ログイン</buttons-square
-            >
-            <buttons-square
-              @click="navigateTo('/signup')"
-              color="bg-blue-200"
-              class="w-full text-lg cursor-pointer"
-              >サインアップ</buttons-square
-            >
-            <h5 class="text-sm text-gray-500 text-center">
-              メニューの機能に関しての詳細ついては、<button
-                @click.stop="navigateTo('/welcome/getting-started/menu')"
-                class="text-blue-500 hover:underline cursor-pointer"
+          <!-- ClientOnlyで認証状態に依存する部分をラップ（モバイル版） -->
+          <ClientOnly :key="`mobile-auth-${isInitialized}-${isAuthenticated}`">
+            <!-- プロセスクライアントでのみレンダリング（モバイル版） -->
+            <div v-if="isClient">
+              <!-- 認証状態初期化中はローディング表示（モバイル版） -->
+              <div
+                v-if="!isInitialized"
+                class="flex flex-col gap-y-4 items-center"
               >
-                インタロダクション</button
-              >をご覧ください。
-            </h5>
-          </div>
-          <div v-else class="flex flex-col gap-y-4">
-            <div class="flex flex-col gap-y-2">
-              <h5 class="text-sm text-gray-500">ログイン中</h5>
-              <p class="text-sm font-medium text-gray-800">
-                {{ user?.email }}
-              </p>
+                <div
+                  class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"
+                ></div>
+                <p class="text-sm text-gray-500 text-center">
+                  認証状態を確認中...
+                </p>
+              </div>
+              <!-- 初期化完了後、未認証の場合（モバイル版） -->
+              <div
+                v-else-if="!isAuthenticated"
+                class="flex flex-col gap-y-4 items-center"
+              >
+                <h5 class="text-sm text-gray-500 text-center">
+                  メニューの機能にアクセスするためには、ログイン・サインアップが必要です。
+                </h5>
+                <buttons-square
+                  @click="navigateTo('/login')"
+                  color="bg-blue-200"
+                  class="w-full text-lg cursor-pointer"
+                  >ログイン</buttons-square
+                >
+                <buttons-square
+                  @click="navigateTo('/signup')"
+                  color="bg-blue-200"
+                  class="w-full text-lg cursor-pointer"
+                  >サインアップ</buttons-square
+                >
+                <h5 class="text-sm text-gray-500 text-center">
+                  メニューの機能に関しての詳細ついては、<button
+                    @click.stop="navigateTo('/welcome/getting-started/menu')"
+                    class="text-blue-500 hover:underline cursor-pointer"
+                  >
+                    インタロダクション</button
+                  >をご覧ください。
+                </h5>
+              </div>
+              <!-- 認証済みの場合（モバイル版） -->
+              <div v-else class="flex flex-col gap-y-4">
+                <div class="flex flex-col gap-y-2">
+                  <h5 class="text-sm text-gray-500">ログイン中</h5>
+                  <p class="text-sm font-medium text-gray-800">
+                    {{ user?.email }}
+                  </p>
+                </div>
+                <div class="flex flex-col gap-y-2">
+                  <h5 class="text-sm text-gray-500">ユーザーID</h5>
+                  <p class="text-xs text-gray-600 font-mono">{{ user?.uid }}</p>
+                </div>
+                <buttons-square
+                  @click="handleLogout"
+                  color="bg-red-200"
+                  class="w-full text-lg cursor-pointer"
+                  >ログアウト</buttons-square
+                >
+              </div>
             </div>
-            <div class="flex flex-col gap-y-2">
-              <h5 class="text-sm text-gray-500">ユーザーID</h5>
-              <p class="text-xs text-gray-600 font-mono">{{ user?.uid }}</p>
-            </div>
-            <buttons-square
-              @click="handleLogout"
-              color="bg-red-200"
-              class="w-full text-lg cursor-pointer"
-              >ログアウト</buttons-square
-            >
-          </div>
+
+            <!-- SSR時のフォールバック表示（モバイル版） -->
+            <template #fallback>
+              <div class="flex flex-col gap-y-4 items-center">
+                <div
+                  class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"
+                ></div>
+                <p class="text-sm text-gray-500 text-center">読み込み中...</p>
+              </div>
+            </template>
+          </ClientOnly>
         </div>
       </div>
     </div>
@@ -308,15 +365,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { useDateImportUtils } from "~/utils/DateImportUtils";
 
 interface Props {
   show: boolean;
 }
 
-const { user, isAuthenticated, logout, initializeAuth } = useAuth();
+const { user, isAuthenticated, logout, initializeAuth, isInitialized } =
+  useAuth();
 const isMobile = ref(false);
+
+// process.clientをリアクティブ変数として定義
+const isClient = ref(process.client);
 
 // ログアウト処理
 const handleLogout = () => {
@@ -331,7 +392,7 @@ const checkMobile = () => {
 
 // コンポーネントマウント時とリサイズ時に判定
 onMounted(() => {
-  initializeAuth();
+  // プラグインで初期化されているため、ここでは初期化しない
   checkMobile();
   window.addEventListener("resize", checkMobile);
   window.addEventListener("keydown", handleEscapeKey);
@@ -356,8 +417,24 @@ const importText = ref("");
 const importError = ref("");
 const importSuccess = ref(false);
 
-// isLoggedInをisAuthenticatedと連動
-const isLoggedIn = computed(() => isAuthenticated.value);
+// isLoggedInをisAuthenticatedと連動（初期化完了後のみ）
+const isLoggedIn = computed(() => isInitialized.value && isAuthenticated.value);
+
+// デバッグ用のwatcher
+watch(
+  [isInitialized, isAuthenticated, user],
+  ([init, auth, userData]) => {
+    console.log("SideMenu認証状態変更:", {
+      isInitialized: init,
+      isAuthenticated: auth,
+      hasUser: !!userData,
+      userEmail: userData?.email,
+      processClient: process.client,
+      processServer: process.server,
+    });
+  },
+  { immediate: true }
+);
 
 const isImportAccordionOpen = ref(false);
 
