@@ -76,7 +76,7 @@ interface LoginResponse {
   message: string;
   uid?: string;
   email?: string;
-  customToken?: string;
+  sessionToken?: string;
   error?: string;
 }
 
@@ -135,6 +135,26 @@ interface TwitterAuthResponse {
   uid?: string;
   email?: string;
   customToken?: string;
+  error?: string;
+}
+
+// ユーザーデータの型定義
+interface UserData {
+  userName: string;
+  userColor: string;
+}
+
+// ユーザーデータリクエストの型定義
+interface UserDataRequest {
+  userName: string;
+  userColor: string;
+}
+
+// ユーザーデータレスポンスの型定義
+interface UserDataResponse {
+  userName?: string;
+  userColor?: string;
+  message?: string;
   error?: string;
 }
 
@@ -353,16 +373,19 @@ export const useAPI = () => {
   // 認証機能
   const verifyEmailToken = async (token: string): Promise<VerifyResponse> => {
     try {
-      const response = await $fetch<VerifyResponse>(`${API_BASE_URL}/api/verify`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: {
-          token: token,
-        } as VerifyRequest,
-      });
+      const response = await $fetch<VerifyResponse>(
+        `${API_BASE_URL}/api/verify`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: {
+            token: token,
+          } as VerifyRequest,
+        }
+      );
       return response;
     } catch (error: any) {
       console.error("認証エラー:", error);
@@ -467,6 +490,67 @@ export const useAPI = () => {
     }
   };
 
+  // ユーザーデータ取得機能
+  const getUserData = async (): Promise<UserDataResponse> => {
+    try {
+      const { getAuthToken } = useAuth();
+      const token = getAuthToken();
+
+      if (!token) {
+        throw new Error("認証トークンが見つかりません");
+      }
+
+      const response = await $fetch<UserDataResponse>("/api/user-data", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response;
+    } catch (error: any) {
+      console.error("ユーザーデータ取得エラー:", error);
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as UserDataResponse;
+      }
+      throw error;
+    }
+  };
+
+  // ユーザーデータ更新機能
+  const updateUserData = async (
+    userData: UserDataRequest
+  ): Promise<UserDataResponse> => {
+    try {
+      const { getAuthToken } = useAuth();
+      const token = getAuthToken();
+
+      if (!token) {
+        throw new Error("認証トークンが見つかりません");
+      }
+
+      const response = await $fetch<UserDataResponse>("/api/user-data", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: userData,
+      });
+      return response;
+    } catch (error: any) {
+      console.error("ユーザーデータ更新エラー:", error);
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as UserDataResponse;
+      }
+      throw error;
+    }
+  };
+
   return {
     fetchSpaceData,
     syncTimeData,
@@ -477,5 +561,7 @@ export const useAPI = () => {
     googleAuth,
     githubAuth,
     twitterAuth,
+    getUserData,
+    updateUserData,
   };
 };
