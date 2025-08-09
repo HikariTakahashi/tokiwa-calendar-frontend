@@ -33,25 +33,32 @@
       </button>
 
       <!-- 認証状態に応じてログイン/ログアウトボタンを表示 -->
-      <div v-if="isAuthenticated" class="flex items-center gap-x-2">
-        <span class="text-xs text-gray-600">{{ user?.email }}</span>
-        <button
-          @click="handleLogout"
-          class="flex items-center gap-x-1 border border-gray-300 rounded-md px-2 py-1 hover:bg-red-100 text-red-600"
-        >
-          <h6 class="text-xs sm:text-base">ログアウト</h6>
-          <UIcon name="ic:baseline-logout" class="size-3" />
-        </button>
-      </div>
-      <div v-else class="flex items-center gap-x-2">
-        <button
-          @click="navigateTo('/login')"
-          class="flex items-center gap-x-1 border border-gray-300 rounded-md px-2 py-1 hover:bg-blue-100 text-blue-600"
-        >
-          <h6 class="text-xs sm:text-base">ログイン</h6>
-          <UIcon name="ic:baseline-login" class="size-3" />
-        </button>
-      </div>
+      <ClientOnly>
+        <div v-if="isAuthenticated" class="flex items-center gap-x-2">
+          <span class="text-xs text-gray-600">{{ user?.email }}</span>
+          <button
+            @click="handleLogout"
+            class="flex items-center gap-x-1 border border-gray-300 rounded-md px-2 py-1 hover:bg-red-100 text-red-600"
+          >
+            <h6 class="text-xs sm:text-base">ログアウト</h6>
+            <UIcon name="ic:baseline-logout" class="size-3" />
+          </button>
+        </div>
+        <div v-else class="flex items-center gap-x-2">
+          <button
+            @click="navigateTo('/login')"
+            class="flex items-center gap-x-1 border border-gray-300 rounded-md px-2 py-1 hover:bg-blue-100 text-blue-600"
+          >
+            <h6 class="text-xs sm:text-base">ログイン</h6>
+            <UIcon name="ic:baseline-login" class="size-3" />
+          </button>
+        </div>
+        <template #fallback>
+          <div class="flex items-center gap-x-2">
+            <span class="text-xs text-gray-600">読み込み中...</span>
+          </div>
+        </template>
+      </ClientOnly>
     </div>
   </div>
 </template>
