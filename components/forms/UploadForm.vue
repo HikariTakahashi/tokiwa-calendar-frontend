@@ -252,7 +252,7 @@
                     {{ existingUserName }}
                   </span>
                   <div
-                    class="w-6 h-6 rounded-full border-2 border-gray-300"
+                    class="w-6 h-6 border rounded-md border-gray-300"
                     :style="{ backgroundColor: existingUserColor }"
                   ></div>
                 </div>
@@ -286,9 +286,8 @@
                 </div>
               </div>
             </div>
-            <!-- ユーザーデータ入力欄（新規 or 変更モード） -->
+            <!-- ユーザーデータ入力欄（新規） -->
             <div v-else class="flex flex-col gap-y-2 w-1/2">
-              <!-- 変更モード時のヘッダー -->
               <div
                 v-if="hasExistingUserData && showChangeUserInfo"
                 class="mb-2"
@@ -307,11 +306,41 @@
               </div>
 
               <div class="flex flex-col gap-y-1 w-full">
+                <!-- 登録済みユーザーが異なる情報を使用する場合 -->
                 <div
+                  v-if="hasExistingUserData && showChangeUserInfo"
+                  class="flex flex-col gap-y-1 p-2 bg-orange-100 rounded-md border-1 border-orange-300"
+                >
+                  <p class="text-sm font-bold flex items-center gap-x-1">
+                    <UIcon
+                      name="ic:sharp-warning"
+                      class="size-4 text-red-500"
+                    />
+                    登録済み情報とは異なるユーザー情報を使用します
+                  </p>
+                  <p class="text-sm ml-4">
+                    このセッションでのみ異なるユーザー名・カラーを使用します。登録済み情報は変更されません。
+                  </p>
+                  <div class="text-xs text-gray-600 ml-4 mt-1">
+                    登録済み:
+                    <span
+                      class="font-bold"
+                      :style="{ color: existingUserColor }"
+                      >{{ existingUserName }}</span
+                    >
+                  </div>
+                </div>
+                <!-- ユーザー情報未登録の場合 -->
+                <div
+                  v-else-if="!hasExistingUserData"
                   class="flex flex-col gap-y-1 p-2 bg-blue-100 rounded-md border-1 border-gray-300"
                 >
-                  <p class="text-sm font-bold">
-                    ⚪︎ユーザー情報を登録しませんか？
+                  <p class="text-sm font-bold flex items-center gap-x-1">
+                    <UIcon
+                      name="ic:baseline-edit"
+                      class="size-4 text-blue-500"
+                    />
+                    ユーザー情報を登録しませんか？
                   </p>
                   <p class="text-sm ml-4">
                     ユーザー情報を登録すると、ユーザー名などの入力を省略できます。
