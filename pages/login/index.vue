@@ -280,12 +280,12 @@ const handleLogin = async () => {
     }
 
     // ログイン成功後の処理
-    if (loginResult.customToken && loginResult.uid && loginResult.email) {
+    if (loginResult.sessionToken && loginResult.uid && loginResult.email) {
       // useAuthでログイン状態を管理
       authLogin({
         uid: loginResult.uid,
         email: loginResult.email,
-        customToken: loginResult.customToken,
+        sessionToken: loginResult.sessionToken,
       });
 
       // 成功時にエラー状態を確実にクリア
