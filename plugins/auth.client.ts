@@ -5,12 +5,5 @@ export default defineNuxtPlugin(() => {
   if (process.client) {
     // 即座に初期化を実行
     initializeAuth();
-
-    // DOMContentLoaded後にも初期化を実行（念のため）
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", () => {
-        initializeAuth();
-      });
-    }
   }
 });
