@@ -1,34 +1,62 @@
 export interface User {
   uid: string;
   email: string;
-  customToken: string;
+  sessionToken: string;
 }
 
 // グローバルな状態管理
 const globalUser = ref<User | null>(null);
 const globalIsAuthenticated = ref(false);
-const isInitialized = ref(false);
+// SSRでは即座に初期化済みとする
+const isInitialized = ref(process.server);
 
 export const useAuth = () => {
   // 初期化時にローカルストレージから認証情報を読み込み
   const initializeAuth = () => {
     if (process.client && !isInitialized.value) {
-      const token = localStorage.getItem("authToken");
-      const uid = localStorage.getItem("userUID");
-      const email = localStorage.getItem("userEmail");
+      try {
+        const sessionToken = localStorage.getItem("sessionToken");
+        const uid = localStorage.getItem("userUID");
+        const email = localStorage.getItem("userEmail");
 
-      if (token && uid && email) {
-        globalUser.value = {
+        // 詳細なデバッグ情報
+        console.log("initializeAuth デバッグ:", {
+          hasSessionToken: !!sessionToken,
+          hasUID: !!uid,
+          hasEmail: !!email,
+          sessionTokenLength: sessionToken?.length,
+          sessionTokenPreview: sessionToken
+            ? sessionToken.substring(0, 20) + "..."
+            : null,
           uid,
           email,
-          customToken: token,
-        };
-        globalIsAuthenticated.value = true;
-        console.log("認証状態を初期化しました:", { uid, email });
-      } else {
-        console.log("ローカルストレージに認証情報が見つかりません");
-      }
+          allLocalStorageKeys: Object.keys(localStorage),
+        });
 
+        if (sessionToken && uid && email) {
+          globalUser.value = {
+            uid,
+            email,
+            sessionToken,
+          };
+          globalIsAuthenticated.value = true;
+          console.log("認証状態を初期化しました:", { uid, email });
+        } else {
+          console.log("ローカルストレージに認証情報が見つかりません");
+          console.log("不足している項目:", {
+            sessionToken: !sessionToken,
+            uid: !uid,
+            email: !email,
+          });
+        }
+      } catch (error) {
+        console.error("認証状態の初期化中にエラーが発生しました:", error);
+      } finally {
+        // エラーが発生しても初期化完了とマークする
+        isInitialized.value = true;
+      }
+    } else if (!process.client) {
+      // SSR時は初期化済みとしてマークし、認証状態はfalseのまま
       isInitialized.value = true;
     }
   };
@@ -36,7 +64,7 @@ export const useAuth = () => {
   // ログイン処理
   const login = (userData: User) => {
     if (process.client) {
-      localStorage.setItem("authToken", userData.customToken);
+      localStorage.setItem("sessionToken", userData.sessionToken);
       localStorage.setItem("userUID", userData.uid);
       localStorage.setItem("userEmail", userData.email);
 
@@ -48,7 +76,7 @@ export const useAuth = () => {
   // ログアウト処理
   const logout = () => {
     if (process.client) {
-      localStorage.removeItem("authToken");
+      localStorage.removeItem("sessionToken");
       localStorage.removeItem("userUID");
       localStorage.removeItem("userEmail");
 
@@ -57,10 +85,18 @@ export const useAuth = () => {
     }
   };
 
-  // 認証トークンを取得
+  // 認証トークンを取得（セッショントークン）
   const getAuthToken = (): string | null => {
     if (process.client) {
-      return localStorage.getItem("authToken");
+      const sessionToken = localStorage.getItem("sessionToken");
+
+      // デバッグ情報
+      console.log("getAuthToken デバッグ:", {
+        hasSessionToken: !!sessionToken,
+        sessionTokenLength: sessionToken?.length,
+      });
+
+      return sessionToken;
     }
     return null;
   };
