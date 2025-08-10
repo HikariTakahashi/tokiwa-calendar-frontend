@@ -97,6 +97,7 @@ interface VerifyResponse {
 interface GoogleAuthRequest {
   code: string;
   redirect_uri: string;
+  linkUID?: string;
 }
 
 // Google OAuth2.0認証レスポンスの型定義
@@ -104,7 +105,7 @@ interface GoogleAuthResponse {
   message: string;
   uid?: string;
   email?: string;
-  customToken?: string;
+  sessionToken?: string;
   error?: string;
 }
 
@@ -112,6 +113,7 @@ interface GoogleAuthResponse {
 interface GitHubAuthRequest {
   code: string;
   redirect_uri: string;
+  linkUID?: string;
 }
 
 // GitHub OAuth2.0認証レスポンスの型定義
@@ -119,7 +121,7 @@ interface GitHubAuthResponse {
   message: string;
   uid?: string;
   email?: string;
-  customToken?: string;
+  sessionToken?: string;
   error?: string;
 }
 
@@ -127,6 +129,7 @@ interface GitHubAuthResponse {
 interface TwitterAuthRequest {
   code: string;
   redirect_uri: string;
+  linkUID?: string;
 }
 
 // Twitter OAuth2.0認証レスポンスの型定義
@@ -134,7 +137,7 @@ interface TwitterAuthResponse {
   message: string;
   uid?: string;
   email?: string;
-  customToken?: string;
+  sessionToken?: string;
   error?: string;
 }
 
@@ -155,6 +158,20 @@ interface UserDataResponse {
   userName?: string;
   userColor?: string;
   message?: string;
+  error?: string;
+}
+
+// プロバイダー詳細情報の型定義
+interface ProviderDetail {
+  provider: string;
+  email: string;
+  displayName?: string;
+  isLinked: boolean;
+}
+
+// プロバイダー詳細情報レスポンスの型定義
+interface UserProvidersDetailResponse {
+  providers?: ProviderDetail[];
   error?: string;
 }
 
@@ -400,7 +417,8 @@ export const useAPI = () => {
   // Google OAuth2.0認証機能
   const googleAuth = async (
     code: string,
-    redirectUri: string
+    redirectUri: string,
+    linkUID?: string
   ): Promise<GoogleAuthResponse> => {
     try {
       const response = await $fetch<GoogleAuthResponse>(
@@ -414,6 +432,7 @@ export const useAPI = () => {
           body: {
             code: code,
             redirect_uri: redirectUri,
+            linkUID: linkUID,
           } as GoogleAuthRequest,
         }
       );
@@ -431,7 +450,8 @@ export const useAPI = () => {
   // GitHub OAuth2.0認証機能
   const githubAuth = async (
     code: string,
-    redirectUri: string
+    redirectUri: string,
+    linkUID?: string
   ): Promise<GitHubAuthResponse> => {
     try {
       const response = await $fetch<GitHubAuthResponse>(
@@ -445,6 +465,7 @@ export const useAPI = () => {
           body: {
             code: code,
             redirect_uri: redirectUri,
+            linkUID: linkUID,
           } as GitHubAuthRequest,
         }
       );
@@ -462,7 +483,8 @@ export const useAPI = () => {
   // Twitter OAuth2.0認証機能
   const twitterAuth = async (
     code: string,
-    redirectUri: string
+    redirectUri: string,
+    linkUID?: string
   ): Promise<TwitterAuthResponse> => {
     try {
       const response = await $fetch<TwitterAuthResponse>(
@@ -476,6 +498,7 @@ export const useAPI = () => {
           body: {
             code: code,
             redirect_uri: redirectUri,
+            linkUID: linkUID,
           } as TwitterAuthRequest,
         }
       );
@@ -551,6 +574,39 @@ export const useAPI = () => {
     }
   };
 
+  // プロバイダー詳細情報取得機能
+  const getUserProvidersDetail =
+    async (): Promise<UserProvidersDetailResponse> => {
+      try {
+        const { getAuthToken } = useAuth();
+        const token = getAuthToken();
+
+        if (!token) {
+          throw new Error("認証トークンが見つかりません");
+        }
+
+        const response = await $fetch<UserProvidersDetailResponse>(
+          "/api/user-providers-detail",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        return response;
+      } catch (error: any) {
+        console.error("プロバイダー詳細情報取得エラー:", error);
+        // エラーレスポンスを適切に処理
+        if (error.data) {
+          return error.data as UserProvidersDetailResponse;
+        }
+        throw error;
+      }
+    };
+
   return {
     fetchSpaceData,
     syncTimeData,
@@ -563,5 +619,6 @@ export const useAPI = () => {
     twitterAuth,
     getUserData,
     updateUserData,
+    getUserProvidersDetail,
   };
 };
