@@ -52,8 +52,26 @@ onMounted(async () => {
     // リダイレクトURIを構築
     const redirectUri = `${window.location.origin}/auth/twitter/callback`;
 
+    // リンクUIDを取得（stateパラメータから）
+    const urlParams = new URLSearchParams(window.location.search);
+    const state = urlParams.get("state");
+    let linkUID = null;
+
+    if (state) {
+      // stateパラメータからlinkUIDを抽出
+      const stateParams = new URLSearchParams(state);
+      linkUID = stateParams.get("linkUID");
+    }
+
+    console.log("Twitter認証コールバック - 取得したstate:", state);
+    console.log("Twitter認証コールバック - 取得したlinkUID:", linkUID);
+
     // Twitter認証を実行
-    const result = await authenticateWithTwitter(code, redirectUri);
+    const result = await authenticateWithTwitter(
+      code,
+      redirectUri,
+      linkUID || undefined
+    );
 
     if (result.success) {
       success.value = true;
