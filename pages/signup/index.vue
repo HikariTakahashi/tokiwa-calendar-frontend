@@ -79,7 +79,7 @@
               <input type="checkbox" id="terms" v-model="isUseTerms" />
               <h5 class="text-sm text-gray-500">
                 <button
-                  @click="navigateTo('/welcome/getting-started')"
+                  @click="handleTerms"
                   class="text-blue-500 hover:underline"
                 >
                   利用規約・プライバシーポリシー</button
@@ -262,5 +262,9 @@ const handleGitHubLogin = () => {
   const { startGitHubAuth } = useGitHubAuth();
   const redirectUri = `${window.location.origin}/auth/github/callback`;
   startGitHubAuth(redirectUri);
+};
+
+const handleTerms = () => {
+  navigateTo("/terms");
 };
 </script>
