@@ -33,6 +33,13 @@
             </h5>
           </button>
         </div>
+        <div class="flex flex-col gap-y-2 items-start">
+          <button @click="navigateTo('/terms')">
+            <h5 class="text-sm text-gray-500 hover:underline">
+              利用規約・プライバシーポリシー
+            </h5>
+          </button>
+        </div>
       </div>
     </div>
     <div class="flex justify-center pb-2 text-gray-500">
