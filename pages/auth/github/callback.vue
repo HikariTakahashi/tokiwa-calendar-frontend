@@ -80,8 +80,26 @@ onMounted(async () => {
     // リダイレクトURIを構築（現在のページのベースURL）
     const redirectUri = `${window.location.origin}/auth/github/callback`;
 
+    // リンクUIDを取得（stateパラメータから）
+    const urlParams = new URLSearchParams(window.location.search);
+    const state = urlParams.get("state");
+    let linkUID = null;
+
+    if (state) {
+      // stateパラメータからlinkUIDを抽出
+      const stateParams = new URLSearchParams(state);
+      linkUID = stateParams.get("linkUID");
+    }
+
+    console.log("GitHub認証コールバック - 取得したstate:", state);
+    console.log("GitHub認証コールバック - 取得したlinkUID:", linkUID);
+
     // GitHub認証を実行
-    const result = await authenticateWithGitHub(code, redirectUri);
+    const result = await authenticateWithGitHub(
+      code,
+      redirectUri,
+      linkUID || undefined
+    );
 
     if (result.success) {
       success.value = true;
