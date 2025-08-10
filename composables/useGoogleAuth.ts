@@ -4,7 +4,7 @@ export const useGoogleAuth = () => {
   const { login: authLogin } = useAuth();
 
   // Google OAuth2.0認証URLを生成
-  const getGoogleAuthUrl = (redirectUri: string): string => {
+  const getGoogleAuthUrl = (redirectUri: string, state?: string): string => {
     const clientId = config.public.googleClientId;
     if (!clientId) {
       throw new Error("Google Client IDが設定されていません");
@@ -18,6 +18,11 @@ export const useGoogleAuth = () => {
       access_type: "offline",
       prompt: "consent",
     });
+
+    // stateパラメータがある場合は追加
+    if (state) {
+      params.set("state", state);
+    }
 
     return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   };
@@ -36,21 +41,22 @@ export const useGoogleAuth = () => {
   // Google認証を実行
   const authenticateWithGoogle = async (
     code: string,
-    redirectUri: string
+    redirectUri: string,
+    linkUID?: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const response = await googleAuth(code, redirectUri);
+      const response = await googleAuth(code, redirectUri, linkUID);
 
       if (response.error) {
         return { success: false, error: response.error };
       }
 
-      if (response.customToken && response.uid && response.email) {
+      if (response.sessionToken && response.uid && response.email) {
         // useAuthでログイン状態を管理
         authLogin({
           uid: response.uid,
           email: response.email,
-          customToken: response.customToken,
+          sessionToken: response.sessionToken,
         });
 
         return { success: true };
@@ -67,9 +73,9 @@ export const useGoogleAuth = () => {
   };
 
   // Google認証フローを開始
-  const startGoogleAuth = (redirectUri: string): void => {
+  const startGoogleAuth = (redirectUri: string, state?: string): void => {
     try {
-      const authUrl = getGoogleAuthUrl(redirectUri);
+      const authUrl = getGoogleAuthUrl(redirectUri, state);
       window.location.href = authUrl;
     } catch (error: any) {
       console.error("Google認証開始エラー:", error);
