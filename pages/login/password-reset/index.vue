@@ -18,7 +18,9 @@
           <div class="flex flex-col gap-y-4">
             担当者にお問い合わせください。
           </div>
-          <div class="flex flex-col gap-y-4">担当者名: Hikari / おおにし</div>
+          <div class="flex flex-col gap-y-4">
+            Hikari | hikari-takahashi@tokiwa-calendar.com
+          </div>
         </div>
       </div>
     </div>
