@@ -25,13 +25,6 @@
             <h1 class="text-2xl font-bold text-gray-800 mb-2">
               ダッシュボード
             </h1>
-            <buttons-square
-              @click="handleLogout"
-              color="bg-blue-300"
-              class="w-full text-lg"
-            >
-              ログアウト
-            </buttons-square>
             <p class="text-gray-600">
               サービスを利用するには、ログインまたは新規登録が必要です。
             </p>
@@ -67,12 +60,21 @@
       <div v-else class="container mx-auto px-4 py-8">
         <div class="max-w-4xl mx-auto">
           <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-4">
-              ダッシュボード
-            </h1>
+            <div class="flex justify-between">
+              <h1 class="w-full text-3xl font-bold text-gray-800 mb-4">
+                ダッシュボード
+              </h1>
+              <buttons-square
+                @click="handleLogout"
+                color="bg-red-300"
+                class="w-28 text-lg"
+              >
+                ログアウト
+              </buttons-square>
+            </div>
             <p class="text-gray-600 mb-4">ようこそ、{{ user?.email }} さん</p>
           </div>
-          <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+          <!-- <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 class="text-xl font-semibold text-gray-800 mb-4">
               ユーザー情報
             </h2>
@@ -94,7 +96,7 @@
                 </p>
               </div>
             </div>
-          </div>
+          </div> -->
           <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <div class="flex items-center justify-between mb-6">
               <div class="flex items-center gap-4">
@@ -235,6 +237,163 @@
               </div>
             </div>
           </div>
+
+          <div class="bg-white rounded-lg shadow-md p-6 mb-8 space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xl font-semibold text-gray-800">認証情報</h2>
+              <div v-if="providersLoading" class="flex items-center gap-2">
+                <div
+                  class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"
+                ></div>
+                <span class="text-sm text-gray-500">読み込み中...</span>
+              </div>
+            </div>
+
+            <!-- プロバイダー詳細情報の表示 -->
+            <div v-if="providersDetailLoading" class="text-center py-4">
+              <div
+                class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"
+              ></div>
+              <p class="text-sm text-gray-500">認証情報を読み込み中...</p>
+            </div>
+
+            <div v-else class="space-y-4">
+              <!-- メールアドレス認証 -->
+              <div
+                v-if="getProviderDetail('password')"
+                class="grid grid-cols-1 md:grid-cols-2"
+              >
+                <div class="">
+                  <h3 class="text-sm font-medium text-gray-500">
+                    メールアドレス
+                  </h3>
+                  <div class="flex items-center gap-2">
+                    <p class="text-lg text-gray-800 font-semibold">
+                      {{ getProviderDetail("password")?.email }}
+                    </p>
+                    <span class="text-green-600 text-sm font-medium">
+                      ✓ リンク済み
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Google認証 -->
+              <div class="grid grid-cols-1 md:grid-cols-2">
+                <div class="">
+                  <h3 class="text-sm font-medium text-gray-500">Google認証</h3>
+                  <div class="flex items-center gap-2">
+                    <p
+                      v-if="getProviderDetail('google.com')"
+                      class="text-lg text-gray-800 font-semibold"
+                    >
+                      {{ getProviderDetail("google.com")?.email }}
+                    </p>
+                    <p v-else class="text-lg text-gray-500">未リンク</p>
+                    <div class="flex items-center gap-2">
+                      <span
+                        v-if="isProviderLinked('google.com')"
+                        class="text-green-600 text-sm font-medium"
+                      >
+                        ✓ リンク済み
+                      </span>
+                      <buttons-square
+                        v-else
+                        @click="handleGoogleAuth"
+                        color="bg-blue-300"
+                        class="px-4 py-2 w-32"
+                      >
+                        リンクする
+                      </buttons-square>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GitHub認証 -->
+              <div class="grid grid-cols-1 md:grid-cols-2">
+                <div class="">
+                  <h3 class="text-sm font-medium text-gray-500">GitHub認証</h3>
+                  <div class="flex items-center gap-2">
+                    <p
+                      v-if="getProviderDetail('github.com')"
+                      class="text-lg text-gray-800 font-semibold"
+                    >
+                      {{ getProviderDetail("github.com")?.email }}
+                    </p>
+                    <p v-else class="text-lg text-gray-500">未リンク</p>
+                    <div class="flex items-center gap-2">
+                      <span
+                        v-if="isProviderLinked('github.com')"
+                        class="text-green-600 text-sm font-medium"
+                      >
+                        ✓ リンク済み
+                      </span>
+                      <buttons-square
+                        v-else
+                        @click="handleGithubAuth"
+                        color="bg-blue-300"
+                        class="px-4 py-2 w-32"
+                      >
+                        リンクする
+                      </buttons-square>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Twitter認証 -->
+              <div class="grid grid-cols-1 md:grid-cols-2">
+                <div class="">
+                  <h3 class="text-sm font-medium text-gray-500">Twitter認証</h3>
+                  <div class="flex items-center gap-2">
+                    <p
+                      v-if="getProviderDetail('twitter.com')"
+                      class="text-lg text-gray-800 font-semibold"
+                    >
+                      {{ getProviderDetail("twitter.com")?.email }}
+                    </p>
+                    <p v-else class="text-lg text-gray-500">未リンク</p>
+                    <div class="flex items-center gap-2">
+                      <span
+                        v-if="isProviderLinked('twitter.com')"
+                        class="text-green-600 text-sm font-medium"
+                      >
+                        ✓ リンク済み
+                      </span>
+                      <buttons-square
+                        v-else
+                        @click="handleTwitterAuth"
+                        color="bg-blue-300"
+                        class="px-4 py-2 w-32"
+                      >
+                        リンクする
+                      </buttons-square>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- リンク済みプロバイダー一覧 -->
+            <div
+              v-if="userProviders.length > 0"
+              class="mt-6 pt-6 border-t border-gray-200"
+            >
+              <h3 class="text-sm font-medium text-gray-500 mb-3">
+                リンク済み認証方法
+              </h3>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="provider in userProviders"
+                  :key="provider"
+                  class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                >
+                  {{ getProviderDisplayName(provider) }}
+                </span>
+              </div>
+            </div>
+          </div>
           <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-semibold text-gray-800 mb-4">
               機能メニュー
@@ -323,11 +482,35 @@ const { user, isAuthenticated, isInitialized, initializeAuth, logout } =
   useAuth();
 const { getUserData, updateUserData } = useAPI();
 
+// アカウントリンク機能の管理
+const {
+  getUserProviders,
+  linkGoogleAccount,
+  linkGitHubAccount,
+  linkTwitterAccount,
+  unlinkAccount,
+} = useAccountLink();
+
 // ユーザーデータの状態管理
 const userDataLoading = ref(true);
 const userDataError = ref("");
 const userName = ref("");
 const userColor = ref("#3b82f6");
+
+// 認証プロバイダー情報の状態管理
+const userProviders = ref<string[]>([]);
+const providersLoading = ref(false);
+
+// プロバイダー詳細情報の状態管理
+const userProvidersDetail = ref<
+  Array<{
+    provider: string;
+    email: string;
+    displayName?: string;
+    isLinked: boolean;
+  }>
+>([]);
+const providersDetailLoading = ref(false);
 
 // 編集モードの状態管理
 const isEditMode = ref(false);
@@ -423,6 +606,93 @@ const fetchUserData = async () => {
     userColor.value = "#3b82f6";
   } finally {
     userDataLoading.value = false;
+  }
+};
+
+// プロバイダー情報を取得する関数
+const fetchUserProviders = async () => {
+  try {
+    providersLoading.value = true;
+    const providers = await getUserProviders();
+    userProviders.value = providers;
+  } catch (error) {
+    console.error("プロバイダー情報取得エラー:", error);
+    userProviders.value = [];
+  } finally {
+    providersLoading.value = false;
+  }
+};
+
+// プロバイダー詳細情報を取得する関数
+const fetchUserProvidersDetail = async () => {
+  try {
+    providersDetailLoading.value = true;
+    const { getUserProvidersDetail } = useAPI();
+    const response = await getUserProvidersDetail();
+
+    console.log("プロバイダー詳細情報APIレスポンス:", response);
+
+    if (response.error) {
+      console.error("プロバイダー詳細情報取得エラー:", response.error);
+      userProvidersDetail.value = [];
+    } else {
+      // バックエンドが正しい形式を返さない場合の一時的な修正
+      if (response.providers && Array.isArray(response.providers)) {
+        // プロバイダー名の配列が返された場合、詳細情報を構築
+        const details = response.providers.map((provider: any) => {
+          if (typeof provider === "string") {
+            switch (provider) {
+              case "password":
+                return {
+                  provider: "password",
+                  email: user.value?.email || "",
+                  displayName: "メールアドレス",
+                  isLinked: true,
+                };
+              case "google.com":
+                return {
+                  provider: "google.com",
+                  email: user.value?.email || "",
+                  displayName: "Google",
+                  isLinked: true,
+                };
+              case "github.com":
+                return {
+                  provider: "github.com",
+                  email: user.value?.email || "",
+                  displayName: "GitHub",
+                  isLinked: true,
+                };
+              case "twitter.com":
+                return {
+                  provider: "twitter.com",
+                  email: user.value?.email || "",
+                  displayName: "Twitter",
+                  isLinked: true,
+                };
+              default:
+                return {
+                  provider: provider,
+                  email: user.value?.email || "",
+                  displayName: provider,
+                  isLinked: true,
+                };
+            }
+          } else {
+            // 既に詳細情報の形式の場合
+            return provider;
+          }
+        });
+        userProvidersDetail.value = details;
+      } else {
+        userProvidersDetail.value = response.providers || [];
+      }
+    }
+  } catch (error) {
+    console.error("プロバイダー詳細情報取得エラー:", error);
+    userProvidersDetail.value = [];
+  } finally {
+    providersDetailLoading.value = false;
   }
 };
 
@@ -531,6 +801,8 @@ onMounted(async () => {
     async (newValue) => {
       if (newValue && isClientMounted.value) {
         await fetchUserData();
+        await fetchUserProviders(); // プロバイダー情報も取得
+        await fetchUserProvidersDetail(); // プロバイダー詳細情報も取得
 
         // UploadFormからの遷移で編集モードを開始
         if (shouldStartEditMode.value) {
@@ -553,6 +825,106 @@ const openWelcome = () => {
 // ログアウトする関数
 const handleLogout = () => {
   logout();
+};
+
+// 認証ハンドラー関数を追加
+const handleEmailAuth = () => {
+  // メールアドレス認証は既に完了しているため、情報を表示
+  alert("メールアドレス認証は既に完了しています。");
+};
+
+const handleGoogleAuth = async () => {
+  try {
+    // 既にリンクされているかチェック
+    if (userProviders.value.includes("google.com")) {
+      alert("Googleアカウントは既にリンクされています。");
+      return;
+    }
+
+    console.log("Google認証開始 - 現在のユーザーUID:", user.value?.uid);
+    const { startGoogleAuth } = useGoogleAuth();
+    // アカウントリンク時は通常のコールバックURIを使用し、linkUIDはstateパラメータで渡す
+    const redirectUri = `${window.location.origin}/auth/google/callback`;
+    const state = `linkUID=${user.value?.uid}`;
+    console.log("Google認証リダイレクトURI:", redirectUri);
+    console.log("Google認証state:", state);
+    startGoogleAuth(redirectUri, state);
+  } catch (error) {
+    console.error("Google認証エラー:", error);
+    alert("Google認証の開始に失敗しました。");
+  }
+};
+
+const handleGithubAuth = async () => {
+  try {
+    // 既にリンクされているかチェック
+    if (userProviders.value.includes("github.com")) {
+      alert("GitHubアカウントは既にリンクされています。");
+      return;
+    }
+
+    console.log("GitHub認証開始 - 現在のユーザーUID:", user.value?.uid);
+    const { startGitHubAuth } = useGitHubAuth();
+    // アカウントリンク時は通常のコールバックURIを使用し、linkUIDはstateパラメータで渡す
+    const redirectUri = `${window.location.origin}/auth/github/callback`;
+    const state = `linkUID=${user.value?.uid}`;
+    console.log("GitHub認証リダイレクトURI:", redirectUri);
+    console.log("GitHub認証state:", state);
+    startGitHubAuth(redirectUri, state);
+  } catch (error) {
+    console.error("GitHub認証エラー:", error);
+    alert("GitHub認証の開始に失敗しました。");
+  }
+};
+
+const handleTwitterAuth = async () => {
+  try {
+    // 既にリンクされているかチェック
+    if (userProviders.value.includes("twitter.com")) {
+      alert("Twitterアカウントは既にリンクされています。");
+      return;
+    }
+
+    console.log("Twitter認証開始 - 現在のユーザーUID:", user.value?.uid);
+    const { startTwitterAuth } = useTwitterAuth();
+    // アカウントリンク時は通常のコールバックURIを使用し、linkUIDはstateパラメータで渡す
+    const redirectUri = `${window.location.origin}/auth/twitter/callback`;
+    const state = `linkUID=${user.value?.uid}`;
+    console.log("Twitter認証リダイレクトURI:", redirectUri);
+    console.log("Twitter認証state:", state);
+    startTwitterAuth(redirectUri, state);
+  } catch (error) {
+    console.error("Twitter認証エラー:", error);
+    alert("Twitter認証の開始に失敗しました。");
+  }
+};
+
+// プロバイダー名を日本語で表示する関数
+const getProviderDisplayName = (provider: string) => {
+  switch (provider) {
+    case "password":
+      return "メールアドレス";
+    case "google.com":
+      return "Google";
+    case "github.com":
+      return "GitHub";
+    case "twitter.com":
+      return "Twitter";
+    default:
+      return provider;
+  }
+};
+
+// プロバイダーがリンクされているかチェックする関数
+const isProviderLinked = (provider: string) => {
+  return userProviders.value.includes(provider);
+};
+
+// プロバイダー詳細情報を取得する関数
+const getProviderDetail = (provider: string) => {
+  return userProvidersDetail.value.find(
+    (detail) => detail.provider === provider
+  );
 };
 
 // SEOメタデータの設定
