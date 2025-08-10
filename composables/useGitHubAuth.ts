@@ -4,7 +4,7 @@ export const useGitHubAuth = () => {
   const { login: authLogin } = useAuth();
 
   // GitHub OAuth2.0認証URLを生成
-  const getGitHubAuthUrl = (redirectUri: string): string => {
+  const getGitHubAuthUrl = (redirectUri: string, state?: string): string => {
     const clientId = config.public.githubClientId;
     if (!clientId) {
       throw new Error("GitHub Client IDが設定されていません");
@@ -15,6 +15,11 @@ export const useGitHubAuth = () => {
       redirect_uri: redirectUri,
       scope: "read:user user:email",
     });
+
+    // stateパラメータがある場合は追加
+    if (state) {
+      params.set("state", state);
+    }
 
     return `https://github.com/login/oauth/authorize?${params.toString()}`;
   };
@@ -33,21 +38,22 @@ export const useGitHubAuth = () => {
   // GitHub認証を実行
   const authenticateWithGitHub = async (
     code: string,
-    redirectUri: string
+    redirectUri: string,
+    linkUID?: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const response = await githubAuth(code, redirectUri);
+      const response = await githubAuth(code, redirectUri, linkUID);
 
       if (response.error) {
         return { success: false, error: response.error };
       }
 
-      if (response.customToken && response.uid && response.email) {
+      if (response.sessionToken && response.uid && response.email) {
         // useAuthでログイン状態を管理
         authLogin({
           uid: response.uid,
           email: response.email,
-          customToken: response.customToken,
+          sessionToken: response.sessionToken,
         });
 
         return { success: true };
@@ -64,9 +70,9 @@ export const useGitHubAuth = () => {
   };
 
   // GitHub認証フローを開始
-  const startGitHubAuth = (redirectUri: string): void => {
+  const startGitHubAuth = (redirectUri: string, state?: string): void => {
     try {
-      const authUrl = getGitHubAuthUrl(redirectUri);
+      const authUrl = getGitHubAuthUrl(redirectUri, state);
       window.location.href = authUrl;
     } catch (error: any) {
       console.error("GitHub認証開始エラー:", error);
