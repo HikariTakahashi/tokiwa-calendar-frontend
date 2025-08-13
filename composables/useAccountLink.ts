@@ -14,8 +14,16 @@ export const useAccountLink = () => {
         return [];
       }
 
+      const config = useRuntimeConfig();
+      const API_BASE_URL = config.public.apiBaseUrl;
+
+      console.log("プロバイダー情報取得API呼び出し:", {
+        url: `${API_BASE_URL}/api/user-providers`,
+        tokenLength: token.length,
+      });
+
       const response = await $fetch<{ providers: string[] }>(
-        "/api/user-providers",
+        `${API_BASE_URL}/api/user-providers`,
         {
           method: "GET",
           headers: {
@@ -23,6 +31,8 @@ export const useAccountLink = () => {
           },
         }
       );
+
+      console.log("プロバイダー情報取得APIレスポンス:", response);
 
       return response.providers || [];
     } catch (error) {
@@ -45,8 +55,16 @@ export const useAccountLink = () => {
         return { success: false, error: "認証トークンが見つかりません" };
       }
 
+      const config = useRuntimeConfig();
+      const API_BASE_URL = config.public.apiBaseUrl;
+
+      console.log("GoogleアカウントリンクAPI呼び出し:", {
+        url: `${API_BASE_URL}/api/link-account`,
+        tokenLength: token.length,
+      });
+
       const response = await $fetch<{ success: boolean; error?: string }>(
-        "/api/link-account",
+        `${API_BASE_URL}/api/link-account`,
         {
           method: "POST",
           headers: {
@@ -59,6 +77,8 @@ export const useAccountLink = () => {
           },
         }
       );
+
+      console.log("GoogleアカウントリンクAPIレスポンス:", response);
 
       return response;
     } catch (error: any) {
@@ -81,8 +101,16 @@ export const useAccountLink = () => {
         return { success: false, error: "認証トークンが見つかりません" };
       }
 
+      const config = useRuntimeConfig();
+      const API_BASE_URL = config.public.apiBaseUrl;
+
+      console.log("GitHubアカウントリンクAPI呼び出し:", {
+        url: `${API_BASE_URL}/api/link-account`,
+        tokenLength: token.length,
+      });
+
       const response = await $fetch<{ success: boolean; error?: string }>(
-        "/api/link-account",
+        `${API_BASE_URL}/api/link-account`,
         {
           method: "POST",
           headers: {
@@ -95,6 +123,8 @@ export const useAccountLink = () => {
           },
         }
       );
+
+      console.log("GitHubアカウントリンクAPIレスポンス:", response);
 
       return response;
     } catch (error: any) {
@@ -117,8 +147,16 @@ export const useAccountLink = () => {
         return { success: false, error: "認証トークンが見つかりません" };
       }
 
+      const config = useRuntimeConfig();
+      const API_BASE_URL = config.public.apiBaseUrl;
+
+      console.log("TwitterアカウントリンクAPI呼び出し:", {
+        url: `${API_BASE_URL}/api/link-account`,
+        tokenLength: token.length,
+      });
+
       const response = await $fetch<{ success: boolean; error?: string }>(
-        "/api/link-account",
+        `${API_BASE_URL}/api/link-account`,
         {
           method: "POST",
           headers: {
@@ -131,6 +169,8 @@ export const useAccountLink = () => {
           },
         }
       );
+
+      console.log("TwitterアカウントリンクAPIレスポンス:", response);
 
       return response;
     } catch (error: any) {
@@ -153,8 +193,17 @@ export const useAccountLink = () => {
         return { success: false, error: "認証トークンが見つかりません" };
       }
 
+      const config = useRuntimeConfig();
+      const API_BASE_URL = config.public.apiBaseUrl;
+
+      console.log("アカウント解除API呼び出し:", {
+        url: `${API_BASE_URL}/api/unlink-account`,
+        tokenLength: token.length,
+        providerId,
+      });
+
       const response = await $fetch<{ success: boolean; error?: string }>(
-        "/api/unlink-account",
+        `${API_BASE_URL}/api/unlink-account`,
         {
           method: "POST",
           headers: {
@@ -166,6 +215,8 @@ export const useAccountLink = () => {
           },
         }
       );
+
+      console.log("アカウント解除APIレスポンス:", response);
 
       return response;
     } catch (error: any) {
