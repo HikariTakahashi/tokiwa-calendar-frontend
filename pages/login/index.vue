@@ -280,13 +280,30 @@ const handleLogin = async () => {
     }
 
     // ログイン成功後の処理
+    console.log("ログイン結果:", loginResult);
+    console.log("ログイン結果の型:", typeof loginResult);
+    console.log("ログイン結果のキー:", Object.keys(loginResult));
+    console.log("各プロパティの値:", {
+      sessionToken: loginResult.sessionToken,
+      uid: loginResult.uid,
+      email: loginResult.email,
+    });
+    console.log("各プロパティの型:", {
+      sessionToken: typeof loginResult.sessionToken,
+      uid: typeof loginResult.uid,
+      email: typeof loginResult.email,
+    });
+
     if (loginResult.sessionToken && loginResult.uid && loginResult.email) {
       // useAuthでログイン状態を管理
-      authLogin({
+      const userData = {
         uid: loginResult.uid,
         email: loginResult.email,
         sessionToken: loginResult.sessionToken,
-      });
+      };
+
+      console.log("認証データを保存:", userData);
+      authLogin(userData);
 
       // 成功時にエラー状態を確実にクリア
       loginError.value = "";
@@ -296,6 +313,16 @@ const handleLogin = async () => {
       await navigateTo("/dashboard");
     } else {
       console.error("ログイン成功だが必要なデータが不足:", loginResult);
+      console.error("条件チェック結果:", {
+        sessionTokenExists: !!loginResult.sessionToken,
+        uidExists: !!loginResult.uid,
+        emailExists: !!loginResult.email,
+      });
+      console.error("不足している項目:", {
+        sessionToken: !loginResult.sessionToken,
+        uid: !loginResult.uid,
+        email: !loginResult.email,
+      });
       loginError.value = "ログイン処理中にエラーが発生しました";
       loginErrorType.value = "unknown";
     }
