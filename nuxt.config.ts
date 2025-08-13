@@ -12,6 +12,8 @@ export default defineNuxtConfig({
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID,
       githubClientId: process.env.NUXT_PUBLIC_GITHUB_CLIENT_ID,
       twitterClientId: process.env.NUXT_PUBLIC_TWITTER_CLIENT_ID,
+      skipEmailVerification:
+        process.env.NUXT_PUBLIC_SKIP_EMAIL_VERIFICATION || "false",
     },
     turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY,
   },
