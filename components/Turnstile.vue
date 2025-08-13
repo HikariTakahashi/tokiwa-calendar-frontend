@@ -41,6 +41,10 @@ const loadTurnstile = () => {
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
     script.async = true;
     script.defer = true;
+    // preload警告を避けるために、crossorigin属性を追加
+    script.crossOrigin = "anonymous";
+    // preload警告を避けるために、rel属性を設定
+    script.setAttribute("data-preload", "false");
     script.onload = () => resolve();
     document.head.appendChild(script);
   });
@@ -53,7 +57,6 @@ const initTurnstile = async () => {
   if (!turnstileContainer.value) return;
 
   const siteKey = props.siteKey || config.public.turnstileSiteKey;
-
 
   window.turnstile.render(turnstileContainer.value, {
     sitekey: siteKey as string,
