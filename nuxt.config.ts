@@ -48,4 +48,10 @@ export default defineNuxtConfig({
   devServer: {
     port: 3000,
   },
+  // 外部スクリプトのpreloadを無効化（Cloudflare警告対策）
+  nitro: {
+    experimental: {
+      wasm: true,
+    },
+  },
 });
