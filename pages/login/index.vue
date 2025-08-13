@@ -219,9 +219,7 @@ const handleFacebookLogin = () => {
 };
 
 const handleTwitterLogin = () => {
-  const { startTwitterAuth } = useTwitterAuth();
-  const redirectUri = `${window.location.origin}/auth/twitter/callback`;
-  startTwitterAuth(redirectUri);
+  navigateTo("/login/twitter");
 };
 
 // ログイン処理
