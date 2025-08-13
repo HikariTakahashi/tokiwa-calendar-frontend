@@ -479,7 +479,7 @@ const userColor = ref("#3b82f6");
 const { formatTimeForDisplay } = useTimeUtils();
 const { generateOverlapDisplayData, formatOverlapTimeForDisplay } =
   useOverlapTimeUtils();
-const { createNewSpace, getUserData } = useAPI();
+const { createNewSpace, syncTimeData, getUserData } = useAPI();
 const { isAuthenticated } = useAuth();
 const enablePeriodSetting = ref(false);
 const allowOtherUserEdit = ref(false);
@@ -697,22 +697,72 @@ const proceedWithSync = async () => {
     console.log("UploadForm: sending request data", requestData);
 
     isConfirming.value = true;
-    const response = await createNewSpace(
-      requestData,
-      allowOtherUserEdit.value
-    );
+    let response;
+
+    if (props.isSync) {
+      // 再同期時は既存のspaceIdを使用してsyncTimeData関数を呼び出し
+      console.log(
+        "UploadForm: using syncTimeData for existing space",
+        props.spaceId
+      );
+      // requestDataからeventsとその他のプロパティを分離
+      const events = {};
+      let startDate = null;
+      let endDate = null;
+
+      Object.entries(requestData).forEach(([key, value]) => {
+        if (key === "startDate") {
+          startDate = value;
+        } else if (key === "endDate") {
+          endDate = value;
+        } else if (key !== "allowOtherEdit") {
+          // events以外のプロパティをeventsに追加
+          events[key] = value;
+        }
+      });
+
+      response = await syncTimeData(
+        {
+          events: events,
+          spaceId: props.spaceId,
+          username: "",
+          userColor: "",
+          startDate: startDate,
+          endDate: endDate,
+          allowOtherEdit: allowOtherUserEdit.value,
+        },
+        props.spaceId,
+        allowOtherUserEdit.value
+      );
+    } else {
+      // 新規作成時はcreateNewSpace関数を使用
+      console.log("UploadForm: using createNewSpace for new space");
+      response = await createNewSpace(requestData, allowOtherUserEdit.value);
+    }
+
+    console.log("UploadForm: received response", response);
 
     // 新しいレスポンス形式に対応：eventsプロパティを使用
     if (response.events) {
       displayData.value = response.events;
     }
 
-    // バックエンドから返されたspaceIdを使用
-    const spaceId = response.spaceId;
-
     if (props.isSync) {
+      // 再同期時は既存のspaceIdを使用
+      console.log("UploadForm: reloading page for sync");
       window.location.reload();
     } else {
+      // 新規作成時はバックエンドから返されたspaceIdを使用
+      const spaceId = response.spaceId;
+      console.log("UploadForm: extracted spaceId for new space", spaceId);
+
+      if (!spaceId) {
+        console.error("UploadForm: spaceId is undefined in response", response);
+        alert("スペースIDの取得に失敗しました。再度お試しください。");
+        isConfirming.value = false;
+        return;
+      }
+
       // バックエンドから取得したspaceIdでページ遷移
       await navigateTo(`/space/${spaceId}`);
     }
