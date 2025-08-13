@@ -63,6 +63,8 @@ export const useAuth = () => {
 
   // ログイン処理
   const login = (userData: User) => {
+    console.log("useAuth.login 呼び出し:", userData);
+
     if (process.client) {
       localStorage.setItem("sessionToken", userData.sessionToken);
       localStorage.setItem("userUID", userData.uid);
@@ -70,6 +72,16 @@ export const useAuth = () => {
 
       globalUser.value = userData;
       globalIsAuthenticated.value = true;
+
+      console.log("認証状態を更新しました:", {
+        globalUser: globalUser.value,
+        globalIsAuthenticated: globalIsAuthenticated.value,
+        localStorage: {
+          sessionToken: localStorage.getItem("sessionToken"),
+          userUID: localStorage.getItem("userUID"),
+          userEmail: localStorage.getItem("userEmail"),
+        },
+      });
     }
   };
 
