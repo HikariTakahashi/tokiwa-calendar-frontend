@@ -38,8 +38,8 @@
   </Teleport>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+<script setup>
+import { onMounted, onBeforeUnmount } from "vue";
 import UploadForm from "@/components/forms/UploadForm.vue";
 
 defineProps({
@@ -53,38 +53,13 @@ defineProps({
   },
 });
 
-const emit = defineEmits([
-  "next-month",
-  "prev-month",
-  "close-copy-mode",
-  "cancel-copy-mode",
-]);
-
-const showModal = ref(false);
-
-const openForm = () => {
-  showModal.value = true;
-};
+const emit = defineEmits(["next-month", "prev-month", "close-copy-mode"]);
 
 const CloseCopyMode = () => {
-  showModal.value = false;
   emit("close-copy-mode");
 };
 
-onMounted(() => {
-  window.addEventListener("keydown", handleKeyDown);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("keydown", handleKeyDown);
-});
-
-const closeForm = () => {
-  showModal.value = false;
-};
-
-// 右矢印キーで次の月に、左矢印キーで前の月に移動する
-const handleKeyDown = (e: KeyboardEvent) => {
+const handleKeyDown = (e) => {
   if (e.key === "Enter") {
     CloseCopyMode();
   } else if (e.key === "ArrowRight") {

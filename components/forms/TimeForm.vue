@@ -383,10 +383,17 @@ const modalWidth = ref(0);
 const modalHeight = ref(0);
 
 const updateModalSize = () => {
-  if (modalRef.value) {
-    const rect = modalRef.value.getBoundingClientRect();
-    modalWidth.value = rect.width;
-    modalHeight.value = rect.height;
+  if (modalRef.value && modalRef.value.getBoundingClientRect) {
+    try {
+      const rect = modalRef.value.getBoundingClientRect();
+      modalWidth.value = rect.width;
+      modalHeight.value = rect.height;
+    } catch (error) {
+      console.warn("Failed to get modal bounds:", error);
+      // フォールバック値を使用
+      modalWidth.value = 400;
+      modalHeight.value = 300;
+    }
   }
 };
 

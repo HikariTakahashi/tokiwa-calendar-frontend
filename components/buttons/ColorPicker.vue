@@ -427,14 +427,21 @@ const stopColorPick = () => {
 };
 
 const updateColorFromPosition = (event) => {
-  const rect = event.target.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
+  if (!event.target || !event.target.getBoundingClientRect) {
+    return;
+  }
 
-  saturation.value = Math.round((x / rect.width) * 100);
-  value.value = Math.round(100 - (y / rect.height) * 100);
+  try {
+    const rect = event.target.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
 
-  updateUserColor();
+    saturation.value = Math.round((x / rect.width) * 100);
+    value.value = Math.round(100 - (y / rect.height) * 100);
+
+    updateUserColor();
+  } catch (error) {
+  }
 };
 
 const updateUserColor = () => {

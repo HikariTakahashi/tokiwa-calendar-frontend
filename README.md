@@ -24,7 +24,11 @@ cd simple-calendar-frontend
 npm install
 ```
 
-注:vue-drumroll-datetime-pickerの利用は廃止されました。特にアンインストール等は必要ないです。
+3. .env ファイルの書き込み
+   .env ファイルの中身を担当者から貰ってください
+   注:アップデート等により.env ファイルは頻繁に変更されるため、こまめに確認してください。
+
+注:vue-drumroll-datetime-picker の利用は廃止されました。特にアンインストール等は必要ないです。
 
 ## 起動準備(バックエンド)
 
@@ -40,16 +44,21 @@ git clone https://github.com/HikariTakahashi/simple-calendar-backend.git
 cd simple-calendar-backend
 ```
 
+3. .env ファイルの書き込み
+   .env ファイルの中身を担当者から貰ってください
+   注:アップデート等により.env ファイルは頻繁に変更されるため、こまめに確認してください。
+
 ## 開発サーバーの起動
 
 1. バックエンド起動（Go 言語）
 
 ```bash
 // バックエンドのターミナルで実行
-go run .
+go run --tags=local .
 ```
 
 注: 以前は `go run main.go` でしたが、ファイル分割により `go run .`に変更されました。プロジェクト内のすべての .go ファイルがビルド対象になります。
+注 2: `go run .`からさらに`go run --tags=local .`に変更されました。
 
 2. フロントエンド起動（Nuxt.js）
 

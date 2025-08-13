@@ -7,7 +7,15 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL,
+      turnstileSiteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY,
+      encryptionKey: process.env.NUXT_PUBLIC_ENCRYPTION_KEY,
+      googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID,
+      githubClientId: process.env.NUXT_PUBLIC_GITHUB_CLIENT_ID,
+      twitterClientId: process.env.NUXT_PUBLIC_TWITTER_CLIENT_ID,
+      skipEmailVerification:
+        process.env.NUXT_PUBLIC_SKIP_EMAIL_VERIFICATION || "false",
     },
+    turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY,
   },
   app: {
     head: {
@@ -32,6 +40,20 @@ export default defineNuxtConfig({
           content: "カレンダー,予定管理,日程調整,ToDo,日本語,TokiWa",
         },
       ],
+    },
+  },
+  // エラーハンドリングの設定
+  experimental: {
+    payloadExtraction: false,
+  },
+  // 開発時のエラー表示を改善
+  devServer: {
+    port: 3000,
+  },
+  // 外部スクリプトのpreloadを無効化（Cloudflare警告対策）
+  nitro: {
+    experimental: {
+      wasm: true,
     },
   },
 });

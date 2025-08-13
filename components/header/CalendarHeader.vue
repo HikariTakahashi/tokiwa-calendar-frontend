@@ -1,19 +1,27 @@
 <template>
   <div
-    class="flex flex-col sm:flex-row justify-between items-center py-2 sx:py-1 px-2"
+    class="flex flex-col sm:flex-row justify-between items-center py-2 sx:py-1 px-2 relative"
   >
-    <div class="flex flex-row items-center gap-x-2">
+    <div class="flex flex-row items-center gap-x-2 w-full sm:w-auto">
       <button
-        @click="openMenu"
-        class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200"
+        @click="toggleSideMenu"
+        class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200 flex-shrink-0 order-1 relative z-50"
+        type="button"
       >
         <UIcon name="ic:sharp-density-medium" class="size-5" />
       </button>
-      <Title />
-      <h2 class="text-sm sm:text-xl font-bold font-mono">予定調整モード</h2>
-      <h2 v-if="isSync" class="text-blue-500 sm:text-xl font-bold font-mono">
-        同期中
-      </h2>
+      <div
+        class="flex flex-row items-center gap-x-2 order-2 flex-1 sm:flex-none sm:justify-start justify-center"
+      >
+        <Title />
+        <h2 class="text-sm sm:text-xl font-bold font-mono">予定調整モード</h2>
+        <h2
+          v-if="isSync"
+          class="text-blue-500 text-sm sm:text-xl font-bold font-mono"
+        >
+          同期中
+        </h2>
+      </div>
     </div>
 
     <div class="flex items-center gap-x-4">
@@ -50,7 +58,6 @@
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import UploadForm from "@/components/forms/UploadForm.vue";
-import { useRouter } from "vue-router";
 import Title from "@/components/calendar/Title.vue";
 
 const props = defineProps<{
@@ -66,7 +73,6 @@ const props = defineProps<{
 }>();
 
 const showModal = ref(false);
-const router = useRouter();
 
 const emit = defineEmits<{
   (e: "openForm"): void;
@@ -94,7 +100,7 @@ const nextMonth = () => {
   emit("nextMonth");
 };
 
-const openMenu = () => {
+const toggleSideMenu = () => {
   emit("toggleSideMenu");
 };
 

@@ -9,6 +9,7 @@ import CopyModeHeader from "@/components/header/CopyModeHeader.vue";
 import LoadingHeader from "@/components/header/LoadingHeader.vue";
 import Calendar from "@/components/calendar/Calendar.vue";
 import Loading from "@/components/background/loading.vue";
+
 import { useAPI, type TimeData } from "@/composables/useAPI";
 
 interface CalendarDay {
@@ -77,6 +78,22 @@ const toggleSideMenu = () => {
 
 const handleCancelCopyMode = () => {
   isCopyMode.value = false;
+};
+
+const handleImportComplete = (importedData: any[]) => {
+  const updatedEvents = { ...timeData.value.events };
+
+  importedData.forEach((item) => {
+    const { date, timeSlots } = item;
+    if (timeSlots && timeSlots.length > 0) {
+      updatedEvents[date] = timeSlots;
+    }
+  });
+
+  timeData.value = {
+    ...timeData.value,
+    events: updatedEvents,
+  };
 };
 
 const handleNextMonth = () => {
@@ -149,7 +166,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col">
+  <div class="h-full flex flex-col">
     <!-- ローディング中のヘッダー -->
     <LoadingHeader
       v-if="isLoading"
@@ -159,6 +176,7 @@ onMounted(() => {
       :current-week="currentWeek"
       :time-data="timeData.events"
       :space-id="route.params.id as string"
+      @toggleSideMenu="toggleSideMenu"
     />
 
     <!-- 通常のヘッダー -->
@@ -177,7 +195,7 @@ onMounted(() => {
       @open-form="openForm"
       @close-copy-mode="closeCopyMode"
       @cancel-copy-mode="handleCancelCopyMode"
-      @toggle-side-menu="toggleSideMenu"
+      @toggleSideMenu="toggleSideMenu"
     />
 
     <!-- ローディング中のオーバーレイ -->
@@ -185,7 +203,7 @@ onMounted(() => {
 
     <!-- カレンダー部分 -->
     <template v-if="!isLoading">
-      <div class="h-full overflow-y-auto">
+      <div class="flex-1 min-h-0">
         <Calendar
           :calendar-days="calendarDays"
           :year="currentYear"
@@ -199,6 +217,8 @@ onMounted(() => {
           @update:time-data="updateTimeData"
           @update:is-copy-mode="updateIsCopyMode"
           @cancel-copy-mode="handleCancelCopyMode"
+          @toggleSideMenu="toggleSideMenu"
+          @import-complete="handleImportComplete"
         />
       </div>
     </template>

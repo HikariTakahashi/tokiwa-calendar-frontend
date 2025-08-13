@@ -5,11 +5,6 @@
     <div
       class="bg-white px-6 rounded-lg w-full sm:w-4/5 max-h-full sm:max-h-[80vh] overflow-y-auto"
     >
-      <!-- デバッグ用表示
-      <div class="text-red-500 font-bold mb-2">
-        現在のspaceId: {{ props.spaceId }}
-      </div> -->
-
       <div
         class="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pt-6"
       >
@@ -232,11 +227,141 @@
                 </div>
               </div>
             </div>
-            <div class="flex flex-col gap-y-2 w-1/2">
+            <!-- ユーザーデータロード中 -->
+            <div v-if="isLoadingUserData" class="flex flex-col gap-y-2 w-1/2">
+              <div class="flex items-center justify-center py-8">
+                <div
+                  class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"
+                ></div>
+                <p class="text-gray-600 ml-2">ユーザーデータを読み込み中...</p>
+              </div>
+            </div>
+            <!-- 既存ユーザーデータがある場合 -->
+            <div
+              v-else-if="hasExistingUserData && !showChangeUserInfo"
+              class="flex flex-col gap-y-2 w-1/2"
+            >
               <div class="flex flex-col gap-y-1 w-full">
                 <p class="font-bold border-b-2 border-gray-600 sm:w-1/4">
                   ユーザー名
                 </p>
+                <div
+                  class="flex items-center gap-3 p-2 bg-gray-50 rounded border"
+                >
+                  <span class="font-bold" :style="{ color: existingUserColor }">
+                    {{ existingUserName }}
+                  </span>
+                  <div
+                    class="w-6 h-6 border rounded-md border-gray-300"
+                    :style="{ backgroundColor: existingUserColor }"
+                  ></div>
+                </div>
+                <div class="flex justify-between items-center">
+                  <p class="text-sm text-gray-600">
+                    登録済みのユーザー情報を使用します
+                  </p>
+                  <button
+                    @click="toggleChangeUserInfo"
+                    class="text-blue-600 hover:text-blue-800 text-sm underline"
+                  >
+                    変更する
+                  </button>
+                </div>
+              </div>
+              <div class="flex flex-col gap-y-1 w-full">
+                <div class="flex pl-2 items-end justify-end">
+                  <buttons-square
+                    @click="confirmSync"
+                    color="bg-green-300"
+                    :isUse="!isConfirming"
+                  >
+                    <div
+                      v-if="isConfirming"
+                      class="flex items-center justify-center"
+                    >
+                      <UIcon name="line-md:loading-loop" class="size-6" />
+                    </div>
+                    <span v-else>確定</span>
+                  </buttons-square>
+                </div>
+              </div>
+            </div>
+            <!-- ユーザーデータ入力欄（新規） -->
+            <div v-else class="flex flex-col gap-y-2 w-1/2">
+              <div
+                v-if="hasExistingUserData && showChangeUserInfo"
+                class="mb-2"
+              >
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-medium text-gray-700">
+                    ユーザー情報を変更
+                  </p>
+                  <button
+                    @click="toggleChangeUserInfo"
+                    class="text-gray-600 hover:text-gray-800 text-sm underline"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-y-1 w-full">
+                <!-- 登録済みユーザーが異なる情報を使用する場合 -->
+                <div
+                  v-if="hasExistingUserData && showChangeUserInfo"
+                  class="flex flex-col gap-y-1 p-2 bg-orange-100 rounded-md border-1 border-orange-300"
+                >
+                  <p class="text-sm font-bold flex items-center gap-x-1">
+                    <UIcon
+                      name="ic:sharp-warning"
+                      class="size-4 text-red-500"
+                    />
+                    登録済み情報とは異なるユーザー情報を使用します
+                  </p>
+                  <p class="text-sm ml-4">
+                    このセッションでのみ異なるユーザー名・カラーを使用します。登録済み情報は変更されません。
+                  </p>
+                  <div class="text-xs text-gray-600 ml-4 mt-1">
+                    登録済み:
+                    <span
+                      class="font-bold"
+                      :style="{ color: existingUserColor }"
+                      >{{ existingUserName }}</span
+                    >
+                  </div>
+                </div>
+                <!-- ユーザー情報未登録の場合 -->
+                <div
+                  v-else-if="!hasExistingUserData"
+                  class="flex flex-col gap-y-1 p-2 bg-blue-100 rounded-md border-1 border-gray-300"
+                >
+                  <p class="text-sm font-bold flex items-center gap-x-1">
+                    <UIcon
+                      name="ic:baseline-edit"
+                      class="size-4 text-blue-500"
+                    />
+                    ユーザー情報を登録しませんか？
+                  </p>
+                  <p class="text-sm ml-4">
+                    ユーザー情報を登録すると、ユーザー名などの入力を省略できます。
+                  </p>
+                  <!--非ログイン時-->
+                  <button
+                    v-if="!isAuthenticated"
+                    @click="handleLogin"
+                    class="text-blue-600 hover:text-blue-800 text-sm underline"
+                  >
+                    ログイン
+                  </button>
+                  <!--ログイン時-->
+                  <button
+                    v-else
+                    @click="handleRegisterUser"
+                    class="text-blue-600 hover:text-blue-800 text-sm underline"
+                  >
+                    ユーザー情報を登録
+                  </button>
+                </div>
                 <input
                   v-model="username"
                   type="text"
@@ -304,6 +429,7 @@
     <!-- 警告モーダル -->
     <WarnModal
       :show="showWarnModal"
+      :userColor="userColor"
       @close="handleWarnModalClose"
       @continue="handleWarnModalContinue"
     />
@@ -314,6 +440,7 @@
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import { copyToClipboard } from "@/utils/CopyDate";
 import { useAPI } from "@/composables/useAPI";
+import { useAuth } from "@/composables/useAuth";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useOverlapTimeUtils } from "@/utils/OverlapTimeUtils";
 import {
@@ -322,7 +449,7 @@ import {
 } from "@/utils/ArrayString";
 import ColorPicker from "@/components/buttons/ColorPicker.vue";
 import Switch from "~/components/buttons/Switch.vue";
-import WarnModal from "@/components/forms/WarnModal.vue";
+import WarnModal from "~/components/pops/WarnModal.vue";
 
 const props = defineProps({
   timeData: {
@@ -352,7 +479,8 @@ const userColor = ref("#3b82f6");
 const { formatTimeForDisplay } = useTimeUtils();
 const { generateOverlapDisplayData, formatOverlapTimeForDisplay } =
   useOverlapTimeUtils();
-const { createNewSpace } = useAPI();
+const { createNewSpace, syncTimeData, getUserData } = useAPI();
+const { isAuthenticated } = useAuth();
 const enablePeriodSetting = ref(false);
 const allowOtherUserEdit = ref(false);
 const startDate = ref("");
@@ -362,6 +490,13 @@ const usernameErrors = ref([]);
 // showOverlapsは削除し、showOverlappingTimeを使用
 const showOverlappingTime = ref(false);
 const showWarnModal = ref(false);
+
+// ユーザーデータ関連の状態管理
+const hasExistingUserData = ref(false);
+const existingUserName = ref("");
+const existingUserColor = ref("#3b82f6");
+const isLoadingUserData = ref(false);
+const showChangeUserInfo = ref(false);
 
 watch(
   () => props.timeData,
@@ -381,6 +516,56 @@ watch(
 const handleEscKey = (event) => {
   if (event.key === "Escape") {
     emit("close");
+  }
+};
+
+// ユーザーデータを取得する関数
+const fetchUserData = async () => {
+  if (!isAuthenticated.value) {
+    return;
+  }
+
+  try {
+    isLoadingUserData.value = true;
+    const response = await getUserData();
+
+    if (response.error) {
+      // エラーの場合はデフォルト値のまま
+      hasExistingUserData.value = false;
+      existingUserName.value = "";
+      existingUserColor.value = "#3b82f6";
+    } else if (response.userName && response.userColor) {
+      // ユーザーデータが存在する場合
+      hasExistingUserData.value = true;
+      existingUserName.value = response.userName;
+      existingUserColor.value = response.userColor;
+      // 既存のデータで初期化
+      username.value = response.userName;
+      userColor.value = response.userColor;
+    } else {
+      // データが不完全な場合
+      hasExistingUserData.value = false;
+      existingUserName.value = "";
+      existingUserColor.value = "#3b82f6";
+    }
+  } catch (error) {
+    console.error("ユーザーデータ取得エラー:", error);
+    hasExistingUserData.value = false;
+    existingUserName.value = "";
+    existingUserColor.value = "#3b82f6";
+  } finally {
+    isLoadingUserData.value = false;
+  }
+};
+
+// ユーザー情報変更モードの切り替え
+const toggleChangeUserInfo = () => {
+  showChangeUserInfo.value = !showChangeUserInfo.value;
+  if (showChangeUserInfo.value) {
+    // 変更モードに入る時は現在の値で初期化
+    username.value = existingUserName.value;
+    userColor.value = existingUserColor.value;
+    usernameErrors.value = [];
   }
 };
 
@@ -439,44 +624,37 @@ const handleCopy = () => {
   }
 };
 
-const generateRandomString = (length = 8) => {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
-
 const syncData = async () => {
   showSyncInput.value = true;
 };
 
 const confirmSync = async () => {
+  // userColorが#3b82f6の場合、警告モーダルを表示
+  if (userColor.value === "#3b82f6") {
+    showWarnModal.value = true;
+    return;
+  }
+
+  // 警告モーダルをスキップして直接同期処理を実行
+  await proceedWithSync();
+};
+
+const proceedWithSync = async () => {
   try {
     if (Object.keys(displayData.value).length === 0) {
       alert("同期するデータがありません");
       return;
     }
 
-    // ユーザーカラーが#3b82f6の場合、警告モーダルを表示
-    if (userColor.value === "#3b82f6") {
-      showWarnModal.value = true;
-      return;
-    }
-
-    await proceedWithSync();
-  } catch (error) {
-    console.error("同期エラー:", error);
-    alert("同期に失敗しました");
-    isConfirming.value = false;
-  }
-};
-
-const proceedWithSync = async () => {
-  try {
-    const spaceId = props.isSync ? props.spaceId : generateRandomString();
+    // 使用するユーザー名とカラーを決定
+    const finalUsername =
+      hasExistingUserData.value && !showChangeUserInfo.value
+        ? existingUserName.value
+        : username.value;
+    const finalUserColor =
+      hasExistingUserData.value && !showChangeUserInfo.value
+        ? existingUserColor.value
+        : userColor.value;
 
     const processedData = Object.entries(displayData.value).reduce(
       (acc, [date, slots]) => {
@@ -487,8 +665,8 @@ const proceedWithSync = async () => {
           }
           return {
             ...slot,
-            username: username.value,
-            userColor: userColor.value,
+            username: finalUsername,
+            userColor: finalUserColor,
           };
         });
         return acc;
@@ -496,10 +674,9 @@ const proceedWithSync = async () => {
       {}
     );
 
-    // リクエストデータの構造を変更
+    // リクエストデータの構造を変更（spaceIdはバックエンドで自動生成されるため削除）
     const requestData = {
       ...processedData, // 直接日付をキーとしたオブジェクト
-      spaceId: spaceId,
       allowOtherEdit: allowOtherUserEdit.value,
     };
 
@@ -520,10 +697,50 @@ const proceedWithSync = async () => {
     console.log("UploadForm: sending request data", requestData);
 
     isConfirming.value = true;
-    const response = await createNewSpace(
-      requestData,
-      allowOtherUserEdit.value
-    );
+    let response;
+
+    if (props.isSync) {
+      // 再同期時は既存のspaceIdを使用してsyncTimeData関数を呼び出し
+      console.log(
+        "UploadForm: using syncTimeData for existing space",
+        props.spaceId
+      );
+      // requestDataからeventsとその他のプロパティを分離
+      const events = {};
+      let startDate = null;
+      let endDate = null;
+
+      Object.entries(requestData).forEach(([key, value]) => {
+        if (key === "startDate") {
+          startDate = value;
+        } else if (key === "endDate") {
+          endDate = value;
+        } else if (key !== "allowOtherEdit") {
+          // events以外のプロパティをeventsに追加
+          events[key] = value;
+        }
+      });
+
+      response = await syncTimeData(
+        {
+          events: events,
+          spaceId: props.spaceId,
+          username: "",
+          userColor: "",
+          startDate: startDate,
+          endDate: endDate,
+          allowOtherEdit: allowOtherUserEdit.value,
+        },
+        props.spaceId,
+        allowOtherUserEdit.value
+      );
+    } else {
+      // 新規作成時はcreateNewSpace関数を使用
+      console.log("UploadForm: using createNewSpace for new space");
+      response = await createNewSpace(requestData, allowOtherUserEdit.value);
+    }
+
+    console.log("UploadForm: received response", response);
 
     // 新しいレスポンス形式に対応：eventsプロパティを使用
     if (response.events) {
@@ -531,15 +748,37 @@ const proceedWithSync = async () => {
     }
 
     if (props.isSync) {
+      // 再同期時は既存のspaceIdを使用
+      console.log("UploadForm: reloading page for sync");
       window.location.reload();
     } else {
+      // 新規作成時はバックエンドから返されたspaceIdを使用
+      const spaceId = response.spaceId;
+      console.log("UploadForm: extracted spaceId for new space", spaceId);
+
+      if (!spaceId) {
+        console.error("UploadForm: spaceId is undefined in response", response);
+        alert("スペースIDの取得に失敗しました。再度お試しください。");
+        isConfirming.value = false;
+        return;
+      }
+
+      // バックエンドから取得したspaceIdでページ遷移
       await navigateTo(`/space/${spaceId}`);
     }
 
     alert("同期が完了しました");
     showSyncInput.value = false;
-    username.value = "";
-    userColor.value = "#3b82f6";
+
+    // ユーザーデータがない場合のみリセット
+    if (!hasExistingUserData.value) {
+      username.value = "";
+      userColor.value = "#3b82f6";
+    }
+
+    // 変更モードをリセット
+    showChangeUserInfo.value = false;
+
     enablePeriodSetting.value = false;
     startDate.value = "";
     endDate.value = "";
@@ -548,6 +787,8 @@ const proceedWithSync = async () => {
     console.error("同期エラー:", error);
     alert("同期に失敗しました");
     isConfirming.value = false;
+    // エラー時も変更モードをリセット
+    showChangeUserInfo.value = false;
   }
 };
 
@@ -599,11 +840,37 @@ const hasOwnInputData = () => {
 
 onMounted(() => {
   window.addEventListener("keydown", handleEscKey);
+  // 認証済みの場合はユーザーデータを取得
+  if (isAuthenticated.value) {
+    fetchUserData();
+  }
 });
 
 onUnmounted(() => {
   window.removeEventListener("keydown", handleEscKey);
 });
+
+// 認証状態の変化を監視
+watch(isAuthenticated, (newValue) => {
+  if (newValue) {
+    fetchUserData();
+  } else {
+    // ログアウト時はデータをリセット
+    hasExistingUserData.value = false;
+    existingUserName.value = "";
+    existingUserColor.value = "#3b82f6";
+    showChangeUserInfo.value = false;
+  }
+});
+
+const handleLogin = () => {
+  navigateTo("/login");
+};
+
+const handleRegisterUser = () => {
+  // ダッシュボードに遷移し、クエリパラメータで編集モードを指示
+  navigateTo("/dashboard?editMode=true");
+};
 </script>
 
 <style scoped>
