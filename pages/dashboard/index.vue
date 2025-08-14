@@ -885,14 +885,16 @@ const handleTwitterAuth = async () => {
       return;
     }
 
-    console.log("Twitter認証開始 - 現在のユーザーUID:", user.value?.uid);
-    const { startTwitterAuth } = useTwitterAuth();
-    // アカウントリンク時は通常のコールバックURIを使用し、linkUIDはstateパラメータで渡す
-    const redirectUri = `${window.location.origin}/auth/twitter/callback`;
-    const state = `linkUID=${user.value?.uid}`;
-    console.log("Twitter認証リダイレクトURI:", redirectUri);
-    console.log("Twitter認証state:", state);
-    startTwitterAuth(redirectUri, state);
+    navigateTo("/login/twitter");
+
+    //   console.log("Twitter認証開始 - 現在のユーザーUID:", user.value?.uid);
+    //   const { startTwitterAuth } = useTwitterAuth();
+    //   // アカウントリンク時は通常のコールバックURIを使用し、linkUIDはstateパラメータで渡す
+    //   const redirectUri = `${window.location.origin}/auth/twitter/callback`;
+    //   const state = `linkUID=${user.value?.uid}`;
+    //   console.log("Twitter認証リダイレクトURI:", redirectUri);
+    //   console.log("Twitter認証state:", state);
+    //   startTwitterAuth(redirectUri, state);
   } catch (error) {
     console.error("Twitter認証エラー:", error);
     alert("Twitter認証の開始に失敗しました。");
