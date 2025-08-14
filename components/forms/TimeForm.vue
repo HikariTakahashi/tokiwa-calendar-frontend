@@ -3,6 +3,7 @@
     ref="modalRef"
     class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border bg-white rounded shadow-lg"
     :style="modalStyle"
+    style="z-index: 9999"
   >
     <div
       class="flex items-center py-1 px-2 border-b-2 hover:bg-gray-100 cursor-move"
