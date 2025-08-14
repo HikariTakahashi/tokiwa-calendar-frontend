@@ -1,6 +1,5 @@
 <template>
   <div class="relative h-full flex flex-col">
-    <!-- サイドメニューをヘッダーの下、カレンダーの左側に配置 -->
     <SideMenu
       :show="props.showSideMenu"
       @toggleSideMenu="toggleSideMenu"

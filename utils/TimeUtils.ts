@@ -19,6 +19,23 @@ export const useTimeUtils = () => {
     },
   ]);
 
+  // userColorに基づいてテキストカラーを決定する関数
+  const getTextColorClass = (userColor?: string): string => {
+    if (!userColor) return "text-white"; // デフォルトは白
+
+    // カラーコードをRGB値に変換
+    const hex = userColor.replace("#", "");
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+
+    // 輝度を計算（YIQ式）
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+    // 輝度が128以上なら黒、未満なら白
+    return brightness >= 128 ? "text-black" : "text-white";
+  };
+
   const assignOrder = (slots: TimeSlot[]) => {
     return slots.map((slot, index) => ({
       ...slot,
@@ -196,5 +213,6 @@ export const useTimeUtils = () => {
     formatTimeForDisplay,
     formatTimeForCopy,
     assignOrder,
+    getTextColorClass,
   };
 };

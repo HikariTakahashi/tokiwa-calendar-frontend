@@ -7,7 +7,9 @@ import type { TimeSlot } from "@/utils/TimeUtils";
 import CalendarHeader from "@/components/header/CalendarHeader.vue";
 import CopyModeHeader from "@/components/header/CopyModeHeader.vue";
 import LoadingHeader from "@/components/header/LoadingHeader.vue";
-import Calendar from "@/components/calendar/Calendar.vue";
+import CalendarMonth from "@/components/calendar/CalendarMonth.vue";
+import CalendarWeek from "@/components/calendar/CalendarWeek.vue";
+import CalendarYear from "@/components/calendar/CalendarYear.vue";
 import Loading from "@/components/background/loading.vue";
 
 import { useAPI, type TimeData } from "@/composables/useAPI";
@@ -32,6 +34,7 @@ const timeData = ref<TimeData>({
 });
 const calendarDays = ref<CalendarDay[]>([]);
 const isCopyMode = ref(false);
+const viewMode = ref<"year" | "month" | "week">("month");
 const {
   currentYear,
   currentMonth,
@@ -40,6 +43,10 @@ const {
   getCalendarDays,
   nextMonth,
   prevMonth,
+  nextYear,
+  prevYear,
+  nextWeek,
+  prevWeek,
 } = useDateUtils();
 
 const { fetchSpaceData: fetchSpaceDataFromAPI } = useAPI();
@@ -106,6 +113,32 @@ const handlePrevMonth = () => {
   updateCalendarDays();
 };
 
+const handleNextYear = () => {
+  nextYear();
+};
+
+const handlePrevYear = () => {
+  prevYear();
+};
+
+const handleNextWeek = () => {
+  nextWeek();
+};
+
+const handlePrevWeek = () => {
+  prevWeek();
+};
+
+const handleViewModeChanged = (mode: "year" | "month" | "week") => {
+  viewMode.value = mode;
+};
+
+const handleMonthSelected = (month: number) => {
+  currentMonth.value = month;
+  viewMode.value = "month";
+  updateCalendarDays();
+};
+
 const fetchSpaceDataFromServer = async () => {
   try {
     isLoading.value = true;
@@ -167,47 +200,95 @@ onMounted(() => {
 
 <template>
   <div class="h-full flex flex-col">
-    <!-- ローディング中のヘッダー -->
-    <LoadingHeader
-      v-if="isLoading"
-      :current-year="currentYear"
-      :current-month="currentMonth"
-      :current-day="currentDay"
-      :current-week="currentWeek"
-      :time-data="timeData.events"
-      :space-id="route.params.id as string"
-      @toggleSideMenu="toggleSideMenu"
-    />
+    <!-- 固定ヘッダー -->
+    <div class="flex-shrink-0 sticky top-0 z-30 bg-white">
+      <!-- ローディング中のヘッダー -->
+      <LoadingHeader
+        v-if="isLoading"
+        :current-year="currentYear"
+        :current-month="currentMonth"
+        :current-day="currentDay"
+        :current-week="currentWeek"
+        :time-data="timeData.events"
+        :space-id="route.params.id as string"
+        @toggleSideMenu="toggleSideMenu"
+      />
 
-    <!-- 通常のヘッダー -->
-    <component
-      v-else
-      :is="isCopyMode ? CopyModeHeader : CalendarHeader"
-      :current-year="currentYear"
-      :current-month="currentMonth"
-      :current-day="currentDay"
-      :current-week="currentWeek"
-      :is-sync="true"
-      :time-data="timeData"
-      :space-id="route.params.id as string"
-      @next-month="handleNextMonth"
-      @prev-month="handlePrevMonth"
-      @open-form="openForm"
-      @close-copy-mode="closeCopyMode"
-      @cancel-copy-mode="handleCancelCopyMode"
-      @toggleSideMenu="toggleSideMenu"
-    />
+      <!-- 通常のヘッダー -->
+      <component
+        v-else
+        :is="isCopyMode ? CopyModeHeader : CalendarHeader"
+        :current-year="currentYear"
+        :current-month="currentMonth"
+        :current-day="currentDay"
+        :current-week="currentWeek"
+        :is-sync="true"
+        :time-data="timeData"
+        :space-id="route.params.id as string"
+        :view-mode="viewMode"
+        @next-month="handleNextMonth"
+        @prev-month="handlePrevMonth"
+        @next-year="handleNextYear"
+        @prev-year="handlePrevYear"
+        @next-week="handleNextWeek"
+        @prev-week="handlePrevWeek"
+        @view-mode-changed="handleViewModeChanged"
+        @open-form="openForm"
+        @close-copy-mode="closeCopyMode"
+        @cancel-copy-mode="handleCancelCopyMode"
+        @toggleSideMenu="toggleSideMenu"
+      />
+    </div>
 
     <!-- ローディング中のオーバーレイ -->
     <Loading v-if="isLoading" />
 
-    <!-- カレンダー部分 -->
+    <!-- スクロール可能なコンテンツ -->
     <template v-if="!isLoading">
-      <div class="flex-1 min-h-0">
-        <Calendar
+      <div class="flex-1 min-h-0 overflow-auto">
+        <!-- 年表示 -->
+        <CalendarYear
+          v-if="viewMode === 'year'"
+          :year="currentYear"
+          :is-copy-mode="isCopyMode"
+          :space-id="route.params.id as string"
+          :time-data="timeData"
+          :show-side-menu="showSideMenu"
+          @save="handleCalendarSave"
+          @delete="deleteTimeData"
+          @update:time-data="updateTimeData"
+          @update:is-copy-mode="updateIsCopyMode"
+          @cancel-copy-mode="handleCancelCopyMode"
+          @toggleSideMenu="toggleSideMenu"
+          @import-complete="handleImportComplete"
+          @month-selected="handleMonthSelected"
+        />
+
+        <!-- 月表示 -->
+        <CalendarMonth
+          v-else-if="viewMode === 'month'"
           :calendar-days="calendarDays"
           :year="currentYear"
           :month="currentMonth"
+          :is-copy-mode="isCopyMode"
+          :space-id="route.params.id as string"
+          :timeData="timeData"
+          :show-side-menu="showSideMenu"
+          @save="handleCalendarSave"
+          @delete="deleteTimeData"
+          @update:time-data="updateTimeData"
+          @update:is-copy-mode="updateIsCopyMode"
+          @cancel-copy-mode="handleCancelCopyMode"
+          @toggleSideMenu="toggleSideMenu"
+          @import-complete="handleImportComplete"
+        />
+
+        <!-- 週表示 -->
+        <CalendarWeek
+          v-else-if="viewMode === 'week'"
+          :year="currentYear"
+          :month="currentMonth"
+          :day="currentDay"
           :is-copy-mode="isCopyMode"
           :space-id="route.params.id as string"
           :time-data="timeData"
