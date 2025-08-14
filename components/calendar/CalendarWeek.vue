@@ -1,6 +1,5 @@
 <template>
   <div class="relative h-full flex flex-col">
-    <!-- サイドメニューをヘッダーの下、カレンダーの左側に配置 -->
     <SideMenu
       :show="props.showSideMenu"
       @toggleSideMenu="toggleSideMenu"
@@ -11,18 +10,14 @@
       class="flex-1 flex flex-col transition-all duration-300 ease-in-out"
       :class="props.showSideMenu && !isMobile ? 'ml-80' : 'ml-0'"
     >
-      <!-- バーチカルカレンダー本体 -->
       <div class="flex-1 flex flex-col">
-        <!-- 固定ヘッダー部分 -->
         <div class="sticky top-0 z-20 bg-white border-b border-gray-200">
           <div class="flex">
-            <!-- 時間列のヘッダー -->
             <div
               class="w-12 sm:w-16 flex-shrink-0 flex justify-center font-bold text-sm sm:text-base p-2 bg-white border-r border-gray-200"
             >
               時間
             </div>
-            <!-- 各日のヘッダー -->
             <div class="flex-1">
               <div class="grid grid-cols-7 gap-0.5 sm:gap-2">
                 <div
@@ -45,15 +40,12 @@
             </div>
           </div>
 
-          <!-- 終日予定の表示 -->
           <div class="flex bg-gray-50">
-            <!-- 終日列のヘッダー -->
             <div
               class="w-12 sm:w-16 flex-shrink-0 flex justify-center font-bold text-xs text-gray-600 bg-gray-50 border-r border-gray-200"
             >
               終日
             </div>
-            <!-- 各日の終日予定 -->
             <div class="flex-1">
               <div class="grid grid-cols-7 gap-0.5 sm:gap-2">
                 <div
@@ -89,17 +81,14 @@
           </div>
         </div>
 
-        <!-- スクロール可能なカレンダー本体 -->
         <div class="flex-1 overflow-auto relative">
           <div class="flex min-h-full">
-            <!-- 時間軸 -->
             <div class="flex flex-col w-12 sm:w-16 flex-shrink-0">
               <div
                 v-for="hour in 24"
                 :key="hour - 1"
                 class="h-8 sm:h-12 border-b border-gray-200 bg-white relative"
               >
-                <!-- 時間表示を上部に配置 -->
                 <div
                   class="absolute top-0 left-0 right-0 h-4 flex items-center justify-center text-xs text-gray-500 bg-gray-50 border-b border-gray-200"
                 >
@@ -108,17 +97,14 @@
               </div>
             </div>
 
-            <!-- 日付カラム -->
             <div class="flex-1">
               <div class="grid grid-cols-7 gap-0.5 sm:gap-2 min-h-full">
-                <!-- 各日のカラム -->
                 <div
                   v-for="date in weekDays"
                   :key="date.date"
                   class="flex flex-col relative border-l"
                   :class="[isDateDisabled(date.date) ? 'bg-gray-100' : '']"
                 >
-                  <!-- 終日データの縦線表示 -->
                   <div
                     v-for="(allDaySlot, allDayIndex) in getAllDaySlots(
                       date.date
@@ -132,16 +118,14 @@
                     }"
                   ></div>
 
-                  <!-- 時間スロット -->
                   <div
                     v-for="hour in 24"
                     :key="hour - 1"
                     class="h-8 sm:h-12 border-b border-gray-200 relative"
                     @click="openFormAtTime(date.date, hour - 1)"
                   >
-                    <!-- 予定の表示（時間表示の下に配置） -->
                     <div
-                      v-for="(slot, index) in getCachedNormalTimeSlots(
+                      v-for="(slot, index) in getDisplaySlotsForHour(
                         date.date,
                         hour - 1
                       )"
@@ -207,7 +191,7 @@ import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
-import { useAPI, type TimeData } from "@/composables/useAPI";
+import { type TimeData } from "@/composables/useAPI";
 import SideMenu from "@/components/calendar/SideMenu.vue";
 
 interface CalendarDay {
@@ -317,29 +301,54 @@ const getAllDaySlots = (date: string): TimeSlot[] => {
   return allDaySlots;
 };
 
-// 通常の時間スロットを取得（終日データを除外）
-const getNormalTimeSlots = (date: string, hour: number): TimeSlot[] => {
+// より効率的な表示制御のための関数
+const shouldDisplaySlotInHour = (slot: TimeSlot, hour: number): boolean => {
+  const startHour = parseInt(slot.start || "0", 10);
+  const endHour = parseInt(slot.end || "0", 10);
+
+  // 終日データは除外
+  if (startHour === 0 && endHour === 24) return false;
+
+  // データの開始時間が指定された時間と一致する場合のみ表示
+  return startHour === hour;
+};
+
+// 各時間スロットで表示するデータを管理する関数（改善版）
+const getDisplaySlotsForHour = (date: string, hour: number): TimeSlot[] => {
   const slots = props.timeData.events[date];
   if (!slots) return [];
 
   const convertedSlots = Array.isArray(slots) ? slots : [slots];
 
-  const normalSlots = convertedSlots
+  // デバッグ用ログ
+  if (convertedSlots.length > 2) {
+    console.log(
+      `[DEBUG] ${date} ${hour}:00 - Processing ${convertedSlots.length} slots:`,
+      convertedSlots
+    );
+  }
+
+  // 指定された時間に表示すべきデータのみを抽出
+  const displaySlots = convertedSlots
     .filter((slot) => {
-      const slotStart = parseInt(
-        (slot as any).Start || (slot as any).start || "0:0",
-        10
-      );
-      const slotEnd = parseInt(
-        (slot as any).End || (slot as any).end || "0:0",
-        10
-      );
+      const normalizedSlot = {
+        start: (slot as any).Start || (slot as any).start,
+        end: (slot as any).End || (slot as any).end,
+        order: (slot as any).Order || (slot as any).order || 1,
+        username: (slot as any).Username || (slot as any).username,
+        userColor: (slot as any).UserColor || (slot as any).userColor,
+      };
 
-      // 終日データ（00:00-24:00）を除外
-      if (slotStart === 0 && slotEnd === 24) return false;
+      const shouldDisplay = shouldDisplaySlotInHour(normalizedSlot, hour);
 
-      // 指定された時間に含まれるかチェック
-      return slotStart <= hour && slotEnd > hour;
+      // デバッグ用ログ
+      if (convertedSlots.length > 2) {
+        console.log(
+          `[DEBUG] ${date} ${hour}:00 - Slot ${normalizedSlot.username} (${normalizedSlot.start}-${normalizedSlot.end}) should display: ${shouldDisplay}`
+        );
+      }
+
+      return shouldDisplay;
     })
     .map((slot) => ({
       start: (slot as any).Start || (slot as any).start,
@@ -350,28 +359,15 @@ const getNormalTimeSlots = (date: string, hour: number): TimeSlot[] => {
     }))
     .sort((a, b) => (a.order || 1) - (b.order || 1));
 
-  return normalSlots;
-};
+  // デバッグ用ログ
+  if (displaySlots.length > 0) {
+    console.log(
+      `[DEBUG] ${date} ${hour}:00 - Display slots: ${displaySlots.length}`,
+      displaySlots
+    );
+  }
 
-// 各日付・時間のスロットをキャッシュするcomputed（通常データのみ）
-const normalTimeSlotsCache = computed(() => {
-  const cache: Record<string, Record<number, TimeSlot[]>> = {};
-
-  weekDays.value.forEach((dateObj) => {
-    const date = dateObj.date;
-    cache[date] = {};
-
-    for (let hour = 0; hour < 24; hour++) {
-      cache[date][hour] = getNormalTimeSlots(date, hour);
-    }
-  });
-
-  return cache;
-});
-
-// 特定の日付・時間の通常スロットを取得する関数
-const getCachedNormalTimeSlots = (date: string, hour: number): TimeSlot[] => {
-  return normalTimeSlotsCache.value[date]?.[hour] || [];
+  return displaySlots;
 };
 
 const formatDate = (date: Date): string => {
@@ -405,11 +401,11 @@ const getSlotStyle = (
   const hourHeight = isMobile.value ? 32 : 48;
   const timeLabelHeight = 16;
 
-  // 通常データのみを取得
-  const normalSlots = getCachedNormalTimeSlots(date, hour);
+  // 表示用のデータを取得（開始時間が一致するデータのみ）
+  const displaySlots = getDisplaySlotsForHour(date, hour);
 
   // 現在のスロットのインデックスを取得
-  const slotIndex = normalSlots.findIndex(
+  const slotIndex = displaySlots.findIndex(
     (s) =>
       s.start === slot.start &&
       s.end === slot.end &&
@@ -417,28 +413,45 @@ const getSlotStyle = (
       s.order === slot.order
   );
 
+  // デバッグ用ログ
+  if (displaySlots.length > 2) {
+    console.log(
+      `[DEBUG] ${date} ${hour}:00 - Slot ${slot.username} (${slot.start}-${slot.end}) index: ${slotIndex}, total slots: ${displaySlots.length}`
+    );
+  }
+
   // カラム分割の計算
   let slotWidth: number;
   let leftPosition: number;
 
-  if (normalSlots.length <= 1) {
+  if (displaySlots.length <= 1) {
     // 1つの場合は全幅
     slotWidth = 100;
     leftPosition = 0;
-  } else if (normalSlots.length === 2) {
+  } else if (displaySlots.length === 2) {
     // 2つの場合は2等分
     slotWidth = 50;
     leftPosition = slotIndex * 50;
   } else {
     // 3つ以上の場合は均等分割（最大4つまで）
-    const maxSlots = Math.min(normalSlots.length, 4);
+    const maxSlots = Math.min(displaySlots.length, 4);
     slotWidth = 100 / maxSlots;
     leftPosition = (slotIndex % maxSlots) * slotWidth;
   }
 
+  // デバッグ用ログ
+  if (displaySlots.length > 2) {
+    console.log(
+      `[DEBUG] ${date} ${hour}:00 - Slot ${slot.username} - width: ${slotWidth}%, left: ${leftPosition}%`
+    );
+  }
+
+  // スロットの高さを計算（開始時間から終了時間まで）
+  const slotHeight = (endHour - startHour) * hourHeight;
+
   return {
-    top: `${timeLabelHeight + (startHour - hour) * hourHeight}px`,
-    height: `${(endHour - startHour) * hourHeight}px`,
+    top: `${timeLabelHeight}px`, // 時間表示の下に配置
+    height: `${slotHeight}px`,
     backgroundColor: slot.userColor || "#3b82f6",
     zIndex: 1 + index,
     width: `${slotWidth}%`,
