@@ -31,7 +31,7 @@
                 class="aspect-square text-xs flex items-center justify-center border rounded"
                 :class="[
                   day.isCurrentMonth ? 'bg-white' : 'bg-gray-100 text-gray-400',
-                  day.isToday ? 'font-bold' : '',
+                  day.isToday ? 'border-green-500 border-2 font-bold' : '',
                   hasEvents(day.date) && day.isCurrentMonth
                     ? 'border-blue-500 border-2'
                     : 'border-gray-200',
