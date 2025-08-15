@@ -193,6 +193,22 @@ const fetchSpaceDataFromServer = async () => {
   }
 };
 
+const handleGoToToday = () => {
+  const today = new Date();
+  currentYear.value = today.getFullYear();
+  currentMonth.value = today.getMonth() + 1;
+  currentDay.value = today.getDate();
+  updateCalendarDays();
+};
+
+const handleGoToSpecificDate = (date: string) => {
+  const selectedDate = new Date(date);
+  currentYear.value = selectedDate.getFullYear();
+  currentMonth.value = selectedDate.getMonth() + 1;
+  currentDay.value = selectedDate.getDate();
+  updateCalendarDays();
+};
+
 onMounted(() => {
   fetchSpaceDataFromServer();
 });
@@ -237,6 +253,8 @@ onMounted(() => {
         @close-copy-mode="closeCopyMode"
         @cancel-copy-mode="handleCancelCopyMode"
         @toggleSideMenu="toggleSideMenu"
+        @go-to-today="handleGoToToday"
+        @go-to-specific-date="handleGoToSpecificDate"
       />
     </div>
 
