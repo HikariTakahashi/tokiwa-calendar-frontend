@@ -32,7 +32,14 @@
                   <div class="text-xs text-gray-600">
                     {{ getDayOfWeek(date.date) }}
                   </div>
-                  <div class="text-lg">
+                  <div
+                    class="flex items-center justify-center text-lg"
+                    :class="[
+                      isToday(date.date)
+                        ? 'rounded-full px-1 bg-green-500 text-white'
+                        : '',
+                    ]"
+                  >
                     {{ new Date(date.date).getDate() }}
                   </div>
                 </div>
@@ -51,7 +58,7 @@
                 <div
                   v-for="date in weekDays"
                   :key="`allday-${date.date}`"
-                  class="flex flex-col items-start justify-start text-xs border-l min-h-8 bg-gray-50 gap-y-1"
+                  class="flex flex-col text-xs border-l min-h-8 bg-gray-50 gap-y-1"
                   :class="[isDateDisabled(date.date) ? 'bg-gray-200' : '']"
                 >
                   <div
@@ -574,10 +581,6 @@ const hasUsernameInDate = (date: string): boolean => {
     return timeSlot.some((slot: TimeSlot) => !!slot.username);
   }
   return !!(timeSlot as TimeSlot).username;
-};
-
-const isPastedDate = (date: string): boolean => {
-  return pastedDates.value.has(date);
 };
 
 const isToday = (dateString: string): boolean => {
