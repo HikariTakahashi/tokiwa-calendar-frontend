@@ -22,6 +22,8 @@
         @close-copy-mode="closeCopyMode"
         @cancel-copy-mode="handleCancelCopyMode"
         @toggleSideMenu="toggleSideMenu"
+        @go-to-today="handleGoToToday"
+        @go-to-specific-date="handleGoToSpecificDate"
       />
     </div>
     <!-- スクロール可能なコンテンツ -->
@@ -209,5 +211,21 @@ const handleImportComplete = (importedData: any[]) => {
     ...timeData.value,
     events: updatedEvents,
   };
+};
+
+const handleGoToToday = () => {
+  const today = new Date();
+  currentYear.value = today.getFullYear();
+  currentMonth.value = today.getMonth() + 1;
+  currentDay.value = today.getDate();
+  calendarDays.value = getCalendarDays(currentYear.value, currentMonth.value);
+};
+
+const handleGoToSpecificDate = (date: string) => {
+  const selectedDate = new Date(date);
+  currentYear.value = selectedDate.getFullYear();
+  currentMonth.value = selectedDate.getMonth() + 1;
+  currentDay.value = selectedDate.getDate();
+  calendarDays.value = getCalendarDays(currentYear.value, currentMonth.value);
 };
 </script>
