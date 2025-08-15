@@ -11,7 +11,7 @@
       :class="props.showSideMenu && !isMobile ? 'ml-80' : 'ml-0'"
     >
       <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 flex-1 overflow-y-auto"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 p-2 flex-1 overflow-y-auto"
       >
         <div
           v-for="month in 12"
