@@ -63,8 +63,20 @@ const handleCalendarSave = (data: { date: string; timeSlots: TimeSlot[] }) => {
   timeData.value.events[data.date] = data.timeSlots;
 };
 
-const deleteTimeData = (data: { date: string }) => {
-  delete timeData.value.events[data.date];
+const deleteTimeData = (data: {
+  date: string;
+  keepUserData?: boolean;
+  userTimeSlots?: TimeSlot[];
+}) => {
+  if (
+    data.keepUserData &&
+    data.userTimeSlots &&
+    data.userTimeSlots.length > 0
+  ) {
+    timeData.value.events[data.date] = data.userTimeSlots;
+  } else {
+    delete timeData.value.events[data.date];
+  }
 };
 
 const updateTimeData = (newTimeData: TimeData) => {
