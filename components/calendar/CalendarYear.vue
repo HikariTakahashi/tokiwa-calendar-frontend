@@ -38,11 +38,6 @@
                 ]"
               >
                 {{ day.dayNumber }}
-                <!-- イベントがある場合のインジケーター -->
-                <div
-                  v-if="hasEvents(day.date)"
-                  class="absolute bottom-0 right-0 w-2 h-2 bg-blue-500 rounded-full"
-                ></div>
               </div>
             </div>
           </div>
@@ -72,11 +67,10 @@
 
 <script setup lang="ts">
 import TimeForm from "@/components/forms/TimeForm.vue";
-import { ref, onMounted, onUnmounted, computed } from "vue";
-import { useTimeUtils } from "@/utils/TimeUtils";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
-import { useAPI, type TimeData } from "@/composables/useAPI";
+import { type TimeData } from "@/composables/useAPI";
 import SideMenu from "@/components/calendar/SideMenu.vue";
 
 interface CalendarDay {
@@ -108,7 +102,6 @@ const emit = defineEmits<{
   (e: "month-selected", month: number): void;
 }>();
 
-const { formatTimeForDisplay } = useTimeUtils();
 const showModal = ref(false);
 const selectedDate = ref<string>("");
 const selectedMonth = ref<number>(1);
@@ -129,15 +122,8 @@ onUnmounted(() => {
   window.removeEventListener("resize", checkMobile);
 });
 
-const {
-  copiedTimeData,
-  handleCopy: copyLogic,
-  handlePaste,
-  handleCancelCopyMode: cancelCopyLogic,
-  pastedDates,
-} = useCopyLogic();
-
-const { fetchSpaceData, syncTimeData } = useAPI();
+const { handleCopy: copyLogic, handleCancelCopyMode: cancelCopyLogic } =
+  useCopyLogic();
 
 // 指定された月の日付を取得
 const getMonthDays = (year: number, month: number): CalendarDay[] => {
@@ -203,21 +189,6 @@ const hasEvents = (date: string): boolean => {
   return !!props.timeData.events[date];
 };
 
-const getMonthEventCount = (month: number): number => {
-  let count = 0;
-  const monthStart = new Date(props.year, month - 1, 1);
-  const monthEnd = new Date(props.year, month, 0);
-
-  Object.keys(props.timeData.events).forEach((date) => {
-    const eventDate = new Date(date);
-    if (eventDate >= monthStart && eventDate <= monthEnd) {
-      count++;
-    }
-  });
-
-  return count;
-};
-
 const selectMonth = (month: number) => {
   selectedMonth.value = month;
   emit("month-selected", month);
@@ -251,26 +222,6 @@ const handleImportComplete = (importedData: any[]) => {
   };
 
   emit("update:time-data", updatedTimeData);
-};
-
-const openForm = (date: string) => {
-  if (isDateDisabled(date)) {
-    return;
-  }
-
-  if (props.isCopyMode) {
-    const result = handlePaste(date, props.timeData.events);
-    if (result.isPasted) {
-      const updatedTimeData = {
-        ...props.timeData,
-        events: result.timeData,
-      };
-      emit("update:time-data", updatedTimeData);
-    }
-  } else {
-    selectedDate.value = date;
-    showModal.value = true;
-  }
 };
 
 const closeForm = () => {
