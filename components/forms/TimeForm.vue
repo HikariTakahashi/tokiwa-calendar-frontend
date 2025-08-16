@@ -125,10 +125,18 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, computed, ref, watch } from "vue";
+import {
+  onMounted,
+  onBeforeUnmount,
+  computed,
+  ref,
+  watch,
+  nextTick,
+} from "vue";
 import InputTime from "@/components/buttons/InputTime.vue";
 import UserTime from "@/components/buttons/UserTime.vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
+import { useDeleteUtils } from "@/utils/DeleteUtils";
 import { copySingleDateToClipboard } from "@/utils/CopyDate";
 
 const props = defineProps({
@@ -160,11 +168,19 @@ const emit = defineEmits(["save", "delete", "copy", "preview"]);
 const {
   timeSlots,
   addTimeSlot: addTimeSlotBase,
-  removeTimeSlot,
   validateTime,
   validateTimeOrder,
   validateTimeOverlap,
 } = useTimeUtils();
+
+const {
+  analyzeTimeSlotsForDeletion,
+  removeTimeSlotAtIndex,
+  removeTimeSlotsByCondition,
+  removeAllNonUserTimeSlots,
+  removeEmptyTimeSlots,
+  debugSlotInfo,
+} = useDeleteUtils();
 
 const timeSlotsContainer = ref(null);
 const isInitialized = ref(false);
@@ -188,6 +204,21 @@ const addTimeSlot = () => {
         timeSlotsContainer.value.scrollHeight;
     }
   });
+};
+
+// 個別削除関数を修正
+const removeTimeSlot = (index) => {
+
+  // ユーザーデータの場合は削除を許可しない
+  const slotToRemove = timeSlots.value[index];
+  if (slotToRemove.username) {
+    errorMessage.value = "ユーザーデータは削除できません";
+    return;
+  }
+
+  // DeleteUtilsを使用して個別削除を実行
+  const updatedSlots = removeTimeSlotAtIndex(timeSlots.value, index);
+  timeSlots.value = updatedSlots;
 };
 
 const parseTimeSlot = (timeString) => {
@@ -428,24 +459,95 @@ const save = () => {
 };
 
 const deleteTime = () => {
-  // Usernameが存在するデータと存在しないデータを分離
-  const userTimeSlots = timeSlots.value.filter((slot) => slot.username);
-  const nonUserTimeSlots = timeSlots.value.filter((slot) => !slot.username);
 
-  if (userTimeSlots.length > 0) {
-    // Usernameが存在するデータがある場合、それらを保持して削除イベントを発火
+  // 削除処理前の状態確認
+  const userDataCount = timeSlots.value.filter((slot) => slot.username).length;
+  const nonUserDataCount = timeSlots.value.filter(
+    (slot) =>
+      !slot.username && !(slot.start === "00:00" && slot.end === "00:00")
+  ).length;
+  const emptyDataCount = timeSlots.value.filter(
+    (slot) => slot.start === "00:00" && slot.end === "00:00"
+  ).length;
+
+  // DeleteUtilsを使用して削除分析を実行
+  const deleteResult = analyzeTimeSlotsForDeletion(timeSlots.value, {
+    allowUserDataDeletion: false, // ユーザーデータの削除は許可しない
+    confirmUserDataDeletion: false,
+  });
+
+  if (!deleteResult.shouldDelete) {
+    // 削除するデータがない場合
+    errorMessage.value = deleteResult.message || "削除するデータがありません";
+    return;
+  }
+
+  // 削除前の確認メッセージを表示
+  if (deleteResult.keepUserData) {
+    errorMessage.value = `削除を実行します: ${deleteResult.message}`;
+  } else {
+    errorMessage.value = `削除を実行します: ${deleteResult.message}`;
+  }
+
+  // 削除可能なスロットを個別に削除
+  const updatedTimeSlots = [...timeSlots.value];
+
+  // 削除対象のスロットを逆順で削除（インデックスがずれないように）
+  const slotsToDelete = deleteResult.deletedSlots;
+
+  // 削除対象のスロットを逆順でソート（インデックスがずれないように）
+  const slotsToDeleteWithIndex = [];
+  for (let i = 0; i < updatedTimeSlots.length; i++) {
+    const slot = updatedTimeSlots[i];
+    const isTarget = slotsToDelete.some((slotToDelete) => {
+      const match =
+        slot.start === slotToDelete.start &&
+        slot.end === slotToDelete.end &&
+        slot.username === slotToDelete.username &&
+        slot.userColor === slotToDelete.userColor;
+
+      if (match) {
+      }
+
+      return match;
+    });
+
+    if (isTarget) {
+      slotsToDeleteWithIndex.push({ index: i, slot });
+    }
+  }
+
+  // インデックスの大きい順に削除（インデックスがずれないように）
+  slotsToDeleteWithIndex
+    .sort((a, b) => b.index - a.index)
+    .forEach(({ index, slot }) => {
+      updatedTimeSlots.splice(index, 1);
+    });
+
+  // orderを再割り当て
+  const finalTimeSlots = updatedTimeSlots.map((slot, index) => ({
+    ...slot,
+    order: index + 1,
+  }));
+
+  // 時間スロットを更新
+  timeSlots.value = finalTimeSlots;
+
+  // 削除イベントを発火
+  if (deleteResult.keepUserData) {
     emit("delete", {
       date: props.selectedDate,
       keepUserData: true,
-      userTimeSlots: userTimeSlots,
+      userTimeSlots: deleteResult.userTimeSlots,
     });
   } else {
-    // Usernameが存在するデータがない場合、通常の削除イベントを発火
     emit("delete", {
       date: props.selectedDate,
       keepUserData: false,
     });
   }
+
+
   isInitialized.value = false; // 初期化フラグをリセット
   hasNewData.value = false; // 新規データフラグをリセット
   props.close();
@@ -482,7 +584,6 @@ const hasOnlyUserTimeSlots = computed(() => {
 });
 
 const hasTimeData = computed(() => {
-  console.log("ExistingTime:", props.existingTime);
   return props.existingTime && Object.keys(props.existingTime).length > 0;
 });
 
@@ -507,7 +608,6 @@ const updateModalSize = () => {
       modalWidth.value = rect.width;
       modalHeight.value = rect.height;
     } catch (error) {
-      console.warn("Failed to get modal bounds:", error);
       // フォールバック値を使用
       modalWidth.value = 400;
       modalHeight.value = 300;
