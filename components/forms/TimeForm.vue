@@ -80,6 +80,9 @@
                 :minute-interval="5"
                 :initial-hours="parseTimeSlot(timeSlot.start).hours"
                 :initial-minutes="parseTimeSlot(timeSlot.start).minutes"
+                @update:time="
+                  (newStartTime) => handleStartTimeChange(newStartTime, index)
+                "
               />
             </div>
             <component
@@ -88,6 +91,9 @@
               :minute-interval="5"
               :initial-hours="parseTimeSlot(timeSlot.end).hours"
               :initial-minutes="parseTimeSlot(timeSlot.end).minutes"
+              @update:time="
+                (newEndTime) => handleEndTimeChange(newEndTime, index)
+              "
             />
             <label>終了時刻</label>
             <button
@@ -143,9 +149,13 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  initialHour: {
+    type: Number,
+    default: null,
+  },
 });
 
-const emit = defineEmits(["save", "delete", "copy"]);
+const emit = defineEmits(["save", "delete", "copy", "preview"]);
 
 const {
   timeSlots,
@@ -157,6 +167,8 @@ const {
 } = useTimeUtils();
 
 const timeSlotsContainer = ref(null);
+const isInitialized = ref(false);
+const hasNewData = ref(false);
 
 const addTimeSlot = () => {
   // ユーザー名が存在する時間スロットの後に新しい時間スロットを追加
@@ -189,6 +201,19 @@ const hasUserTimeSlot = computed(() => {
 });
 
 const updateTimeSlots = () => {
+  // 初期化後は、既に有効な時間スロットが存在する場合は、それらを保持
+  if (isInitialized.value) {
+    const hasValidTimeSlots = timeSlots.value.some(
+      (slot) => !(slot.start === "00:00" && slot.end === "00:00")
+    );
+
+    if (hasValidTimeSlots) {
+      // 既に時間が入力されている場合は、現在の状態を維持
+      return;
+    }
+  }
+
+  // 既存データがある場合
   if (props.existingTime.start && props.existingTime.end) {
     timeSlots.value = [
       {
@@ -197,11 +222,24 @@ const updateTimeSlots = () => {
         username: props.existingTime.username,
         userColor: props.existingTime.userColor,
       },
-      {
+    ];
+
+    // initialHourが設定されている場合は、新規スロットを追加
+    if (props.initialHour !== undefined && props.initialHour !== null) {
+      const startHour = props.initialHour.toString().padStart(2, "0");
+      const endHour = (props.initialHour + 1).toString().padStart(2, "0");
+
+      timeSlots.value.push({
+        start: `${startHour}:00`,
+        end: `${endHour}:00`,
+      });
+    } else {
+      // 空のスロットを追加
+      timeSlots.value.push({
         start: "00:00",
         end: "00:00",
-      },
-    ];
+      });
+    }
   } else if (Array.isArray(props.existingTime)) {
     timeSlots.value = [
       ...props.existingTime.map((slot) => ({
@@ -210,9 +248,33 @@ const updateTimeSlots = () => {
         username: slot.username,
         userColor: slot.userColor,
       })),
-      {
+    ];
+
+    // initialHourが設定されている場合は、新規スロットを追加
+    if (props.initialHour !== undefined && props.initialHour !== null) {
+      const startHour = props.initialHour.toString().padStart(2, "0");
+      const endHour = (props.initialHour + 1).toString().padStart(2, "0");
+
+      timeSlots.value.push({
+        start: `${startHour}:00`,
+        end: `${endHour}:00`,
+      });
+    } else {
+      // 空のスロットを追加
+      timeSlots.value.push({
         start: "00:00",
         end: "00:00",
+      });
+    }
+  } else if (props.initialHour !== undefined && props.initialHour !== null) {
+    // initialHourが設定されている場合、その時間から1時間後の範囲を設定
+    const startHour = props.initialHour.toString().padStart(2, "0");
+    const endHour = (props.initialHour + 1).toString().padStart(2, "0");
+
+    timeSlots.value = [
+      {
+        start: `${startHour}:00`,
+        end: `${endHour}:00`,
       },
     ];
   } else {
@@ -223,6 +285,21 @@ const updateTimeSlots = () => {
       },
     ];
   }
+
+  // 新規データがあるかどうかを判定
+  hasNewData.value =
+    props.initialHour !== undefined && props.initialHour !== null;
+
+  // 既存データがある場合もプレビュー表示を有効にする
+  if (
+    !hasNewData.value &&
+    (props.existingTime.start || Array.isArray(props.existingTime))
+  ) {
+    hasNewData.value = true;
+  }
+
+  // 初期化完了をマーク
+  isInitialized.value = true;
 };
 
 // 初期化時に実行
@@ -244,6 +321,38 @@ watch(
   },
   { deep: true }
 );
+
+// initialHourが変更された時に実行
+watch(
+  () => props.initialHour,
+  () => {
+    updateTimeSlots();
+  }
+);
+
+// プレビュー機能を無効化（時間変更の問題を解決するため）
+// watch(
+//   timeSlots,
+//   (newTimeSlots) => {
+//     // 空のスロット（startが00:00かつendが00:00）を除外
+//     const validTimeSlots = newTimeSlots.filter(
+//       (slot) => !(slot.start === "00:00" && slot.end === "00:00")
+//     );
+
+//     if (validTimeSlots.length > 0) {
+//       emit("preview", {
+//         date: props.selectedDate,
+//         timeSlots: validTimeSlots,
+//       });
+//     } else {
+//       emit("preview", {
+//         date: props.selectedDate,
+//         timeSlots: [],
+//       });
+//     }
+//   },
+//   { deep: true }
+// );
 
 const dateComponents = computed(() => {
   const parts = props.selectedDate.split("-");
@@ -283,13 +392,15 @@ const save = () => {
       date: props.selectedDate,
       timeSlots: [],
     });
+    isInitialized.value = false; // 初期化フラグをリセット
+    hasNewData.value = false; // 新規データフラグをリセット
     props.close();
     return;
   }
 
   // 有効なスロットのみでバリデーションを実行
   if (!validateTime(validTimeSlots)) {
-    alert("開始時刻と終了時刻を入力してください");
+    errorMessage.value = "開始時刻と終了時刻を入力してください";
     return;
   }
 
@@ -311,6 +422,8 @@ const save = () => {
     timeSlots: validTimeSlots,
   });
 
+  isInitialized.value = false; // 初期化フラグをリセット
+  hasNewData.value = false; // 新規データフラグをリセット
   props.close();
 };
 
@@ -333,11 +446,15 @@ const deleteTime = () => {
       keepUserData: false,
     });
   }
+  isInitialized.value = false; // 初期化フラグをリセット
+  hasNewData.value = false; // 新規データフラグをリセット
   props.close();
 };
 
 const copy = () => {
   emit("copy");
+  isInitialized.value = false; // 初期化フラグをリセット
+  hasNewData.value = false; // 新規データフラグをリセット
 };
 
 const copyClipboard = () => {
@@ -472,5 +589,133 @@ const shouldUseUserTime = (timeSlot) => {
   }
   // allowOtherEditがfalseの場合は、従来通りusernameが含まれている場合はUserTimeを使用
   return timeSlot.username;
+};
+
+const handleStartTimeChange = (newStartTime, index) => {
+  // 開始時刻が変更された時に、終了時刻に+1時間を設定
+  if (newStartTime && newStartTime !== "00:00") {
+    const startTime = new Date(`2000-01-01T${newStartTime}`);
+    const currentEndTime = timeSlots.value[index].end;
+
+    // 現在の終了時刻が有効な場合、開始時刻との差を計算
+    if (
+      currentEndTime &&
+      currentEndTime !== "00:00" &&
+      currentEndTime !== "24:00"
+    ) {
+      const currentEnd = new Date(`2000-01-01T${currentEndTime}`);
+      const timeDifference = currentEnd.getTime() - startTime.getTime();
+
+      // 時間差が1時間未満の場合は+1時間に設定
+      if (timeDifference < 60 * 60 * 1000) {
+        const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1時間
+
+        // 24時間を超える場合は24:00に設定
+        if (endTime.getHours() === 0) {
+          timeSlots.value[index].end = "24:00";
+        } else {
+          const endHours = endTime.getHours().toString().padStart(2, "0");
+          const endMinutes = endTime.getMinutes().toString().padStart(2, "0");
+          timeSlots.value[index].end = `${endHours}:${endMinutes}`;
+        }
+      }
+      // 時間差が1時間以上の場合は現在の終了時刻を維持
+    } else {
+      // 現在の終了時刻が無効な場合は+1時間を設定
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1時間
+
+      // 24時間を超える場合は24:00に設定
+      if (endTime.getHours() === 0) {
+        timeSlots.value[index].end = "24:00";
+      } else {
+        const endHours = endTime.getHours().toString().padStart(2, "0");
+        const endMinutes = endTime.getMinutes().toString().padStart(2, "0");
+        timeSlots.value[index].end = `${endHours}:${endMinutes}`;
+      }
+    }
+  }
+
+  // プレビューを更新
+  updatePreview();
+};
+
+const handleEndTimeChange = (newEndTime, index) => {
+  // 終了時刻が変更された時の処理
+  // プレビューを更新
+  updatePreview();
+};
+
+const updatePreview = () => {
+  // 新規データまたは既存データがない場合はプレビューを送信しない
+  if (!hasNewData.value) {
+    return;
+  }
+
+  // 空のスロット（startが00:00かつendが00:00）を除外
+  const validTimeSlots = timeSlots.value.filter(
+    (slot) => !(slot.start === "00:00" && slot.end === "00:00")
+  );
+
+  if (validTimeSlots.length > 0) {
+    // 新規データのみをプレビューとして送信
+    const previewSlots = validTimeSlots
+      .map((slot, index) => {
+        // 既存データかどうかを判定
+        const isExistingData =
+          slot.username ||
+          (props.existingTime &&
+            props.existingTime.start &&
+            slot.start === props.existingTime.start &&
+            slot.end === props.existingTime.end) ||
+          (Array.isArray(props.existingTime) &&
+            props.existingTime.some(
+              (existing) =>
+                existing.start === slot.start && existing.end === slot.end
+            ));
+
+        // 新規データの場合のみプレビュー用のorderを設定
+        if (!isExistingData) {
+          return {
+            ...slot,
+            order: (slot.order || index + 1) + 1000,
+          };
+        }
+        return null;
+      })
+      .filter((slot) => slot !== null); // nullを除外
+
+    // 既存データも含めて送信（新規データのみプレビュー表示）
+    const allSlots = validTimeSlots.map((slot, index) => {
+      const isExistingData =
+        slot.username ||
+        (props.existingTime &&
+          props.existingTime.start &&
+          slot.start === props.existingTime.start &&
+          slot.end === props.existingTime.end) ||
+        (Array.isArray(props.existingTime) &&
+          props.existingTime.some(
+            (existing) =>
+              existing.start === slot.start && existing.end === slot.end
+          ));
+
+      return {
+        ...slot,
+        // 既存データは通常のorder、新規データはプレビュー用のorder
+        order: isExistingData
+          ? slot.order || index + 1
+          : (slot.order || index + 1) + 1000,
+      };
+    });
+
+    emit("preview", {
+      date: props.selectedDate,
+      timeSlots: allSlots,
+    });
+  } else {
+    emit("preview", {
+      date: props.selectedDate,
+      timeSlots: [],
+    });
+  }
 };
 </script>
