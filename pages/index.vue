@@ -185,8 +185,21 @@ const saveTime = ({
   timeData.value.events[date] = timeSlots;
 };
 
-const deleteTime = (data: { date: string }) => {
-  delete timeData.value.events[data.date];
+const deleteTime = (data: {
+  date: string;
+  keepUserData?: boolean;
+  userTimeSlots?: TimeSlot[];
+}) => {
+
+  if (
+    data.keepUserData &&
+    data.userTimeSlots &&
+    data.userTimeSlots.length > 0
+  ) {
+    timeData.value.events[data.date] = data.userTimeSlots;
+  } else {
+    delete timeData.value.events[data.date];
+  }
 };
 
 const handleCancelCopyMode = () => {
