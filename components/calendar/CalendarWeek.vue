@@ -70,7 +70,11 @@
                     :class="getTextColorClass(slot.userColor)"
                     :style="{
                       backgroundColor: slot.userColor || '#3b82f6',
-                      opacity: 0.9,
+                      opacity: slot.order && slot.order > 1000 ? 0.6 : 0.9,
+                      border:
+                        slot.order && slot.order > 1000
+                          ? '2px dashed #666'
+                          : 'none',
                     }"
                     @click="openForm(date.date)"
                   >
@@ -139,7 +143,7 @@
                       :key="`${date.date}-${hour - 1}-${slot.start}-${
                         slot.end
                       }-${slot.username || 'default'}-${slot.order || index}`"
-                      class="absolute left-0 right-0 mx-1 text-xs p-1 overflow-hidden"
+                      class="absolute left-0 right-0 mx-1 text-xs p-1 mt-[-16px] overflow-hidden"
                       :style="getSlotStyle(slot, hour - 1, index, date.date)"
                       :class="[
                         slot.username
@@ -183,10 +187,12 @@
         "
         :isCopyMode="props.isCopyMode"
         :allowOtherEdit="props.timeData.allowOtherEdit || false"
+        :initialHour="selectedHour"
         @save="onSave"
         @delete="onDelete"
         @copy="handleCopy"
         @cancel-copy-mode="handleCancelCopyMode"
+        @preview="handlePreview"
       />
     </Teleport>
   </div>
@@ -227,11 +233,14 @@ const emit = defineEmits<{
   (e: "cancel-copy-mode"): void;
   (e: "toggleSideMenu"): void;
   (e: "import-complete", data: any[]): void;
+  (e: "preview", data: { date: string; timeSlots: TimeSlot[] }): void;
 }>();
 
 const { formatTimeForDisplay, getTextColorClass } = useTimeUtils();
 const showModal = ref(false);
 const selectedDate = ref<string>("");
+const selectedHour = ref<number | undefined>(undefined);
+const previewData = ref<{ [date: string]: TimeSlot[] }>({});
 const isMobile = ref(false);
 
 // レスポンシブ判定
@@ -279,30 +288,36 @@ const weekDays = computed(() => {
 // 終日予定を取得（終日列ヘッダー用）
 const getAllDaySlots = (date: string): TimeSlot[] => {
   const slots = props.timeData.events[date];
-  if (!slots) return [];
+  const previewSlots = previewData.value[date];
 
-  const convertedSlots = Array.isArray(slots) ? slots : [slots];
+  let allSlots: TimeSlot[] = [];
+
+  // プレビューデータがある場合は、プレビューデータのみを使用
+  if (previewSlots && previewSlots.length > 0) {
+    allSlots.push(...previewSlots);
+  } else {
+    // プレビューデータがない場合は、既存のデータを使用
+    if (slots) {
+      const convertedSlots = Array.isArray(slots) ? slots : [slots];
+      allSlots.push(
+        ...convertedSlots.map((slot) => ({
+          start: (slot as any).Start || (slot as any).start,
+          end: (slot as any).End || (slot as any).end,
+          order: (slot as any).Order || (slot as any).order || 1,
+          username: (slot as any).Username || (slot as any).username,
+          userColor: (slot as any).UserColor || (slot as any).userColor,
+        }))
+      );
+    }
+  }
 
   // 終日データのみを抽出（00:00-24:00）
-  const allDaySlots = convertedSlots
+  const allDaySlots = allSlots
     .filter((slot) => {
-      const slotStart = parseInt(
-        (slot as any).Start || (slot as any).start || "0:0",
-        10
-      );
-      const slotEnd = parseInt(
-        (slot as any).End || (slot as any).end || "0:0",
-        10
-      );
+      const slotStart = parseInt(slot.start || "0:0", 10);
+      const slotEnd = parseInt(slot.end || "0:0", 10);
       return slotStart === 0 && slotEnd === 24;
     })
-    .map((slot) => ({
-      start: (slot as any).Start || (slot as any).start,
-      end: (slot as any).End || (slot as any).end,
-      order: (slot as any).Order || (slot as any).order || 1,
-      username: (slot as any).Username || (slot as any).username,
-      userColor: (slot as any).UserColor || (slot as any).userColor,
-    }))
     .sort((a, b) => (a.order || 1) - (b.order || 1));
 
   return allDaySlots;
@@ -323,56 +338,37 @@ const shouldDisplaySlotInHour = (slot: TimeSlot, hour: number): boolean => {
 // 各時間スロットで表示するデータを管理する関数（改善版）
 const getDisplaySlotsForHour = (date: string, hour: number): TimeSlot[] => {
   const slots = props.timeData.events[date];
-  if (!slots) return [];
+  const previewSlots = previewData.value[date];
 
-  const convertedSlots = Array.isArray(slots) ? slots : [slots];
+  let allSlots: TimeSlot[] = [];
 
-  // デバッグ用ログ
-  if (convertedSlots.length > 2) {
-    console.log(
-      `[DEBUG] ${date} ${hour}:00 - Processing ${convertedSlots.length} slots:`,
-      convertedSlots
-    );
+  // プレビューデータがある場合は、プレビューデータのみを使用
+  if (previewSlots && previewSlots.length > 0) {
+    allSlots.push(...previewSlots);
+  } else {
+    // プレビューデータがない場合は、既存のデータを使用
+    if (slots) {
+      const convertedSlots = Array.isArray(slots) ? slots : [slots];
+      allSlots.push(
+        ...convertedSlots.map((slot) => ({
+          start: (slot as any).Start || (slot as any).start,
+          end: (slot as any).End || (slot as any).end,
+          order: (slot as any).Order || (slot as any).order || 1,
+          username: (slot as any).Username || (slot as any).username,
+          userColor: (slot as any).UserColor || (slot as any).userColor,
+        }))
+      );
+    }
   }
 
   // 指定された時間に表示すべきデータのみを抽出
-  const displaySlots = convertedSlots
+  const displaySlots = allSlots
     .filter((slot) => {
-      const normalizedSlot = {
-        start: (slot as any).Start || (slot as any).start,
-        end: (slot as any).End || (slot as any).end,
-        order: (slot as any).Order || (slot as any).order || 1,
-        username: (slot as any).Username || (slot as any).username,
-        userColor: (slot as any).UserColor || (slot as any).userColor,
-      };
-
-      const shouldDisplay = shouldDisplaySlotInHour(normalizedSlot, hour);
-
-      // デバッグ用ログ
-      if (convertedSlots.length > 2) {
-        console.log(
-          `[DEBUG] ${date} ${hour}:00 - Slot ${normalizedSlot.username} (${normalizedSlot.start}-${normalizedSlot.end}) should display: ${shouldDisplay}`
-        );
-      }
+      const shouldDisplay = shouldDisplaySlotInHour(slot, hour);
 
       return shouldDisplay;
     })
-    .map((slot) => ({
-      start: (slot as any).Start || (slot as any).start,
-      end: (slot as any).End || (slot as any).end,
-      order: (slot as any).Order || (slot as any).order || 1,
-      username: (slot as any).Username || (slot as any).username,
-      userColor: (slot as any).UserColor || (slot as any).userColor,
-    }))
     .sort((a, b) => (a.order || 1) - (b.order || 1));
-
-  // デバッグ用ログ
-  if (displaySlots.length > 0) {
-    console.log(
-      `[DEBUG] ${date} ${hour}:00 - Display slots: ${displaySlots.length}`,
-      displaySlots
-    );
-  }
 
   return displaySlots;
 };
@@ -420,19 +416,20 @@ const getSlotStyle = (
       s.order === slot.order
   );
 
-  // デバッグ用ログ
-  if (displaySlots.length > 2) {
-    console.log(
-      `[DEBUG] ${date} ${hour}:00 - Slot ${slot.username} (${slot.start}-${slot.end}) index: ${slotIndex}, total slots: ${displaySlots.length}`
-    );
-  }
+  // 終日データの数を取得
+  const allDaySlots = getAllDaySlots(date);
+  const allDayCount = allDaySlots.length;
 
-  // カラム分割の計算
+  // 終日データの表示幅を計算（1つにつき5px + 余白2px）
+  const allDayWidth = allDayCount * 7; // 5px + 2px余白
+  const allDayMargin = Math.max(allDayWidth, 0);
+
+  // カラム分割の計算（終日データの幅を考慮）
   let slotWidth: number;
   let leftPosition: number;
 
   if (displaySlots.length <= 1) {
-    // 1つの場合は全幅
+    // 1つの場合は全幅（終日データの幅を除く）
     slotWidth = 100;
     leftPosition = 0;
   } else if (displaySlots.length === 2) {
@@ -446,23 +443,34 @@ const getSlotStyle = (
     leftPosition = (slotIndex % maxSlots) * slotWidth;
   }
 
-  // デバッグ用ログ
-  if (displaySlots.length > 2) {
-    console.log(
-      `[DEBUG] ${date} ${hour}:00 - Slot ${slot.username} - width: ${slotWidth}%, left: ${leftPosition}%`
-    );
+  // 終日データがある場合、幅を調整
+  if (allDayCount > 0) {
+    const adjustedWidth = Math.max(slotWidth - allDayCount * 2, 20); // 最小20%は確保
+    slotWidth = adjustedWidth;
+  }
+
+  // 終日データがある場合、右寄せにするための左位置を調整
+  let adjustedLeftPosition = leftPosition;
+  if (allDayCount > 0) {
+    // 終日データの幅分だけ右にずらす
+    adjustedLeftPosition = leftPosition + allDayCount * 2;
   }
 
   // スロットの高さを計算（開始時間から終了時間まで）
   const slotHeight = (endHour - startHour) * hourHeight;
 
+  // プレビューデータかどうかを判定
+  const isPreview = slot.order && slot.order > 1000;
+
   return {
-    top: `${timeLabelHeight}px`, // 時間表示の下に配置
+    top: `${timeLabelHeight}px`,
     height: `${slotHeight}px`,
     backgroundColor: slot.userColor || "#3b82f6",
+    opacity: isPreview ? 0.6 : 1,
+    border: isPreview ? "2px dashed #666" : "none",
     zIndex: 1 + index,
     width: `${slotWidth}%`,
-    left: `${leftPosition}%`,
+    left: `${adjustedLeftPosition}%`,
   };
 };
 
@@ -483,6 +491,7 @@ const openFormAtTime = (date: string, hour: number) => {
     }
   } else {
     selectedDate.value = date;
+    selectedHour.value = hour;
     showModal.value = true;
   }
 };
@@ -533,12 +542,18 @@ const openForm = (date: string) => {
     }
   } else {
     selectedDate.value = date;
+    selectedHour.value = undefined; // 通常のクリック時は時間をリセット
     showModal.value = true;
   }
 };
 
 const closeForm = () => {
   showModal.value = false;
+  selectedHour.value = undefined;
+  // プレビューデータをクリア
+  if (selectedDate.value) {
+    delete previewData.value[selectedDate.value];
+  }
 };
 
 const handleCopy = () => {
@@ -546,6 +561,14 @@ const handleCopy = () => {
   const result = copyLogic(selectedDate.value, props.timeData.events);
   emit("update:is-copy-mode", result.isCopyMode);
   showModal.value = false;
+};
+
+const handlePreview = (data: { date: string; timeSlots: TimeSlot[] }) => {
+  if (data.timeSlots.length > 0) {
+    previewData.value[data.date] = data.timeSlots;
+  } else {
+    delete previewData.value[data.date];
+  }
 };
 
 const handleCancelCopyMode = () => {
