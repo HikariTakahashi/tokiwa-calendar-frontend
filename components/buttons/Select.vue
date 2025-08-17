@@ -3,21 +3,21 @@
     <button
       @click="handleYearView"
       class="text-sm sm:text-lg border-r border-y border-l rounded-l-md border-gray-300 px-2 py-1 hover:bg-gray-200"
-      :class="viewMode === 'year' ? 'bg-gray-200 ' : ''"
+      :class="currentViewMode === 'year' ? 'bg-gray-200 ' : ''"
     >
       年
     </button>
     <button
       @click="handleMonthView"
       class="text-sm sm:text-lg border-r border-y border-gray-300 px-2 py-1 hover:bg-gray-200"
-      :class="viewMode === 'month' ? 'bg-gray-200 ' : ''"
+      :class="currentViewMode === 'month' ? 'bg-gray-200 ' : ''"
     >
       月
     </button>
     <button
       @click="handleWeekView"
       class="text-sm sm:text-lg border-r border-y rounded-r-md border-gray-300 px-2 py-1 hover:bg-gray-200"
-      :class="viewMode === 'week' ? 'bg-gray-200 ' : ''"
+      :class="currentViewMode === 'week' ? 'bg-gray-200 ' : ''"
     >
       週
     </button>
@@ -25,6 +25,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+
 const props = defineProps<{
   viewMode?: "year" | "month" | "week";
 }>();
@@ -32,6 +34,11 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "viewModeChanged", mode: "year" | "month" | "week"): void;
 }>();
+
+// viewModeがundefinedの場合は'month'をデフォルトとする
+const currentViewMode = computed(() => {
+  return props.viewMode || "month";
+});
 
 const handleYearView = () => {
   emit("viewModeChanged", "year");
