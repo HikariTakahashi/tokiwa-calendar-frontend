@@ -206,6 +206,7 @@
         :existingTime="
           selectedDate ? props.timeData.events[selectedDate] || {} : {}
         "
+        :timeData="props.timeData"
         :isCopyMode="props.isCopyMode"
         :allowOtherEdit="props.timeData.allowOtherEdit || false"
         :initialHour="selectedHour"
@@ -229,6 +230,7 @@
         :existingTime="
           selectedDate ? props.timeData.events[selectedDate] || {} : {}
         "
+        :timeData="props.timeData"
         :isCopyMode="props.isCopyMode"
         :allowOtherEdit="props.timeData.allowOtherEdit || false"
         :initialHour="selectedHour"
