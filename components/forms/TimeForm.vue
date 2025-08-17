@@ -11,130 +11,140 @@
     >
       <div class="flex flex-row justify-between w-full">
         <div v-if="hasTimeData && !hasOnlyUserTimeSlots" class="flex gap-x-2">
-          <button
+          <buttons-hover
             @click="copy"
-            class="py-2 px-2 flex justify-center items-center rounded-full hover:bg-gray-300"
-          >
-            <UIcon
-              name="mdi:calendar-blank-multiple"
-              class="size-5 bg-gray-600 hover:bg-blue-500"
-            />
-          </button>
-          <button
+            :size="5"
+            name="mdi:calendar-blank-multiple"
+            color="bg-blue-500"
+          />
+          <buttons-hover
+            @click="inputRepetitionDate"
+            :size="5"
+            name="ic:baseline-calendar-month"
+            color="bg-blue-600"
+          />
+          <buttons-hover
             @click="copyClipboard"
-            class="py-2 px-2 flex justify-center items-center rounded-full hover:bg-gray-300"
-          >
-            <UIcon
-              name="mdi:clipboard-multiple-outline"
-              class="size-5 bg-gray-600 hover:bg-green-500"
-            />
-          </button>
-          <button
+            :size="5"
+            name="mdi:clipboard-multiple-outline"
+            color="bg-green-500"
+          />
+          <buttons-hover
             @click="deleteTime"
-            class="py-2 px-2 flex justify-center items-center rounded-full hover:bg-gray-300"
-          >
-            <UIcon
-              name="ic:baseline-delete"
-              class="size-5 bg-gray-600 hover:bg-red-500"
-            />
-          </button>
+            :size="5"
+            name="ic:baseline-delete"
+            color="bg-red-500"
+          />
         </div>
-        <button
+        <div class="flex flex-row mr-auto ml-2 gap-x-2">
+          <buttons-hover
+            v-if="!isMobile"
+            @click="openTimeSideMenu"
+            :size="5"
+            name="material-symbols:side-navigation"
+            color="bg-gray-600"
+          />
+        </div>
+        <buttons-hover
           @click="props.close"
-          class="py-1.5 px-1.5 flex justify-center items-center"
+          :size="5"
+          name="ic:sharp-clear"
+          color="bg-red-500"
+          :ishover="false"
           :class="{ 'ml-auto': !hasTimeData }"
-        >
-          <UIcon name="ic:sharp-clear" class="size-6 hover:bg-red-500" />
-        </button>
+        />
       </div>
     </div>
 
-    <div class="pl-5 pr-2 pt-1 pb-5 rounded-lg w-96 shadow-lg relative">
+    <div
+      class="pl-5 pr-2 pt-1 pb-5 rounded-lg shadow-lg relative"
+      :class="isRepetitionMode && !isMobile ? 'w-[800px]' : 'w-96'"
+    >
       <h6 class="text-sm font-bold text-red-500">
         {{ errorMessage }}
       </h6>
-      <div class="flex justify-between items-center">
-        <h2 class="text-xl font-bold">
-          {{ isCurrentYear ? "" : dateComponents.year + "年" }}
-          {{ isCurrentMonth ? "" : dateComponents.month + "月" }}
-          {{ dateComponents.day }} 日の時間設定
-        </h2>
-      </div>
 
-      <div class="max-h-[40vh] overflow-y-auto pr-2" ref="timeSlotsContainer">
-        <div v-for="(timeSlot, index) in timeSlots" :key="index">
-          <div v-if="timeSlot.username" class="mb-2">
-            <h3
-              class="text-lg font-bold"
-              :style="{ color: timeSlot.userColor || '#3b82f6' }"
-            >
-              {{ timeSlot.username }}
-            </h3>
-          </div>
-          <div class="flex pr-3 justify-center items-center gap-x-2 mb-2">
-            <label>開始時刻</label>
-            <div class="border-r border-gray-400 pr-2">
-              <component
-                :is="shouldUseUserTime(timeSlot) ? UserTime : InputTime"
-                v-model:time="timeSlot.start"
-                :minute-interval="5"
-                :initial-hours="parseTimeSlot(timeSlot.start).hours"
-                :initial-minutes="parseTimeSlot(timeSlot.start).minutes"
-                @update:time="
-                  (newStartTime) => handleStartTimeChange(newStartTime, index)
-                "
-              />
-            </div>
-            <component
-              :is="shouldUseUserTime(timeSlot) ? UserTime : InputTime"
-              v-model:time="timeSlot.end"
-              :minute-interval="5"
-              :initial-hours="parseTimeSlot(timeSlot.end).hours"
-              :initial-minutes="parseTimeSlot(timeSlot.end).minutes"
-              @update:time="
-                (newEndTime) => handleEndTimeChange(newEndTime, index)
-              "
-            />
-            <label>終了時刻</label>
-            <button
-              v-if="timeSlots.length > 1 && !timeSlot.username"
-              @click="removeTimeSlot(index)"
-              class="text-red-500"
-            >
-              <UIcon name="ic:sharp-delete" class="size-5 hover:bg-red-800" />
-            </button>
-          </div>
-        </div>
-        <div class="flex items-center gap-x-5">
+      <div v-if="isRepetitionMode">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold">繰り返し日付の設定</h2>
           <button
-            type="button"
-            @click="addTimeSlot"
-            class="text-blue-500 pb-2 hover:underline"
+            @click="cancelRepetitionMode"
+            class="text-gray-500 hover:text-gray-700 text-sm"
           >
-            複数時間を入力
+            キャンセル
           </button>
         </div>
+
+        <div
+          :class="isMobile ? 'flex flex-col gap-y-4' : 'flex flex-row gap-x-6'"
+        >
+          <div :class="isMobile ? 'w-full' : 'flex-1'">
+            <TimeRepetitionDate
+              :selectedDate="props.selectedDate"
+              :startDate="props.startDate"
+              :endDate="props.endDate"
+              @update:repetitionDates="updateRepetitionDates"
+              @update:selectedRepetitionDates="updateSelectedRepetitionDates"
+              @update:repetitionPattern="updateRepetitionPattern"
+              @update:repetitionStartDate="updateRepetitionStartDate"
+              @update:repetitionEndDate="updateRepetitionEndDate"
+              @update:selectedWeekdays="updateSelectedWeekdays"
+            />
+          </div>
+
+          <div :class="isMobile ? 'w-full' : 'flex-1'">
+            <TimeInputDate
+              :timeSlots="timeSlots"
+              :allowOtherEdit="props.allowOtherEdit"
+              @update:timeSlots="updateTimeSlots"
+              @startTimeChange="handleStartTimeChange"
+              @endTimeChange="handleEndTimeChange"
+            />
+          </div>
+        </div>
+
+        <div class="mt-3 flex justify-end gap-x-2">
+          <buttons-square
+            @click="saveRepetition"
+            color="bg-blue-200"
+            class="w-32"
+          >
+            繰り返し保存
+          </buttons-square>
+        </div>
       </div>
-      <div class="mt-3 flex justify-end gap-x-2">
-        <buttons-square @click="save" color="bg-blue-200">
-          保存
-        </buttons-square>
+
+      <!-- 通常モードの場合は従来のUIを表示 -->
+      <div v-else>
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-bold">
+            {{ isCurrentYear ? "" : dateComponents.year + "年" }}
+            {{ isCurrentMonth ? "" : dateComponents.month + "月" }}
+            {{ dateComponents.day }} 日の時間設定
+          </h2>
+        </div>
+
+        <TimeInputDate
+          :timeSlots="timeSlots"
+          :allowOtherEdit="props.allowOtherEdit"
+          @update:timeSlots="updateTimeSlots"
+          @startTimeChange="handleStartTimeChange"
+          @endTimeChange="handleEndTimeChange"
+        />
+        <div class="mt-3 flex justify-end gap-x-2">
+          <buttons-square @click="save" color="bg-blue-200">
+            保存
+          </buttons-square>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import {
-  onMounted,
-  onBeforeUnmount,
-  computed,
-  ref,
-  watch,
-  nextTick,
-} from "vue";
-import InputTime from "@/components/buttons/InputTime.vue";
-import UserTime from "@/components/buttons/UserTime.vue";
+import { onMounted, onBeforeUnmount, computed, ref, watch } from "vue";
+import TimeInputDate from "@/components/buttons/TimeInputDate.vue";
+import TimeRepetitionDate from "@/components/buttons/TimeRepetitionDate.vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useDeleteUtils } from "@/utils/DeleteUtils";
 import { copySingleDateToClipboard } from "@/utils/CopyDate";
@@ -161,77 +171,211 @@ const props = defineProps({
     type: Number,
     default: null,
   },
+  startDate: {
+    type: [String, null],
+    default: null,
+  },
+  endDate: {
+    type: [String, null],
+    default: null,
+  },
 });
 
-const emit = defineEmits(["save", "delete", "copy", "preview"]);
+const emit = defineEmits([
+  "save",
+  "delete",
+  "copy",
+  "preview",
+  "openTimeSideMenu",
+]);
 
-const {
-  timeSlots,
-  addTimeSlot: addTimeSlotBase,
-  validateTime,
-  validateTimeOrder,
-  validateTimeOverlap,
-} = useTimeUtils();
+const openTimeSideMenu = () => {
+  // selectedDateから日付を抽出
+  const dateParts = props.selectedDate.split("-");
+  const day = parseInt(dateParts[2], 10);
 
-const {
-  analyzeTimeSlotsForDeletion,
-  removeTimeSlotAtIndex,
-  removeTimeSlotsByCondition,
-  removeAllNonUserTimeSlots,
-  removeEmptyTimeSlots,
-  debugSlotInfo,
-} = useDeleteUtils();
-
-const timeSlotsContainer = ref(null);
-const isInitialized = ref(false);
-const hasNewData = ref(false);
-
-const addTimeSlot = () => {
-  // ユーザー名が存在する時間スロットの後に新しい時間スロットを追加
-  const userSlotIndex = timeSlots.value.findIndex((slot) => slot.username);
-  if (userSlotIndex !== -1) {
-    timeSlots.value.splice(userSlotIndex + 1, 0, {
-      start: "00:00",
-      end: "00:00",
-    });
-  } else {
-    addTimeSlotBase();
-  }
-
-  nextTick(() => {
-    if (timeSlotsContainer.value) {
-      timeSlotsContainer.value.scrollTop =
-        timeSlotsContainer.value.scrollHeight;
-    }
+  // TimeSideMenuを開くためのイベントを発火
+  emit("openTimeSideMenu", {
+    selectedDate: props.selectedDate,
+    year: props.year,
+    month: props.month,
+    day: day,
+    existingTime: props.existingTime,
+    isCopyMode: props.isCopyMode,
+    allowOtherEdit: props.allowOtherEdit,
+    initialHour: props.initialHour,
   });
+
+  // TimeFormを閉じる
+  props.close();
 };
 
-// 個別削除関数を修正
-const removeTimeSlot = (index) => {
+const { timeSlots, validateTime, validateTimeOrder, validateTimeOverlap } =
+  useTimeUtils();
 
-  // ユーザーデータの場合は削除を許可しない
-  const slotToRemove = timeSlots.value[index];
-  if (slotToRemove.username) {
-    errorMessage.value = "ユーザーデータは削除できません";
+const { analyzeTimeSlotsForDeletion } = useDeleteUtils();
+
+const isInitialized = ref(false);
+const hasNewData = ref(false);
+const isMobile = ref(false);
+const isRepetitionMode = ref(false);
+const repetitionDates = ref([]);
+const selectedRepetitionDates = ref([]);
+const repetitionPattern = ref("daily");
+const repetitionStartDate = ref("");
+const repetitionEndDate = ref("");
+const selectedWeekdays = ref([]);
+
+// レスポンシブ判定
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768; // md breakpoint
+};
+
+// 繰り返し日付入力モードを開始
+const inputRepetitionDate = () => {
+  isRepetitionMode.value = true;
+};
+
+// 新しいコンポーネントからのイベントハンドラー
+const updateTimeSlots = (newTimeSlots) => {
+  timeSlots.value = newTimeSlots;
+};
+
+const updateRepetitionDates = (newRepetitionDates) => {
+  repetitionDates.value = newRepetitionDates;
+};
+
+const updateSelectedRepetitionDates = (newSelectedRepetitionDates) => {
+  selectedRepetitionDates.value = newSelectedRepetitionDates;
+};
+
+const updateRepetitionPattern = (newRepetitionPattern) => {
+  repetitionPattern.value = newRepetitionPattern;
+};
+
+const updateRepetitionStartDate = (newRepetitionStartDate) => {
+  repetitionStartDate.value = newRepetitionStartDate;
+};
+
+const updateRepetitionEndDate = (newRepetitionEndDate) => {
+  repetitionEndDate.value = newRepetitionEndDate;
+};
+
+const updateSelectedWeekdays = (newSelectedWeekdays) => {
+  selectedWeekdays.value = newSelectedWeekdays;
+};
+
+// 繰り返しモードをキャンセル
+const cancelRepetitionMode = () => {
+  isRepetitionMode.value = false;
+  repetitionDates.value = [];
+  selectedRepetitionDates.value = [];
+  repetitionPattern.value = "daily";
+  repetitionStartDate.value = "";
+  repetitionEndDate.value = "";
+  selectedWeekdays.value = [];
+};
+
+// 繰り返し保存を実行
+const saveRepetition = () => {
+  // 開始日・終了日が設定されていない場合
+  if (!repetitionStartDate.value || !repetitionEndDate.value) {
+    errorMessage.value = "開始日と終了日を設定してください";
     return;
   }
 
-  // DeleteUtilsを使用して個別削除を実行
-  const updatedSlots = removeTimeSlotAtIndex(timeSlots.value, index);
-  timeSlots.value = updatedSlots;
+  // バックエンドの制限をチェック
+  if (props.startDate && repetitionStartDate.value < props.startDate) {
+    errorMessage.value = `開始日は${formatDisplayDate(
+      props.startDate
+    )}以降に設定してください`;
+    return;
+  }
+
+  if (props.endDate && repetitionEndDate.value > props.endDate) {
+    errorMessage.value = `終了日は${formatDisplayDate(
+      props.endDate
+    )}までに設定してください`;
+    return;
+  }
+
+  // 毎週の場合、曜日が選択されていない場合
+  if (
+    repetitionPattern.value === "weekly" &&
+    selectedWeekdays.value.length === 0
+  ) {
+    errorMessage.value = "曜日を選択してください";
+    return;
+  }
+
+  // 日付が選択されていない場合
+  if (selectedRepetitionDates.value.length === 0) {
+    errorMessage.value = "対象日付を選択してください";
+    return;
+  }
+
+  // 空のスロットが含まれているかチェック
+  const emptySlots = timeSlots.value.filter(
+    (slot) => slot.start === "00:00" && slot.end === "00:00"
+  );
+
+  if (emptySlots.length > 0) {
+    errorMessage.value = "空の時間スロットがあります。";
+    return;
+  }
+
+  // 空のスロット（startが00:00かつendが00:00）を除外
+  const validTimeSlots = timeSlots.value.filter(
+    (slot) => !(slot.start === "00:00" && slot.end === "00:00")
+  );
+
+  // 有効なスロットがない場合は保存しない
+  if (validTimeSlots.length === 0) {
+    errorMessage.value = "時間を入力してください";
+    return;
+  }
+
+  // バリデーションを実行
+  if (!validateTime(validTimeSlots)) {
+    errorMessage.value = "開始時刻と終了時刻を入力してください";
+    return;
+  }
+
+  const orderValidation = validateTimeOrder(validTimeSlots);
+  if (!orderValidation.isValid) {
+    errorMessage.value = orderValidation.errorMessage;
+    return;
+  }
+
+  const overlapValidation = validateTimeOverlap(validTimeSlots);
+  if (!overlapValidation.isValid) {
+    errorMessage.value = overlapValidation.errorMessage;
+    return;
+  }
+
+  errorMessage.value = "";
+
+  // 選択された日付に時間データを保存
+  selectedRepetitionDates.value.forEach((date) => {
+    emit("save", {
+      date: date,
+      timeSlots: validTimeSlots,
+    });
+  });
+
+  isInitialized.value = false;
+  hasNewData.value = false;
+  isRepetitionMode.value = false;
+  repetitionDates.value = [];
+  selectedRepetitionDates.value = [];
+  repetitionPattern.value = "daily";
+  repetitionStartDate.value = "";
+  repetitionEndDate.value = "";
+  selectedWeekdays.value = [];
+  props.close();
 };
 
-const parseTimeSlot = (timeString) => {
-  if (!timeString) return { hours: 0, minutes: 0 };
-  const [hours, minutes] = timeString.split(":").map(Number);
-  return { hours, minutes };
-};
-
-const hasUserTimeSlot = computed(() => {
-  return timeSlots.value.some((slot) => slot.username);
-});
-
-const updateTimeSlots = () => {
+const initializeTimeSlots = () => {
   // 初期化後は、既に有効な時間スロットが存在する場合は、それらを保持
   if (isInitialized.value) {
     const hasValidTimeSlots = timeSlots.value.some(
@@ -334,13 +478,16 @@ const updateTimeSlots = () => {
 };
 
 // 初期化時に実行
-updateTimeSlots();
+initializeTimeSlots();
 
 // selectedDateが変更された時に実行
 watch(
   () => props.selectedDate,
-  () => {
-    updateTimeSlots();
+  (newDate, oldDate) => {
+    // 日付が変更された場合のみ更新
+    if (newDate !== oldDate) {
+      initializeTimeSlots();
+    }
   }
 );
 
@@ -348,7 +495,7 @@ watch(
 watch(
   () => props.existingTime,
   () => {
-    updateTimeSlots();
+    initializeTimeSlots();
   },
   { deep: true }
 );
@@ -357,7 +504,7 @@ watch(
 watch(
   () => props.initialHour,
   () => {
-    updateTimeSlots();
+    initializeTimeSlots();
   }
 );
 
@@ -417,8 +564,24 @@ const save = () => {
     (slot) => !(slot.start === "00:00" && slot.end === "00:00")
   );
 
+  // 空のスロットが含まれているかチェック
+  const emptySlots = timeSlots.value.filter(
+    (slot) => slot.start === "00:00" && slot.end === "00:00"
+  );
+
+  if (emptySlots.length > 0) {
+    errorMessage.value = "空の時間スロットがあります。";
+    return;
+  }
+
   // 有効なスロットがない場合は保存しない
   if (validTimeSlots.length === 0) {
+    // プレビューデータをクリアするためのイベントを発火
+    emit("preview", {
+      date: props.selectedDate,
+      timeSlots: [],
+    });
+
     emit("save", {
       date: props.selectedDate,
       timeSlots: [],
@@ -448,6 +611,13 @@ const save = () => {
   }
 
   errorMessage.value = "";
+
+  // プレビューデータをクリアするためのイベントを発火
+  emit("preview", {
+    date: props.selectedDate,
+    timeSlots: [],
+  });
+
   emit("save", {
     date: props.selectedDate,
     timeSlots: validTimeSlots,
@@ -459,7 +629,6 @@ const save = () => {
 };
 
 const deleteTime = () => {
-
   // 削除処理前の状態確認
   const userDataCount = timeSlots.value.filter((slot) => slot.username).length;
   const nonUserDataCount = timeSlots.value.filter(
@@ -546,7 +715,6 @@ const deleteTime = () => {
       keepUserData: false,
     });
   }
-
 
   isInitialized.value = false; // 初期化フラグをリセット
   hasNewData.value = false; // 新規データフラグをリセット
@@ -674,73 +842,23 @@ const stopDrag = () => {
 onMounted(() => {
   window.addEventListener("keydown", onKeyDown);
   window.addEventListener("resize", updateModalSize);
+  window.addEventListener("resize", checkMobile);
   updateModalSize();
+  checkMobile();
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", onKeyDown);
   window.removeEventListener("resize", updateModalSize);
+  window.removeEventListener("resize", checkMobile);
 });
 
-const shouldUseUserTime = (timeSlot) => {
-  // allowOtherEditがtrueの場合は、usernameが含まれていてもInputTimeを使用
-  if (props.allowOtherEdit) {
-    return false;
-  }
-  // allowOtherEditがfalseの場合は、従来通りusernameが含まれている場合はUserTimeを使用
-  return timeSlot.username;
-};
-
-const handleStartTimeChange = (newStartTime, index) => {
-  // 開始時刻が変更された時に、終了時刻に+1時間を設定
-  if (newStartTime && newStartTime !== "00:00") {
-    const startTime = new Date(`2000-01-01T${newStartTime}`);
-    const currentEndTime = timeSlots.value[index].end;
-
-    // 現在の終了時刻が有効な場合、開始時刻との差を計算
-    if (
-      currentEndTime &&
-      currentEndTime !== "00:00" &&
-      currentEndTime !== "24:00"
-    ) {
-      const currentEnd = new Date(`2000-01-01T${currentEndTime}`);
-      const timeDifference = currentEnd.getTime() - startTime.getTime();
-
-      // 時間差が1時間未満の場合は+1時間に設定
-      if (timeDifference < 60 * 60 * 1000) {
-        const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1時間
-
-        // 24時間を超える場合は24:00に設定
-        if (endTime.getHours() === 0) {
-          timeSlots.value[index].end = "24:00";
-        } else {
-          const endHours = endTime.getHours().toString().padStart(2, "0");
-          const endMinutes = endTime.getMinutes().toString().padStart(2, "0");
-          timeSlots.value[index].end = `${endHours}:${endMinutes}`;
-        }
-      }
-      // 時間差が1時間以上の場合は現在の終了時刻を維持
-    } else {
-      // 現在の終了時刻が無効な場合は+1時間を設定
-      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1時間
-
-      // 24時間を超える場合は24:00に設定
-      if (endTime.getHours() === 0) {
-        timeSlots.value[index].end = "24:00";
-      } else {
-        const endHours = endTime.getHours().toString().padStart(2, "0");
-        const endMinutes = endTime.getMinutes().toString().padStart(2, "0");
-        timeSlots.value[index].end = `${endHours}:${endMinutes}`;
-      }
-    }
-  }
-
+const handleStartTimeChange = (data) => {
   // プレビューを更新
   updatePreview();
 };
 
-const handleEndTimeChange = (newEndTime, index) => {
-  // 終了時刻が変更された時の処理
+const handleEndTimeChange = (data) => {
   // プレビューを更新
   updatePreview();
 };
