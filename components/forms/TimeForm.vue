@@ -10,7 +10,10 @@
       @mousedown="startDrag"
     >
       <div class="flex flex-row justify-between w-full">
-        <div v-if="hasTimeData && !hasOnlyUserTimeSlots" class="flex gap-x-2">
+        <div
+          v-if="hasTimeData && !hasOnlyUserTimeSlots && hasNonUserTimeSlots"
+          class="flex gap-x-2"
+        >
           <buttons-hover
             @click="copy"
             :size="5"
@@ -148,6 +151,7 @@ import TimeRepetitionDate from "@/components/buttons/TimeRepetitionDate.vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useDeleteUtils } from "@/utils/DeleteUtils";
 import { copySingleDateToClipboard } from "@/utils/CopyDate";
+import { useRepetitionUtils } from "@/utils/RepetitionUtils";
 
 const props = defineProps({
   close: Function,
@@ -158,6 +162,10 @@ const props = defineProps({
   existingTime: {
     type: Object,
     default: () => ({}),
+  },
+  timeData: {
+    type: Object,
+    default: () => ({ events: {} }),
   },
   isCopyMode: {
     type: Boolean,
@@ -214,6 +222,12 @@ const { timeSlots, validateTime, validateTimeOrder, validateTimeOverlap } =
   useTimeUtils();
 
 const { analyzeTimeSlotsForDeletion } = useDeleteUtils();
+
+const {
+  validateRepetitionSave,
+  generateRepetitionSaveData,
+  shouldShowRepetitionButton,
+} = useRepetitionUtils();
 
 const isInitialized = ref(false);
 const hasNewData = ref(false);
@@ -278,89 +292,38 @@ const cancelRepetitionMode = () => {
 
 // 繰り返し保存を実行
 const saveRepetition = () => {
-  // 開始日・終了日が設定されていない場合
-  if (!repetitionStartDate.value || !repetitionEndDate.value) {
-    errorMessage.value = "開始日と終了日を設定してください";
-    return;
-  }
-
-  // バックエンドの制限をチェック
-  if (props.startDate && repetitionStartDate.value < props.startDate) {
-    errorMessage.value = `開始日は${formatDisplayDate(
-      props.startDate
-    )}以降に設定してください`;
-    return;
-  }
-
-  if (props.endDate && repetitionEndDate.value > props.endDate) {
-    errorMessage.value = `終了日は${formatDisplayDate(
-      props.endDate
-    )}までに設定してください`;
-    return;
-  }
-
-  // 毎週の場合、曜日が選択されていない場合
-  if (
-    repetitionPattern.value === "weekly" &&
-    selectedWeekdays.value.length === 0
-  ) {
-    errorMessage.value = "曜日を選択してください";
-    return;
-  }
-
-  // 日付が選択されていない場合
-  if (selectedRepetitionDates.value.length === 0) {
-    errorMessage.value = "対象日付を選択してください";
-    return;
-  }
-
-  // 空のスロットが含まれているかチェック
-  const emptySlots = timeSlots.value.filter(
-    (slot) => slot.start === "00:00" && slot.end === "00:00"
+  // RepetitionUtilsを使用してバリデーション
+  const validation = validateRepetitionSave(
+    repetitionStartDate.value,
+    repetitionEndDate.value,
+    repetitionPattern.value,
+    selectedWeekdays.value,
+    selectedRepetitionDates.value,
+    timeSlots.value,
+    props.startDate,
+    props.endDate,
+    validateTime,
+    validateTimeOrder,
+    validateTimeOverlap
   );
 
-  if (emptySlots.length > 0) {
-    errorMessage.value = "空の時間スロットがあります。";
-    return;
-  }
-
-  // 空のスロット（startが00:00かつendが00:00）を除外
-  const validTimeSlots = timeSlots.value.filter(
-    (slot) => !(slot.start === "00:00" && slot.end === "00:00")
-  );
-
-  // 有効なスロットがない場合は保存しない
-  if (validTimeSlots.length === 0) {
-    errorMessage.value = "時間を入力してください";
-    return;
-  }
-
-  // バリデーションを実行
-  if (!validateTime(validTimeSlots)) {
-    errorMessage.value = "開始時刻と終了時刻を入力してください";
-    return;
-  }
-
-  const orderValidation = validateTimeOrder(validTimeSlots);
-  if (!orderValidation.isValid) {
-    errorMessage.value = orderValidation.errorMessage;
-    return;
-  }
-
-  const overlapValidation = validateTimeOverlap(validTimeSlots);
-  if (!overlapValidation.isValid) {
-    errorMessage.value = overlapValidation.errorMessage;
+  if (!validation.isValid) {
+    errorMessage.value = validation.errorMessage;
     return;
   }
 
   errorMessage.value = "";
 
+  // RepetitionUtilsを使用して保存データを生成
+  const saveDataList = generateRepetitionSaveData(
+    selectedRepetitionDates.value,
+    timeSlots.value,
+    props.timeData
+  );
+
   // 選択された日付に時間データを保存
-  selectedRepetitionDates.value.forEach((date) => {
-    emit("save", {
-      date: date,
-      timeSlots: validTimeSlots,
-    });
+  saveDataList.forEach((saveData) => {
+    emit("save", saveData);
   });
 
   isInitialized.value = false;
@@ -748,6 +711,14 @@ const hasOnlyUserTimeSlots = computed(() => {
   );
   return (
     nonEmptySlots.length > 0 && nonEmptySlots.every((slot) => slot.username)
+  );
+});
+
+const hasNonUserTimeSlots = computed(() => {
+  return shouldShowRepetitionButton(
+    hasTimeData.value,
+    hasOnlyUserTimeSlots.value,
+    timeSlots.value
   );
 });
 
