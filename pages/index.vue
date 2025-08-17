@@ -11,7 +11,7 @@
         :time-data="timeData"
         :is-sync="false"
         :space-id="spaceId || ''"
-        :view-mode="viewMode"
+        :view-mode="viewModeState.viewMode.value"
         @next-month="handleNextMonth"
         @prev-month="handlePrevMonth"
         @next-year="handleNextYear"
@@ -22,13 +22,15 @@
         @close-copy-mode="closeCopyMode"
         @cancel-copy-mode="handleCancelCopyMode"
         @toggleSideMenu="toggleSideMenu"
+        @go-to-today="handleGoToToday"
+        @go-to-specific-date="handleGoToSpecificDate"
       />
     </div>
     <!-- スクロール可能なコンテンツ -->
     <div class="flex-1 min-h-0 overflow-auto">
       <!-- 年表示 -->
       <CalendarYear
-        v-if="viewMode === 'year'"
+        v-if="viewModeState.isYearView()"
         :year="currentYear"
         :is-copy-mode="isCopyMode"
         :space-id="spaceId"
@@ -46,7 +48,7 @@
 
       <!-- 月表示 -->
       <CalendarMonth
-        v-else-if="viewMode === 'month'"
+        v-else-if="viewModeState.isMonthView()"
         :calendar-days="calendarDays"
         :year="currentYear"
         :month="currentMonth"
@@ -65,7 +67,7 @@
 
       <!-- 週表示 -->
       <CalendarWeek
-        v-else-if="viewMode === 'week'"
+        v-else-if="viewModeState.isWeekView()"
         :year="currentYear"
         :month="currentMonth"
         :day="currentDay"
@@ -94,6 +96,7 @@ import CalendarWeek from "@/components/calendar/CalendarWeek.vue";
 import CalendarYear from "@/components/calendar/CalendarYear.vue";
 
 import { useDateUtils } from "@/utils/DateUtils";
+import { useViewMode, createViewModeHandlers } from "@/utils/ViewModeUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import type { TimeData } from "@/composables/useAPI";
 
@@ -120,7 +123,9 @@ const timeData = ref<TimeData>({
 const isCopyMode = ref(false);
 const showSideMenu = ref(false);
 const spaceId = ref<string | undefined>(undefined);
-const viewMode = ref<"year" | "month" | "week">("month");
+
+// 表示方法の管理
+const viewModeState = useViewMode("month");
 const calendarDays = ref(
   getCalendarDays(currentYear.value, currentMonth.value)
 );
@@ -163,15 +168,19 @@ const handlePrevWeek = () => {
   prevWeek();
 };
 
-const handleViewModeChanged = (mode: "year" | "month" | "week") => {
-  viewMode.value = mode;
-};
-
-const handleMonthSelected = (month: number) => {
-  currentMonth.value = month;
-  viewMode.value = "month";
-  calendarDays.value = getCalendarDays(currentYear.value, currentMonth.value);
-};
+// 表示方法のハンドラー
+const { handleViewModeChanged, handleMonthSelected } = createViewModeHandlers(
+  viewModeState,
+  {
+    onMonthSelected: (month: number) => {
+      currentMonth.value = month;
+      calendarDays.value = getCalendarDays(
+        currentYear.value,
+        currentMonth.value
+      );
+    },
+  }
+);
 
 const saveTime = ({
   date,
@@ -183,8 +192,20 @@ const saveTime = ({
   timeData.value.events[date] = timeSlots;
 };
 
-const deleteTime = (data: { date: string }) => {
-  delete timeData.value.events[data.date];
+const deleteTime = (data: {
+  date: string;
+  keepUserData?: boolean;
+  userTimeSlots?: TimeSlot[];
+}) => {
+  if (
+    data.keepUserData &&
+    data.userTimeSlots &&
+    data.userTimeSlots.length > 0
+  ) {
+    timeData.value.events[data.date] = data.userTimeSlots;
+  } else {
+    delete timeData.value.events[data.date];
+  }
 };
 
 const handleCancelCopyMode = () => {
@@ -209,5 +230,21 @@ const handleImportComplete = (importedData: any[]) => {
     ...timeData.value,
     events: updatedEvents,
   };
+};
+
+const handleGoToToday = () => {
+  const today = new Date();
+  currentYear.value = today.getFullYear();
+  currentMonth.value = today.getMonth() + 1;
+  currentDay.value = today.getDate();
+  calendarDays.value = getCalendarDays(currentYear.value, currentMonth.value);
+};
+
+const handleGoToSpecificDate = (date: string) => {
+  const selectedDate = new Date(date);
+  currentYear.value = selectedDate.getFullYear();
+  currentMonth.value = selectedDate.getMonth() + 1;
+  currentDay.value = selectedDate.getDate();
+  calendarDays.value = getCalendarDays(currentYear.value, currentMonth.value);
 };
 </script>

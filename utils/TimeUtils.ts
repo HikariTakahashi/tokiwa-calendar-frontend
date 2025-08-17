@@ -56,12 +56,33 @@ export const useTimeUtils = () => {
     timeSlots.value = assignOrder(timeSlots.value);
   };
 
+  // 時刻の妥当性をチェックする関数
+  const isValidTimeFormat = (timeString: string): boolean => {
+    if (!timeString) return false;
+
+    // 24:00の場合は特別に許可
+    if (timeString === "24:00") return true;
+
+    // HH:MM形式のチェック
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(timeString)) return false;
+
+    const [hours, minutes] = timeString.split(":").map(Number);
+    return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+  };
+
   const validateTime = (timeSlots: TimeSlot[]) => {
     return !timeSlots.some((slot) => {
       // startまたはendが空の場合
       if (!slot.start || !slot.end) return true;
       // startが00:00かつendが00:00の場合（空のスロット）
       if (slot.start === "00:00" && slot.end === "00:00") return false;
+
+      // 時刻形式の妥当性チェック
+      if (!isValidTimeFormat(slot.start) || !isValidTimeFormat(slot.end)) {
+        return true;
+      }
+
       return false;
     });
   };
@@ -71,6 +92,27 @@ export const useTimeUtils = () => {
       if (!slot.start || !slot.end) continue;
       // startが00:00かつendが00:00の場合は空のスロットとしてスキップ
       if (slot.start === "00:00" && slot.end === "00:00") continue;
+
+      // 時刻形式の妥当性チェック
+      if (!isValidTimeFormat(slot.start) || !isValidTimeFormat(slot.end)) {
+        return {
+          isValid: false,
+          errorMessage:
+            "無効な時刻形式です。HH:MM形式で入力してください（例: 09:30）",
+        };
+      }
+
+      // 24:00の場合は特別処理
+      if (slot.end === "24:00") {
+        // 開始時刻が24:00以上の場合のみエラー
+        if (slot.start === "24:00") {
+          return {
+            isValid: false,
+            errorMessage: "開始時刻は終了時刻より若い時刻を入力してください",
+          };
+        }
+        continue; // 24:00の場合は比較をスキップ
+      }
 
       const startTime = new Date(`2000-01-01T${slot.start}`);
       const endTime = new Date(`2000-01-01T${slot.end}`);
@@ -94,9 +136,25 @@ export const useTimeUtils = () => {
       (slot) => !(slot.start === "00:00" && slot.end === "00:00")
     );
 
+    // 時刻形式の妥当性チェック
+    for (const slot of validSlots) {
+      if (!isValidTimeFormat(slot.start) || !isValidTimeFormat(slot.end)) {
+        return {
+          isValid: false,
+          errorMessage:
+            "無効な時刻形式です。HH:MM形式で入力してください（例: 09:30）",
+        };
+      }
+    }
+
     // 時間スロットを開始時刻でソート
     const sortedSlots = [...validSlots].sort((a, b) => {
       if (!a.start || !b.start) return 0;
+
+      // 24:00の場合は特別処理
+      if (a.start === "24:00") return 1; // 24:00は最後に配置
+      if (b.start === "24:00") return -1;
+
       const dateA = new Date(`2000-01-01T${a.start}`).getTime();
       const dateB = new Date(`2000-01-01T${b.start}`).getTime();
       return dateA - dateB;
@@ -214,5 +272,6 @@ export const useTimeUtils = () => {
     formatTimeForCopy,
     assignOrder,
     getTextColorClass,
+    isValidTimeFormat,
   };
 };
