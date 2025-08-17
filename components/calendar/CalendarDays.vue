@@ -5,7 +5,7 @@
       class="flex items-center justify-center w-full h-full hover:bg-gray-100 pl-3 pr-1 py-1 rounded-xl"
       @click="handleCalendarTabs"
     >
-      <h2 class="text-2xl font-bold">
+      <h2 class="text-xl sm:text-2xl font-bold">
         {{ currentYear }}年 {{ currentMonth }}月
       </h2>
       <UIcon name="ic:baseline-keyboard-arrow-down" class="size-5" />
