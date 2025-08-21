@@ -15,7 +15,7 @@ https://www.tokiwa-calendar.com/welcome
 **フロントエンド**:https://github.com/HikariTakahashi/tokiwa-calendar-frontend  ← いまここ <br>
 **バックエンド**:https://github.com/HikariTakahashi/tokiwa-calendar-backend <br>
 **ハードウェア**:https://github.com/HikariTakahashi/tokiwa-calendar-hardware <br>
-~~**DiscordBot** ~~:https://github.com/HikariTakahashi/tokiwa-calendar-discordbot
+~~**DiscordBot**~~:https://github.com/HikariTakahashi/tokiwa-calendar-discordbot
 
 ## 起動準備(フロントエンド)
 
