@@ -1,10 +1,21 @@
+# 概要
+「部屋を丸ごとリマインダーにする」タスク管理に特化したカレンダーアプリ、『TokiWa Calendar』のレポジトリです。
+従来のタスク管理ツールが抱える「通知の見逃し」「タスクの後回し」という根源的な課題に対し、ソフトウェアとハードウェアの融合で解決する新しいタスク管理システムです。デジタル上のタスクを現実世界の「光・音・モノの動き」に変換し、ユーザーの物理環境に直接働きかけることで、確実な行動を促します。
+『ToKiWa calendar』は、ソフトウェアによる「認知」のサポートと、ハードウェアによる物理的な「行動喚起」を組み合わせ、“わかっていても行動できない”という課題（意図と行動の乖離）を解消します。タスク管理に「環境そのものをデザインする」という新たな選択肢を提示します。
+## 関連URL
+YouTube動画
+https://www.youtube.com/watch?v=OgA2TAeWcS0
+URL
+https://www.tokiwa-calendar.com/welcome
+# 導入準備
 ## 前提
 
-動作には以上の二つのレポジトリのインストールが必要です
+動作には以上の~~四つ~~三つのレポジトリのインストールが必要です
 
-**フロントエンド**:https://github.com/HikariTakahashi/simple-calendar-frontend
-
-**バックエンド**:https://github.com/HikariTakahashi/simple-calendar-backend ← いまここ
+**フロントエンド**:https://github.com/HikariTakahashi/tokiwa-calendar-frontend  ← いまここ <br>
+**バックエンド**:https://github.com/HikariTakahashi/tokiwa-calendar-backend <br>
+**ハードウェア**:https://github.com/HikariTakahashi/tokiwa-calendar-hardware <br>
+~~**DiscordBot** ~~:https://github.com/HikariTakahashi/tokiwa-calendar-discordbot
 
 ## 起動準備(フロントエンド)
 
@@ -28,25 +39,47 @@ npm install
    .env ファイルの中身を担当者から貰ってください
    注:アップデート等により.env ファイルは頻繁に変更されるため、こまめに確認してください。
 
-注:vue-drumroll-datetime-picker の利用は廃止されました。特にアンインストール等は必要ないです。
-
 ## 起動準備(バックエンド)
 
 1. レポジトリのクローン
 
 ```bash
-git clone https://github.com/HikariTakahashi/simple-calendar-backend.git
+git clone https://github.com/HikariTakahashi/tokiwa-calendar-backend.git
 ```
 
 2. バックエンドのプロジェクトに移動(個人のいつもの開き方で OK)
 
 ```bash
-cd simple-calendar-backend
+cd tokiwa-calendar-backend
 ```
 
 3. .env ファイルの書き込み
    .env ファイルの中身を担当者から貰ってください
    注:アップデート等により.env ファイルは頻繁に変更されるため、こまめに確認してください。
+
+## 起動準備(ハードウェア)
+1. PlatformIO IDEの導入
+VSCode の「拡張機能」から PlatformIO IDE を検索してインストール
+2. レポジトリのクローン
+```bash
+git clone https://github.com/HikariTakahashi/tokiwa-calendar-hardware.git
+```
+3. ハードウェアのプロジェクトに移動(個人のいつもの開き方でOK)
+```bash
+cd tokiwa-calendar-hardware
+```
+3. PCにESP32C6を接続
+4. ファームウェアを書き込む
+　コンパイルボタンを押す
+5. 外部から操作したい端末でアクセスポイントに接続
+```bash 
+http://192.168.4.1/
+```
+3. ssidとパスワードを入力しwifiに接続
+　シリアルモニターを確認
+　```bash
+　http://<シリアルモニターに表示されたIPアドレス>/control
+```
 
 ## 開発サーバーの起動
 
@@ -69,55 +102,5 @@ npm run dev
 
 3. 開発用のサーバーにアクセス
 
-基本的には http://localhost:3000 にあります。`npm run dev` を実行した powershell にリンクが出るのでそっちを見てください。
 
-バックエンドは基本的に http://localhost:8080/api/calendar にあります。フロントエンドはここからデータを取得しているのでデバックの際にどうぞ。
 
-## Thunder Client を使ったバックエンドのテスト
-
-Thunder Client は VSCode の拡張機能で、フロントを立てずにバックエンド単体でリクエストのテストが可能です。
-
-### 導入方法
-
-1. VSCode の「拡張機能」から Thunder Client を検索してインストール
-
-### テスト方法（GET リクエスト）
-
-1. Thunder Client を開く
-
-2. `GET`を選択し、URL に `http://localhost:8080/api/calendar?year=2024&month=5&move=`（テスト用クエリ）などを入力
-
-3. 「Send」ボタンを押すと、右側にレスポンスが表示される
-
-4. 表示されたレスポンスより、挙動やステータスコードを確認
-
-### POST リクエストでのテスト（※未実装予定）
-
-将来的にバックエンドで POST リクエストを受け取る場合、以下のようにテスト可能。
-
-1. Thunder Client でメソッドを POST に設定
-
-2. `Body` タブで `JSON` を選び、以下のように入力
-
-```bash
-  ｛
-　"title": "会議",
-  "date": "2024-05-10"
-｝
-```
-
-3. `Send` を押して、レスポンスやエラーを確認
-
-### ステータスコードの意味
-
-- 200 OK：バックエンドが正常動作
-
-- 400 Bad Request：クエリの入力ミスなど → フロントエンドの問題
-
-- 500 Internal Server Error：サーバー内部のエラー → バックエンドの問題
-
-- 404 Not Found：API エンドポイントが存在しない
-
-- 403 Forbidden：管理者権限が必要
-
-- 401 Unauthorized：認証が必要
