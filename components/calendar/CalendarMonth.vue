@@ -88,70 +88,6 @@
         </div>
       </div>
     </div>
-
-    <!-- デスクトップ用TimeForm -->
-    <TimeForm
-      v-if="
-        showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && !isMobile
-      "
-      :close="closeForm"
-      :selectedDate="selectedDate"
-      :year="year"
-      :month="month"
-      :existingTime="
-        selectedDate ? props.timeData.events[selectedDate] || {} : {}
-      "
-      :timeData="props.timeData"
-      :isCopyMode="props.isCopyMode"
-      :allowOtherEdit="props.timeData.allowOtherEdit || false"
-      :startDate="
-        props.timeData.startDate && props.timeData.startDate !== null
-          ? props.timeData.startDate
-          : undefined
-      "
-      :endDate="
-        props.timeData.endDate && props.timeData.endDate !== null
-          ? props.timeData.endDate
-          : undefined
-      "
-      @save="onSave"
-      @delete="onDelete"
-      @copy="handleCopy"
-      @cancel-copy-mode="handleCancelCopyMode"
-      @openTimeSideMenu="handleOpenTimeSideMenu"
-    />
-
-    <!-- モバイル用TimeForm -->
-    <MobileTimeForm
-      v-if="
-        showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && isMobile
-      "
-      :show="showModal"
-      :selectedDate="selectedDate"
-      :year="year"
-      :month="month"
-      :existingTime="
-        selectedDate ? props.timeData.events[selectedDate] || {} : {}
-      "
-      :timeData="props.timeData"
-      :isCopyMode="props.isCopyMode"
-      :allowOtherEdit="props.timeData.allowOtherEdit || false"
-      :startDate="
-        props.timeData.startDate && props.timeData.startDate !== null
-          ? props.timeData.startDate
-          : undefined
-      "
-      :endDate="
-        props.timeData.endDate && props.timeData.endDate !== null
-          ? props.timeData.endDate
-          : undefined
-      "
-      @save="onSave"
-      @delete="onDelete"
-      @copy="handleCopy"
-      @preview="handlePreview"
-      @close="closeForm"
-    />
   </div>
 
   <TimeSideMenu
@@ -177,8 +113,6 @@
 </template>
 
 <script setup lang="ts">
-import TimeForm from "@/components/forms/TimeForm.vue";
-import MobileTimeForm from "@/components/forms/MobileTimeForm.vue";
 import TimeSideMenu from "@/components/sidemenu/TimeSideMenu.vue";
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
@@ -214,6 +148,7 @@ const emit = defineEmits<{
   (e: "cancel-copy-mode"): void;
   (e: "toggleSideMenu"): void;
   (e: "import-complete", data: any[]): void;
+  (e: "openForm", data: { date: string; hour?: number }): void;
 }>();
 
 const { formatTimeForDisplay } = useTimeUtils();
@@ -317,27 +252,15 @@ const openForm = (date: string) => {
       return;
     }
 
-    // TimeFormが開いている場合は、TimeFormの日付を更新
-    if (showModal.value) {
-      selectedDate.value = date;
-      return;
-    }
-
-    // どちらも開いていない場合は、TimeFormを開く
-    selectedDate.value = date;
-    showModal.value = true;
+    // 親コンポーネントにフォームを開くイベントを送信
+    emit("openForm", { date });
   }
-};
-
-const closeForm = () => {
-  showModal.value = false;
 };
 
 const handleCopy = () => {
   if (!selectedDate.value) return;
   const result = copyLogic(selectedDate.value, props.timeData.events);
   emit("update:is-copy-mode", result.isCopyMode);
-  showModal.value = false;
 };
 
 const handleCancelCopyMode = () => {
