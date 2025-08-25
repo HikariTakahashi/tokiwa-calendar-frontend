@@ -24,6 +24,7 @@
         @toggleSideMenu="toggleSideMenu"
         @go-to-today="handleGoToToday"
         @go-to-specific-date="handleGoToSpecificDate"
+        @open-form="handleOpenForm"
       />
     </div>
     <!-- スクロール可能なコンテンツ -->
@@ -44,6 +45,7 @@
         @toggleSideMenu="toggleSideMenu"
         @import-complete="handleImportComplete"
         @month-selected="handleMonthSelected"
+        @open-form="handleOpenForm"
       />
 
       <!-- 月表示 -->
@@ -63,6 +65,7 @@
         @cancel-copy-mode="handleCancelCopyMode"
         @toggleSideMenu="toggleSideMenu"
         @import-complete="handleImportComplete"
+        @open-form="handleOpenForm"
       />
 
       <!-- 週表示 -->
@@ -82,18 +85,88 @@
         @cancel-copy-mode="handleCancelCopyMode"
         @toggleSideMenu="toggleSideMenu"
         @import-complete="handleImportComplete"
+        @open-form="handleOpenForm"
       />
     </div>
+
+    <!-- フォームモーダル -->
+    <Teleport to="body">
+      <!-- デスクトップ用TimeForm -->
+      <TimeForm
+        v-if="
+          showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && !isMobile
+        "
+        :close="closeForm"
+        :selectedDate="selectedDate"
+        :year="currentYear"
+        :month="currentMonth"
+        :existingTime="selectedDate ? timeData.events[selectedDate] || {} : {}"
+        :timeData="timeData"
+        :is-copy-mode="isCopyMode"
+        :allow-other-edit="timeData.allowOtherEdit || false"
+        :initial-hour="selectedHour"
+        @save="saveTime"
+        @delete="deleteTime"
+        @copy="handleCopy"
+        @cancel-copy-mode="handleCancelCopyMode"
+        @preview="handlePreview"
+        @open-time-side-menu="handleOpenTimeSideMenu"
+      />
+
+      <!-- モバイル用TimeForm -->
+      <MobileTimeForm
+        v-if="
+          showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && isMobile
+        "
+        :show="showModal"
+        :selectedDate="selectedDate"
+        :year="currentYear"
+        :month="currentMonth"
+        :existingTime="selectedDate ? timeData.events[selectedDate] || {} : {}"
+        :timeData="timeData"
+        :is-copy-mode="isCopyMode"
+        :allow-other-edit="timeData.allowOtherEdit || false"
+        :initial-hour="selectedHour"
+        @save="saveTime"
+        @delete="deleteTime"
+        @copy="handleCopy"
+        @preview="handlePreview"
+        @close="closeForm"
+      />
+    </Teleport>
+
+    <!-- TimeSideMenu -->
+    <TimeSideMenu
+      v-if="showTimeSideMenu"
+      :show="showTimeSideMenu"
+      :selectedDate="timeSideMenuData.selectedDate"
+      :year="timeSideMenuData.year"
+      :month="timeSideMenuData.month"
+      :day="timeSideMenuData.day"
+      :existingTime="timeSideMenuData.existingTime"
+      :isCopyMode="timeSideMenuData.isCopyMode"
+      :allowOtherEdit="timeSideMenuData.allowOtherEdit"
+      :initialHour="timeSideMenuData.initialHour"
+      @save="saveTime"
+      @delete="deleteTime"
+      @copy="handleCopy"
+      @preview="handlePreview"
+      @close="closeTimeSideMenu"
+      @editModeChanged="handleTimeSideMenuEditModeChanged"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import CalendarHeader from "@/components/header/CalendarHeader.vue";
 import CopyModeHeader from "@/components/header/CopyModeHeader.vue";
 import CalendarMonth from "@/components/calendar/CalendarMonth.vue";
 import CalendarWeek from "@/components/calendar/CalendarWeek.vue";
 import CalendarYear from "@/components/calendar/CalendarYear.vue";
+import TimeForm from "@/components/forms/TimeForm.vue";
+import MobileTimeForm from "@/components/forms/MobileTimeForm.vue";
+import TimeSideMenu from "@/components/sidemenu/TimeSideMenu.vue";
 
 import { useDateUtils } from "@/utils/DateUtils";
 import { useViewMode, createViewModeHandlers } from "@/utils/ViewModeUtils";
@@ -123,6 +196,26 @@ const timeData = ref<TimeData>({
 const isCopyMode = ref(false);
 const showSideMenu = ref(false);
 const spaceId = ref<string | undefined>(undefined);
+
+// フォーム関連の状態
+const showModal = ref(false);
+const selectedDate = ref<string>("");
+const selectedHour = ref<number | undefined>(undefined);
+const isMobile = ref(false);
+const showTimeSideMenu = ref(false);
+const isTimeSideMenuEditMode = ref(false);
+
+// TimeSideMenu関連の状態
+const timeSideMenuData = ref({
+  selectedDate: "",
+  year: 0,
+  month: 0,
+  day: 0,
+  existingTime: {},
+  isCopyMode: false,
+  allowOtherEdit: false,
+  initialHour: undefined as number | undefined,
+});
 
 // 表示方法の管理
 const viewModeState = useViewMode("month");
@@ -208,10 +301,6 @@ const deleteTime = (data: {
   }
 };
 
-const handleCancelCopyMode = () => {
-  isCopyMode.value = false;
-};
-
 const toggleSideMenu = () => {
   showSideMenu.value = !showSideMenu.value;
 };
@@ -247,4 +336,72 @@ const handleGoToSpecificDate = (date: string) => {
   currentDay.value = selectedDate.getDate();
   calendarDays.value = getCalendarDays(currentYear.value, currentMonth.value);
 };
+
+// フォーム関連のハンドラー
+const closeForm = () => {
+  showModal.value = false;
+  selectedHour.value = undefined;
+};
+
+const handleCopy = () => {
+  // コピーモードの処理
+  isCopyMode.value = true;
+  showModal.value = false;
+};
+
+const handlePreview = (data: { date: string; timeSlots: TimeSlot[] }) => {
+  // プレビュー処理
+  console.log("Preview:", data);
+};
+
+const handleOpenTimeSideMenu = (data: any) => {
+  // TimeSideMenuを開く処理
+  timeSideMenuData.value = {
+    selectedDate: data.selectedDate,
+    year: data.year,
+    month: data.month,
+    day: data.day,
+    existingTime: data.existingTime,
+    isCopyMode: data.isCopyMode,
+    allowOtherEdit: data.allowOtherEdit,
+    initialHour: data.initialHour,
+  };
+  showTimeSideMenu.value = true;
+  showModal.value = false;
+};
+
+const closeTimeSideMenu = () => {
+  showTimeSideMenu.value = false;
+  isTimeSideMenuEditMode.value = false;
+};
+
+const handleTimeSideMenuEditModeChanged = (isEditMode: boolean) => {
+  isTimeSideMenuEditMode.value = isEditMode;
+};
+
+const handleCancelCopyMode = () => {
+  isCopyMode.value = false;
+};
+
+// レスポンシブ判定
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768; // md breakpoint
+};
+
+// カレンダーコンポーネントからのフォーム開要求を処理
+const handleOpenForm = (data: { date: string; hour?: number }) => {
+  selectedDate.value = data.date;
+  selectedHour.value = data.hour;
+  showModal.value = true;
+};
+
+// コンポーネントマウント時にモバイル判定を実行
+onMounted(() => {
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", checkMobile);
+});
 </script>
