@@ -91,10 +91,12 @@ interface Props {
   spaceId?: string;
   timeData: TimeData;
   showSideMenu?: boolean;
+  displayMode?: "time" | "task";
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showSideMenu: false,
+  displayMode: "time",
 });
 const emit = defineEmits<{
   (e: "save", data: { date: string; timeSlots: TimeSlot[] }): void;
