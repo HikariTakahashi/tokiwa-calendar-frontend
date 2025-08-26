@@ -1,7 +1,7 @@
 <template>
   <div
     ref="modalRef"
-    class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border bg-white rounded shadow-lg"
+    class="absolute top-1/2 left-1/2 w-1/3 transform -translate-x-1/2 -translate-y-1/2 border bg-white rounded shadow-lg"
     :style="modalStyle"
     style="z-index: 9999"
   >
@@ -10,9 +10,7 @@
       @mousedown="startDrag"
     >
       <div class="flex flex-row justify-between w-full">
-        <div class="flex flex-row mr-auto ml-2 gap-x-2">
-          <h3 class="text-sm font-semibold text-gray-700">タスク管理</h3>
-        </div>
+        <div class="flex flex-row mr-auto ml-2 gap-x-2"></div>
         <buttons-hover
           @click="props.close"
           :size="5"
@@ -23,111 +21,194 @@
       </div>
     </div>
 
-    <div class="pl-5 pr-2 pt-1 pb-5 rounded-lg shadow-lg relative w-96">
-      <!-- <h6 class="text-sm font-bold text-red-500">
+    <div
+      class="px-5 pt-1 pb-5 rounded-lg shadow-lg relative w-full max-h-[80vh] overflow-y-auto"
+    >
+      <h6 class="text-sm font-bold text-red-500">
         {{ errorMessage }}
       </h6>
-
       <div class="flex justify-between items-center">
         <h2 class="text-xl font-bold">
-          {{ isCurrentYear ? "" : dateComponents.year + "年" }}
-          {{ isCurrentMonth ? "" : dateComponents.month + "月" }}
-          {{ dateComponents.day }} 日のタスク設定
+          {{ isCurrentYear ? "" : dateComponents.year + " 年" }}
+          {{ isCurrentMonth ? "" : dateComponents.month + " 月" }}
+          {{ dateComponents.day }} 日
         </h2>
       </div>
 
-      <div class="mt-4 space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            タスク名
+      <!-- 時間入力部分をコメントアウト（タスク管理モードでは不要） -->
+
+      <!-- 時間入力 -->
+      <div class="mt-4">
+        <div class="mb-3">
+          <label class="flex items-center text-sm text-gray-500 mb-2">
+            <input
+              v-model="isAllDay"
+              type="checkbox"
+              class="mr-2"
+              @change="handleAllDayChange"
+            />
+            終日
           </label>
-          <input
-            v-model="taskName"
-            type="text"
-            class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="タスク名を入力してください"
-            maxlength="100"
-          />
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            説明
-          </label>
-          <textarea
-            v-model="taskDescription"
-            rows="3"
-            class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="タスクの詳細を入力してください"
-            maxlength="500"
-          ></textarea>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            優先度
-          </label>
-          <select
-            v-model="taskPriority"
-            class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="low">低</option>
-            <option value="medium">中</option>
-            <option value="high">高</option>
-            <option value="urgent">緊急</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            予定時間
-          </label>
-          <TimeInputDate
-            :timeSlots="timeSlots"
-            :allowOtherEdit="props.allowOtherEdit"
-            @update:timeSlots="updateTimeSlots"
-            @startTimeChange="handleStartTimeChange"
-            @endTimeChange="handleEndTimeChange"
-          />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            ステータス
-          </label>
-          <select
-            v-model="taskStatus"
-            class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="pending">未着手</option>
-            <option value="in-progress">進行中</option>
-            <option value="completed">完了</option>
-            <option value="cancelled">キャンセル</option>
-          </select>
+        <div v-if="!isAllDay" class="max-h-[30vh] overflow-y-auto pr-2">
+          <div v-for="(timeSlot, index) in timeSlots" :key="index">
+            <div class="flex pr-3 justify-center items-center gap-x-2 mb-2">
+              <label>開始時刻</label>
+              <div class="border-r border-gray-400 pr-2">
+                <InputTime
+                  :minute-interval="15"
+                  :initial-hours="parseTimeSlot(timeSlot.start).hours"
+                  :initial-minutes="parseTimeSlot(timeSlot.start).minutes"
+                  @update:time="
+                    (newStartTime) => handleStartTimeChange(newStartTime, index)
+                  "
+                />
+              </div>
+              <InputTime
+                :minute-interval="15"
+                :initial-hours="parseTimeSlot(timeSlot.end).hours"
+                :initial-minutes="parseTimeSlot(timeSlot.end).minutes"
+                @update:time="
+                  (newEndTime) => handleEndTimeChange(newEndTime, index)
+                "
+              />
+              <label>終了時刻</label>
+              <buttons-hover
+                v-if="timeSlots.length > 1"
+                @click="removeTimeSlot(index)"
+                :size="5"
+                name="ic:sharp-delete"
+                color="bg-red-500"
+                :ishover="false"
+              />
+            </div>
+          </div>
+          <div class="flex items-center gap-x-5">
+            <button
+              type="button"
+              @click="addTimeSlot"
+              class="text-blue-500 pb-2 hover:underline"
+            >
+              複数時間を入力
+            </button>
+          </div>
         </div>
       </div>
 
-      <div class="mt-6 flex justify-end gap-x-2">
-        <buttons-square
-          v-if="hasExistingTask"
-          @click="deleteTask"
-          color="bg-red-200"
-          class="w-24"
-        >
-          削除
-        </buttons-square>
-        <buttons-square @click="save" color="bg-blue-200" class="w-24">
-          保存
-        </buttons-square>
-      </div> -->
+      <!-- 編集モードの場合は単一タスク編集、新規追加モードの場合は複数タスク管理 -->
+      <div class="mt-4">
+        <!-- タスク名 -->
+        <div class="mb-3">
+          <label class="block text-sm text-gray-500 mb-1">タスク名</label>
+          <input
+            v-model="editingTaskData.taskName"
+            type="text"
+            class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            :class="{ 'border-red-500': taskNameErrors.length > 0 }"
+            placeholder="タスク名を入力してください"
+            maxlength="40"
+            @input="handleTaskNameInput"
+          />
+          <!-- 警告欄 -->
+          <div class="flex flex-row gap-x-2 items-center justify-between">
+            <div
+              v-if="taskNameErrors.length > 0"
+              class="text-red-500 text-sm mt-1"
+            >
+              <div
+                v-for="error in taskNameErrors"
+                :key="error"
+                class="flex items-center gap-1"
+              >
+                <UIcon name="ic:sharp-error" class="size-4" />
+                <span>{{ error }}</span>
+              </div>
+            </div>
+            <div class="text-gray-500 text-xs text-right">
+              {{ editingTaskData.taskName.length }}/40
+            </div>
+          </div>
+        </div>
+
+        <!-- 説明 -->
+        <div class="mb-3">
+          <label class="block text-sm text-gray-500 mb-1">説明</label>
+          <textarea
+            v-model="editingTaskData.description"
+            rows="3"
+            class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            :class="{ 'border-red-500': descriptionErrors.length > 0 }"
+            placeholder="タスクの詳細を入力してください"
+            maxlength="500"
+            @input="handleDescriptionInput"
+          ></textarea>
+          <!-- 警告欄 -->
+          <div class="flex flex-row gap-x-2 items-center justify-between">
+            <div
+              v-if="descriptionErrors.length > 0"
+              class="text-red-500 text-sm mt-1"
+            >
+              <div
+                v-for="error in descriptionErrors"
+                :key="error"
+                class="flex items-center gap-1"
+              >
+                <UIcon name="ic:sharp-error" class="size-4" />
+                <span>{{ error }}</span>
+              </div>
+            </div>
+            <div class="text-gray-500 text-xs text-right">
+              {{ editingTaskData.description.length }}/500
+            </div>
+          </div>
+        </div>
+
+        <!-- タスク色 -->
+        <div class="mb-3">
+          <label class="block text-sm text-gray-500 mb-1">タスク色</label>
+          <div class="flex flex-row gap-3">
+            <div class="flex flex-col gap-1">
+              <ColorField v-model="taskColor" />
+            </div>
+
+            <div class="flex flex-wrap flex-row gap-1">
+              <ColorButton
+                v-for="color in presetColors"
+                :key="color"
+                :color="color"
+                @update:modelValue="taskColor = color"
+              />
+            </div>
+            <div class="flex flex-col gap-1 justify-end">
+              <buttons-square
+                v-if="isEditMode"
+                @click="deleteTask"
+                color="bg-red-200"
+                class="w-18"
+              >
+                削除
+              </buttons-square>
+              <buttons-square @click="save" color="bg-blue-200" class="w-18">
+                {{ isEditMode ? "更新" : "保存" }}
+              </buttons-square>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { onMounted, onBeforeUnmount, computed, ref, watch } from "vue";
-import TimeInputDate from "@/components/buttons/TimeInputDate.vue";
-import { useTimeUtils } from "@/utils/TimeUtils";
+import InputTime from "@/components/buttons/InputTime.vue";
+import ColorField from "@/components/buttons/ColorField.vue";
+import ColorButton from "@/components/buttons/ColorButton.vue";
+import {
+  validateUsername,
+  applyUsernameRestrictions,
+} from "@/utils/ArrayString";
 
 const props = defineProps({
   close: Function,
@@ -163,6 +244,14 @@ const props = defineProps({
     type: [String, null],
     default: null,
   },
+  editingTaskIndex: {
+    type: Number,
+    default: -1,
+  },
+  editingTask: {
+    type: Object,
+    default: null,
+  },
 });
 
 const emit = defineEmits([
@@ -173,19 +262,57 @@ const emit = defineEmits([
   "openTimeSideMenu",
 ]);
 
-const { timeSlots, validateTime, validateTimeOrder, validateTimeOverlap } =
-  useTimeUtils();
+// タスク管理モードでは時間関連の処理をコメントアウト
+// const { timeSlots, validateTime, validateTimeOrder, validateTimeOverlap } =
+//   useTimeUtils();
 
 const isInitialized = ref(false);
 const hasNewData = ref(false);
 const isMobile = ref(false);
 const errorMessage = ref("");
 
-// タスク管理用の状態
-const taskName = ref("");
-const taskDescription = ref("");
-const taskPriority = ref("medium");
-const taskStatus = ref("pending");
+// 編集モード用の状態
+const editingTaskData = ref({
+  taskName: "",
+  description: "",
+});
+
+// バリデーション状態
+const taskNameErrors = ref([]);
+const descriptionErrors = ref([]);
+
+// タスク色の状態
+const taskColor = ref("#3b82f6");
+
+// プリセットカラー
+const presetColors = [
+  "#ff0000",
+  "#00ff00",
+  "#0000ff",
+  "#dc2626",
+  "#10b981",
+  "#3b82f6",
+  "#eae727",
+  "#ec4899",
+  "#6366f1",
+  "#f59e0b",
+  "#cd0000",
+  "#7c3aed",
+];
+
+// 時間関連の状態
+const isAllDay = ref(true);
+const timeSlots = ref([
+  {
+    start: "09:00",
+    end: "10:00",
+  },
+]);
+
+// 編集モードかどうかを判定
+const isEditMode = computed(() => {
+  return props.editingTaskIndex >= 0 && props.editingTask !== null;
+});
 
 const dateComponents = computed(() => {
   const parts = props.selectedDate.split("-");
@@ -220,6 +347,39 @@ const checkMobile = () => {
   isMobile.value = window.innerWidth < 768; // md breakpoint
 };
 
+// タスク名入力処理
+const handleTaskNameInput = () => {
+  // 入力制限を適用
+  const restrictedTaskName = applyUsernameRestrictions(
+    editingTaskData.value.taskName
+  );
+  if (restrictedTaskName !== editingTaskData.value.taskName) {
+    editingTaskData.value.taskName = restrictedTaskName;
+  }
+
+  // バリデーションを実行
+  const validation = validateUsername(editingTaskData.value.taskName);
+  taskNameErrors.value = validation.errors;
+};
+
+// 説明入力処理
+const handleDescriptionInput = () => {
+  // 説明の文字数制限（500文字）
+  if (editingTaskData.value.description.length > 500) {
+    editingTaskData.value.description =
+      editingTaskData.value.description.substring(0, 500);
+  }
+
+  // 説明のバリデーション
+  const errors = [];
+  if (editingTaskData.value.description.length > 500) {
+    errors.push("説明は500文字以内で入力してください");
+  }
+  descriptionErrors.value = errors;
+};
+
+// タスク管理モードでは時間関連の処理をコメントアウト
+/*
 // 新しいコンポーネントからのイベントハンドラー
 const updateTimeSlots = (newTimeSlots) => {
   timeSlots.value = newTimeSlots;
@@ -234,135 +394,150 @@ const handleEndTimeChange = (data) => {
   // プレビューを更新
   updatePreview();
 };
+*/
 
 const initializeTaskData = () => {
-  // 初期化後は、既に有効な時間スロットが存在する場合は、それらを保持
-  if (isInitialized.value) {
-    const hasValidTimeSlots = timeSlots.value.some(
-      (slot) => !(slot.start === "00:00" && slot.end === "00:00")
-    );
+  // 編集モードの場合
+  if (isEditMode.value && props.editingTask) {
+    editingTaskData.value = {
+      taskName: props.editingTask.taskName || "",
+      description: props.editingTask.description || "",
+    };
 
-    if (hasValidTimeSlots) {
-      // 既に時間が入力されている場合は、現在の状態を維持
-      return;
-    }
-  }
+    // タスク色を設定
+    taskColor.value = props.editingTask.userColor || "#3b82f6";
 
-  // 既存データがある場合
-  if (props.existingTime.start && props.existingTime.end) {
-    timeSlots.value = [
-      {
-        start: props.existingTime.start,
-        end: props.existingTime.end,
-        username: props.existingTime.username,
-        userColor: props.existingTime.userColor,
-      },
-    ];
+    // 時間情報を設定
+    const taskStart = props.editingTask.start || "00:00";
+    const taskEnd = props.editingTask.end || "24:00";
 
-    // タスク情報を復元
-    if (props.existingTime.taskName) {
-      taskName.value = props.existingTime.taskName;
-    }
-    if (props.existingTime.taskDescription) {
-      taskDescription.value = props.existingTime.taskDescription;
-    }
-    if (props.existingTime.taskPriority) {
-      taskPriority.value = props.existingTime.taskPriority;
-    }
-    if (props.existingTime.taskStatus) {
-      taskStatus.value = props.existingTime.taskStatus;
-    }
-
-    // initialHourが設定されている場合は、新規スロットを追加
-    if (props.initialHour !== undefined && props.initialHour !== null) {
-      const startHour = props.initialHour.toString().padStart(2, "0");
-      const endHour = (props.initialHour + 1).toString().padStart(2, "0");
-
-      timeSlots.value.push({
-        start: `${startHour}:00`,
-        end: `${endHour}:00`,
-      });
+    if (taskStart === "00:00" && taskEnd === "24:00") {
+      isAllDay.value = true;
+      timeSlots.value = [
+        {
+          start: "00:00",
+          end: "24:00",
+        },
+      ];
     } else {
-      // 空のスロットを追加
-      timeSlots.value.push({
-        start: "00:00",
-        end: "00:00",
-      });
+      isAllDay.value = false;
+      timeSlots.value = [
+        {
+          start: taskStart,
+          end: taskEnd,
+        },
+      ];
     }
-  } else if (Array.isArray(props.existingTime)) {
-    timeSlots.value = [
-      ...props.existingTime.map((slot) => ({
-        start: slot.start,
-        end: slot.end,
-        username: slot.username,
-        userColor: slot.userColor,
-      })),
-    ];
-
-    // タスク情報を復元（配列の最初の要素から）
-    if (props.existingTime[0]) {
-      const firstSlot = props.existingTime[0];
-      if (firstSlot.taskName) {
-        taskName.value = firstSlot.taskName;
-      }
-      if (firstSlot.taskDescription) {
-        taskDescription.value = firstSlot.taskDescription;
-      }
-      if (firstSlot.taskPriority) {
-        taskPriority.value = firstSlot.taskPriority;
-      }
-      if (firstSlot.taskStatus) {
-        taskStatus.value = firstSlot.taskStatus;
-      }
-    }
-
-    // initialHourが設定されている場合は、新規スロットを追加
-    if (props.initialHour !== undefined && props.initialHour !== null) {
-      const startHour = props.initialHour.toString().padStart(2, "0");
-      const endHour = (props.initialHour + 1).toString().padStart(2, "0");
-
-      timeSlots.value.push({
-        start: `${startHour}:00`,
-        end: `${endHour}:00`,
-      });
-    } else {
-      // 空のスロットを追加
-      timeSlots.value.push({
-        start: "00:00",
-        end: "00:00",
-      });
-    }
-  } else if (props.initialHour !== undefined && props.initialHour !== null) {
-    // initialHourが設定されている場合、その時間から1時間後の範囲を設定
-    const startHour = props.initialHour.toString().padStart(2, "0");
-    const endHour = (props.initialHour + 1).toString().padStart(2, "0");
-
-    timeSlots.value = [
-      {
-        start: `${startHour}:00`,
-        end: `${endHour}:00`,
-      },
-    ];
   } else {
-    timeSlots.value = [
-      {
-        start: "00:00",
-        end: "00:00",
-      },
-    ];
+    // 新規追加モードの場合
+    if (props.existingTime && Object.keys(props.existingTime).length > 0) {
+      // 既存データがある場合は、そのデータを編集用に設定
+      if (props.existingTime.taskName) {
+        editingTaskData.value = {
+          taskName: props.existingTime.taskName,
+          description: props.existingTime.description || "",
+        };
+
+        // タスク色を設定
+        taskColor.value = props.existingTime.userColor || "#3b82f6";
+
+        // 時間情報を設定
+        const taskStart = props.existingTime.start || "00:00";
+        const taskEnd = props.existingTime.end || "24:00";
+
+        if (taskStart === "00:00" && taskEnd === "24:00") {
+          isAllDay.value = true;
+          timeSlots.value = [
+            {
+              start: "00:00",
+              end: "24:00",
+            },
+          ];
+        } else {
+          isAllDay.value = false;
+          timeSlots.value = [
+            {
+              start: taskStart,
+              end: taskEnd,
+            },
+          ];
+        }
+      }
+    } else if (
+      Array.isArray(props.existingTime) &&
+      props.existingTime.length > 0
+    ) {
+      // 配列の場合、最初のタスクを編集用に設定
+      const firstTask = props.existingTime[0];
+      editingTaskData.value = {
+        taskName: firstTask.taskName || "",
+        description: firstTask.description || "",
+      };
+
+      // タスク色を設定
+      taskColor.value = firstTask.userColor || "#3b82f6";
+
+      // 時間情報を設定
+      const taskStart = firstTask.start || "00:00";
+      const taskEnd = firstTask.end || "24:00";
+
+      if (taskStart === "00:00" && taskEnd === "24:00") {
+        isAllDay.value = true;
+        timeSlots.value = [
+          {
+            start: "00:00",
+            end: "24:00",
+          },
+        ];
+      } else {
+        isAllDay.value = false;
+        timeSlots.value = [
+          {
+            start: taskStart,
+            end: taskEnd,
+          },
+        ];
+      }
+    } else {
+      // 新規の場合、空のタスクデータを設定
+      editingTaskData.value = {
+        taskName: "",
+        description: "",
+      };
+
+      // デフォルトのタスク色を設定
+      taskColor.value = "#3b82f6";
+
+      // initialHourが設定されている場合は、その時間から1時間後の範囲を設定
+      if (props.initialHour !== undefined && props.initialHour !== null) {
+        isAllDay.value = false;
+        const startHour = props.initialHour.toString().padStart(2, "0");
+        const endHour = (props.initialHour + 1).toString().padStart(2, "0");
+        timeSlots.value = [
+          {
+            start: `${startHour}:00`,
+            end: `${endHour}:00`,
+          },
+        ];
+      } else {
+        // デフォルトで終日
+        isAllDay.value = true;
+        timeSlots.value = [
+          {
+            start: "00:00",
+            end: "24:00",
+          },
+        ];
+      }
+    }
   }
 
-  // 新規データがあるかどうかを判定
-  hasNewData.value =
-    props.initialHour !== undefined && props.initialHour !== null;
+  // バリデーションエラーをリセット
+  taskNameErrors.value = [];
+  descriptionErrors.value = [];
 
-  // 既存データがある場合もプレビュー表示を有効にする
-  if (
-    !hasNewData.value &&
-    (props.existingTime.start || Array.isArray(props.existingTime))
-  ) {
-    hasNewData.value = true;
-  }
+  // タスク管理モードでは新規データ判定を簡素化
+  hasNewData.value = true;
 
   // 初期化完了をマーク
   isInitialized.value = true;
@@ -399,30 +574,141 @@ watch(
   }
 );
 
+// 時間関連のハンドラー
+const handleAllDayChange = () => {
+  if (isAllDay.value) {
+    // 終日の場合は時間をリセット
+    timeSlots.value = [
+      {
+        start: "00:00",
+        end: "24:00",
+      },
+    ];
+  } else {
+    // 終日でない場合はデフォルト時間を設定
+    timeSlots.value = [
+      {
+        start: "09:00",
+        end: "10:00",
+      },
+    ];
+  }
+};
+
+// 時間関連のユーティリティ関数
+const parseTimeSlot = (timeString) => {
+  if (!timeString) return { hours: 0, minutes: 0 };
+  const [hours, minutes] = timeString.split(":").map(Number);
+  return { hours, minutes };
+};
+
+const addTimeSlot = () => {
+  const newTimeSlots = [...timeSlots.value];
+  newTimeSlots.push({
+    start: "09:00",
+    end: "10:00",
+  });
+  timeSlots.value = newTimeSlots;
+};
+
+const removeTimeSlot = (index) => {
+  if (timeSlots.value.length > 1) {
+    const newTimeSlots = [...timeSlots.value];
+    newTimeSlots.splice(index, 1);
+    timeSlots.value = newTimeSlots;
+  }
+};
+
+const handleStartTimeChange = (newStartTime, index) => {
+  // 開始時刻が変更された時に、終了時刻に+1時間を設定
+  if (newStartTime && newStartTime !== "00:00") {
+    const startTime = new Date(`2000-01-01T${newStartTime}`);
+    const currentEndTime = timeSlots.value[index].end;
+
+    // 現在の終了時刻が有効な場合、開始時刻との差を計算
+    if (
+      currentEndTime &&
+      currentEndTime !== "00:00" &&
+      currentEndTime !== "24:00"
+    ) {
+      const currentEnd = new Date(`2000-01-01T${currentEndTime}`);
+      const timeDifference = currentEnd.getTime() - startTime.getTime();
+
+      // 時間差が1時間未満の場合は+1時間に設定
+      if (timeDifference < 60 * 60 * 1000) {
+        const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1時間
+
+        // 24時間を超える場合は24:00に設定
+        if (endTime.getHours() === 0) {
+          timeSlots.value[index].end = "24:00";
+        } else {
+          const endHours = endTime.getHours().toString().padStart(2, "0");
+          const endMinutes = endTime.getMinutes().toString().padStart(2, "0");
+          timeSlots.value[index].end = `${endHours}:${endMinutes}`;
+        }
+      }
+      // 時間差が1時間以上の場合は現在の終了時刻を維持
+    } else {
+      // 現在の終了時刻が無効な場合は+1時間を設定
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1時間
+
+      // 24時間を超える場合は24:00に設定
+      if (endTime.getHours() === 0) {
+        timeSlots.value[index].end = "24:00";
+      } else {
+        const endHours = endTime.getHours().toString().padStart(2, "0");
+        const endMinutes = endTime.getMinutes().toString().padStart(2, "0");
+        timeSlots.value[index].end = `${endHours}:${endMinutes}`;
+      }
+    }
+  }
+
+  timeSlots.value[index].start = newStartTime;
+};
+
+const handleEndTimeChange = (newEndTime, index) => {
+  timeSlots.value[index].end = newEndTime;
+};
+
 const save = () => {
-  // バリデーション
-  if (!taskName.value.trim()) {
+  // タスク名のバリデーション
+  if (!editingTaskData.value.taskName.trim()) {
     errorMessage.value = "タスク名を入力してください";
     return;
   }
 
-  // 空のスロット（startが00:00かつendが00:00）を除外
-  const validTimeSlots = timeSlots.value.filter(
-    (slot) => !(slot.start === "00:00" && slot.end === "00:00")
-  );
-
-  // 空のスロットが含まれているかチェック
-  const emptySlots = timeSlots.value.filter(
-    (slot) => slot.start === "00:00" && slot.end === "00:00"
-  );
-
-  if (emptySlots.length > 0) {
-    errorMessage.value = "空の時間スロットがあります。";
+  // バリデーションエラーのチェック
+  if (taskNameErrors.value.length > 0) {
+    errorMessage.value = "タスク名にエラーがあります";
     return;
   }
 
-  // 有効なスロットがない場合は保存しない
-  if (validTimeSlots.length === 0) {
+  if (descriptionErrors.value.length > 0) {
+    errorMessage.value = "説明にエラーがあります";
+    return;
+  }
+
+  if (isEditMode.value) {
+    // 編集モードの場合
+    // 既存のタスクリストを取得
+    const existingTasks = Array.isArray(props.existingTime)
+      ? [...props.existingTime]
+      : props.existingTime && props.existingTime.taskName
+      ? [props.existingTime]
+      : [];
+
+    // 編集対象のタスクを更新
+    if (existingTasks[props.editingTaskIndex]) {
+      existingTasks[props.editingTaskIndex] = {
+        ...existingTasks[props.editingTaskIndex],
+        taskName: editingTaskData.value.taskName.trim(),
+        description: editingTaskData.value.description.trim(),
+        start: timeSlots.value[0].start,
+        end: timeSlots.value[0].end,
+        userColor: taskColor.value,
+      };
+    }
+
     // プレビューデータをクリアするためのイベントを発火
     emit("preview", {
       date: props.selectedDate,
@@ -431,53 +717,40 @@ const save = () => {
 
     emit("save", {
       date: props.selectedDate,
+      timeSlots: existingTasks,
+    });
+  } else {
+    // 新規追加モードの場合
+    // 新しいタスクデータを作成
+    const newTask = {
+      taskName: editingTaskData.value.taskName.trim(),
+      description: editingTaskData.value.description.trim(),
+      start: timeSlots.value[0].start,
+      end: timeSlots.value[0].end,
+      userColor: taskColor.value,
+      order: 1,
+    };
+
+    // 既存のタスクがある場合は追加、ない場合は新規作成
+    const existingTasks = Array.isArray(props.existingTime)
+      ? [...props.existingTime]
+      : props.existingTime && props.existingTime.taskName
+      ? [props.existingTime]
+      : [];
+
+    const updatedTasks = [...existingTasks, newTask];
+
+    // プレビューデータをクリアするためのイベントを発火
+    emit("preview", {
+      date: props.selectedDate,
       timeSlots: [],
     });
-    isInitialized.value = false; // 初期化フラグをリセット
-    hasNewData.value = false; // 新規データフラグをリセット
-    props.close();
-    return;
+
+    emit("save", {
+      date: props.selectedDate,
+      timeSlots: updatedTasks,
+    });
   }
-
-  // 有効なスロットのみでバリデーションを実行
-  if (!validateTime(validTimeSlots)) {
-    errorMessage.value = "開始時刻と終了時刻を入力してください";
-    return;
-  }
-
-  const orderValidation = validateTimeOrder(validTimeSlots);
-  if (!orderValidation.isValid) {
-    errorMessage.value = orderValidation.errorMessage;
-    return;
-  }
-
-  const overlapValidation = validateTimeOverlap(validTimeSlots);
-  if (!overlapValidation.isValid) {
-    errorMessage.value = overlapValidation.errorMessage;
-    return;
-  }
-
-  errorMessage.value = "";
-
-  // タスク情報を時間スロットに追加
-  const taskTimeSlots = validTimeSlots.map((slot) => ({
-    ...slot,
-    taskName: taskName.value.trim(),
-    taskDescription: taskDescription.value.trim(),
-    taskPriority: taskPriority.value,
-    taskStatus: taskStatus.value,
-  }));
-
-  // プレビューデータをクリアするためのイベントを発火
-  emit("preview", {
-    date: props.selectedDate,
-    timeSlots: [],
-  });
-
-  emit("save", {
-    date: props.selectedDate,
-    timeSlots: taskTimeSlots,
-  });
 
   isInitialized.value = false; // 初期化フラグをリセット
   hasNewData.value = false; // 新規データフラグをリセット
@@ -485,15 +758,36 @@ const save = () => {
 };
 
 const deleteTask = () => {
-  emit("delete", {
-    date: props.selectedDate,
-    keepUserData: false,
-  });
+  // 編集モードで特定のタスクを削除
+  const existingTasks = Array.isArray(props.existingTime)
+    ? [...props.existingTime]
+    : props.existingTime && props.existingTime.taskName
+    ? [props.existingTime]
+    : [];
 
-  isInitialized.value = false; // 初期化フラグをリセット
-  hasNewData.value = false; // 新規データフラグをリセット
+  // 指定されたタスクを削除
+  existingTasks.splice(props.editingTaskIndex, 1);
+
+  if (existingTasks.length === 0) {
+    // すべてのタスクが削除された場合
+    emit("delete", {
+      date: props.selectedDate,
+      keepUserData: false,
+    });
+  } else {
+    // 残りのタスクを保存
+    emit("save", {
+      date: props.selectedDate,
+      timeSlots: existingTasks,
+    });
+  }
+
+  isInitialized.value = false;
+  hasNewData.value = false;
   props.close();
 };
+
+// 不要になった関数を削除
 
 const onKeyDown = (e) => {
   if (e.key === "Escape") {
@@ -584,78 +878,10 @@ const stopDrag = () => {
   document.removeEventListener("mouseup", stopDrag);
 };
 
+// タスク管理モードではプレビュー機能を簡素化
 const updatePreview = () => {
-  // 新規データまたは既存データがない場合はプレビューを送信しない
-  if (!hasNewData.value) {
-    return;
-  }
-
-  // 空のスロット（startが00:00かつendが00:00）を除外
-  const validTimeSlots = timeSlots.value.filter(
-    (slot) => !(slot.start === "00:00" && slot.end === "00:00")
-  );
-
-  if (validTimeSlots.length > 0) {
-    // 新規データのみをプレビューとして送信
-    const previewSlots = validTimeSlots
-      .map((slot, index) => {
-        // 既存データかどうかを判定
-        const isExistingData =
-          slot.username ||
-          (props.existingTime &&
-            props.existingTime.start &&
-            slot.start === props.existingTime.start &&
-            slot.end === props.existingTime.end) ||
-          (Array.isArray(props.existingTime) &&
-            props.existingTime.some(
-              (existing) =>
-                existing.start === slot.start && existing.end === slot.end
-            ));
-
-        // 新規データの場合のみプレビュー用のorderを設定
-        if (!isExistingData) {
-          return {
-            ...slot,
-            order: (slot.order || index + 1) + 1000,
-          };
-        }
-        return null;
-      })
-      .filter((slot) => slot !== null); // nullを除外
-
-    // 既存データも含めて送信（新規データのみプレビュー表示）
-    const allSlots = validTimeSlots.map((slot, index) => {
-      const isExistingData =
-        slot.username ||
-        (props.existingTime &&
-          props.existingTime.start &&
-          slot.start === props.existingTime.start &&
-          slot.end === props.existingTime.end) ||
-        (Array.isArray(props.existingTime) &&
-          props.existingTime.some(
-            (existing) =>
-              existing.start === slot.start && existing.end === slot.end
-          ));
-
-      return {
-        ...slot,
-        // 既存データは通常のorder、新規データはプレビュー用のorder
-        order: isExistingData
-          ? slot.order || index + 1
-          : (slot.order || index + 1) + 1000,
-      };
-    });
-
-    emit("preview", {
-      date: props.selectedDate,
-      timeSlots: allSlots,
-    });
-  } else {
-    emit("preview", {
-      date: props.selectedDate,
-      timeSlots: [],
-    });
-  }
+  // タスク管理モードではプレビューを無効化
+  return;
 };
 
 // ウィンドウのリサイズ時にモーダルのサイズを更新
