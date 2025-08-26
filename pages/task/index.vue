@@ -1,111 +1,10 @@
 <template>
   <div class="h-full flex flex-col">
-    <!-- 非ログイン時の表示 -->
+    <!-- 初期化前のローディング表示 -->
     <div
-      v-if="!isAuthenticated && isInitialized"
-      class="min-h-screen bg-gray-50"
+      v-if="!isClientMounted"
+      class="h-full flex items-center justify-center"
     >
-      <LoginPrompt
-        title="タスク管理モード"
-        description="タスク管理機能を利用するには、ログインまたは新規登録が必要です。"
-        footerText="ログインすると、タスクの作成・編集・管理が可能になります。"
-      />
-    </div>
-
-    <!-- ログイン時の表示 -->
-    <div v-else-if="isAuthenticated" class="h-full flex flex-col">
-      <!-- 固定ヘッダー -->
-      <div class="flex-shrink-0 sticky top-0 z-30 bg-white">
-        <component
-          :is="isCopyMode ? CopyModeHeader : TaskHeader"
-          :current-year="currentYear"
-          :current-month="currentMonth"
-          :current-day="currentDay"
-          :current-week="currentWeek"
-          :time-data="timeData"
-          :is-sync="false"
-          :space-id="spaceId || ''"
-          :view-mode="viewModeState.viewMode.value"
-          @next-month="handleNextMonth"
-          @prev-month="handlePrevMonth"
-          @next-year="handleNextYear"
-          @prev-year="handlePrevYear"
-          @next-week="handleNextWeek"
-          @prev-week="handlePrevWeek"
-          @view-mode-changed="handleViewModeChanged"
-          @close-copy-mode="closeCopyMode"
-          @cancel-copy-mode="handleCancelCopyMode"
-          @toggleSideMenu="toggleSideMenu"
-          @go-to-today="handleGoToToday"
-          @go-to-specific-date="handleGoToSpecificDate"
-          @open-form="handleOpenForm"
-        />
-      </div>
-      <!-- スクロール可能なコンテンツ -->
-      <div class="flex-1 min-h-0 overflow-auto">
-        <!-- 年表示 -->
-        <CalendarYear
-          v-if="viewModeState.isYearView()"
-          :year="currentYear"
-          :is-copy-mode="isCopyMode"
-          :space-id="spaceId"
-          :time-data="timeData"
-          :show-side-menu="showSideMenu"
-          @save="saveTime"
-          @delete="deleteTime"
-          @update:time-data="updateTimeData"
-          @update:is-copy-mode="updateIsCopyMode"
-          @cancel-copy-mode="handleCancelCopyMode"
-          @toggleSideMenu="toggleSideMenu"
-          @import-complete="handleImportComplete"
-          @month-selected="handleMonthSelected"
-          @open-form="handleOpenForm"
-        />
-
-        <!-- 月表示 -->
-        <CalendarMonth
-          v-else-if="viewModeState.isMonthView()"
-          :calendar-days="calendarDays"
-          :year="currentYear"
-          :month="currentMonth"
-          :is-copy-mode="isCopyMode"
-          :space-id="spaceId"
-          :time-data="timeData"
-          :show-side-menu="showSideMenu"
-          @save="saveTime"
-          @delete="deleteTime"
-          @update:time-data="updateTimeData"
-          @update:is-copy-mode="updateIsCopyMode"
-          @cancel-copy-mode="handleCancelCopyMode"
-          @toggleSideMenu="toggleSideMenu"
-          @import-complete="handleImportComplete"
-          @open-form="handleOpenForm"
-        />
-
-        <!-- 週表示 -->
-        <CalendarWeek
-          v-else-if="viewModeState.isWeekView()"
-          :year="currentYear"
-          :month="currentMonth"
-          :day="currentDay"
-          :is-copy-mode="isCopyMode"
-          :space-id="spaceId"
-          :time-data="timeData"
-          :show-side-menu="showSideMenu"
-          @save="saveTime"
-          @delete="deleteTime"
-          @update:time-data="updateTimeData"
-          @update:is-copy-mode="updateIsCopyMode"
-          @cancel-copy-mode="handleCancelCopyMode"
-          @toggleSideMenu="toggleSideMenu"
-          @import-complete="handleImportComplete"
-          @open-form="handleOpenForm"
-        />
-      </div>
-    </div>
-
-    <!-- ローディング表示 -->
-    <div v-else class="flex items-center justify-center min-h-[80vh]">
       <div class="text-center">
         <div
           class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"
@@ -114,71 +13,205 @@
       </div>
     </div>
 
-    <!-- フォームモーダル -->
-    <Teleport to="body">
-      <!-- デスクトップ用TaskForm -->
-      <TaskForm
-        v-if="
-          showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && !isMobile
-        "
-        :close="closeForm"
-        :selectedDate="selectedDate"
-        :year="currentYear"
-        :month="currentMonth"
-        :existingTime="selectedDate ? timeData.events[selectedDate] || {} : {}"
-        :timeData="timeData"
-        :is-copy-mode="isCopyMode"
-        :allow-other-edit="timeData.allowOtherEdit || false"
-        :initial-hour="selectedHour"
+    <!-- 初期化後の表示 -->
+    <div v-else class="h-full flex flex-col">
+      <!-- 非ログイン時の表示 -->
+      <div
+        v-if="!isAuthenticated && isInitialized"
+        class="min-h-screen bg-gray-50"
+      >
+        <LoginPrompt
+          title="タスク管理モード"
+          description="タスク管理機能を利用するには、ログインまたは新規登録が必要です。"
+          footerText="ログインすると、タスクの作成・編集・管理が可能になります。"
+        />
+      </div>
+
+      <!-- ログイン時の表示 -->
+      <div v-else-if="isAuthenticated" class="h-full flex flex-col">
+        <!-- 固定ヘッダー -->
+        <div class="flex-shrink-0 sticky top-0 z-30 bg-white">
+          <component
+            :is="isCopyMode ? CopyModeHeader : TaskHeader"
+            :current-year="currentYear"
+            :current-month="currentMonth"
+            :current-day="currentDay"
+            :current-week="currentWeek"
+            :time-data="timeData"
+            :is-sync="false"
+            :space-id="spaceId || ''"
+            :view-mode="viewModeState.viewMode.value"
+            @next-month="handleNextMonth"
+            @prev-month="handlePrevMonth"
+            @next-year="handleNextYear"
+            @prev-year="handlePrevYear"
+            @next-week="handleNextWeek"
+            @prev-week="handlePrevWeek"
+            @view-mode-changed="handleViewModeChanged"
+            @close-copy-mode="closeCopyMode"
+            @cancel-copy-mode="handleCancelCopyMode"
+            @toggleSideMenu="toggleSideMenu"
+            @go-to-today="handleGoToToday"
+            @go-to-specific-date="handleGoToSpecificDate"
+            @open-form="handleOpenForm"
+          />
+        </div>
+        <!-- スクロール可能なコンテンツ -->
+        <div class="flex-1 min-h-0 overflow-auto">
+          <!-- 年表示 -->
+          <CalendarYear
+            v-if="viewModeState.isYearView()"
+            :year="currentYear"
+            :is-copy-mode="isCopyMode"
+            :space-id="spaceId"
+            :time-data="timeData"
+            :show-side-menu="showSideMenu"
+            :display-mode="'task'"
+            @save="saveTime"
+            @delete="deleteTime"
+            @update:time-data="updateTimeData"
+            @update:is-copy-mode="updateIsCopyMode"
+            @cancel-copy-mode="handleCancelCopyMode"
+            @toggleSideMenu="toggleSideMenu"
+            @import-complete="handleImportComplete"
+            @month-selected="handleMonthSelected"
+            @open-form="handleOpenForm"
+          />
+
+          <!-- 月表示 -->
+          <CalendarMonth
+            v-else-if="viewModeState.isMonthView()"
+            :calendar-days="calendarDays"
+            :year="currentYear"
+            :month="currentMonth"
+            :is-copy-mode="isCopyMode"
+            :space-id="spaceId"
+            :time-data="timeData"
+            :show-side-menu="showSideMenu"
+            :display-mode="'task'"
+            @save="saveTime"
+            @delete="deleteTime"
+            @update:time-data="updateTimeData"
+            @update:is-copy-mode="updateIsCopyMode"
+            @cancel-copy-mode="handleCancelCopyMode"
+            @toggleSideMenu="toggleSideMenu"
+            @import-complete="handleImportComplete"
+            @open-form="handleOpenForm"
+          />
+
+          <!-- 週表示 -->
+          <CalendarWeek
+            v-else-if="viewModeState.isWeekView()"
+            :year="currentYear"
+            :month="currentMonth"
+            :day="currentDay"
+            :is-copy-mode="isCopyMode"
+            :space-id="spaceId"
+            :time-data="timeData"
+            :show-side-menu="showSideMenu"
+            :display-mode="'task'"
+            @save="saveTime"
+            @delete="deleteTime"
+            @update:time-data="updateTimeData"
+            @update:is-copy-mode="updateIsCopyMode"
+            @cancel-copy-mode="handleCancelCopyMode"
+            @toggleSideMenu="toggleSideMenu"
+            @import-complete="handleImportComplete"
+            @open-form="handleOpenForm"
+          />
+        </div>
+      </div>
+
+      <!-- ローディング表示 -->
+      <div v-else class="h-full flex items-center justify-center">
+        <div class="text-center">
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"
+          ></div>
+          <p class="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+
+      <!-- フォームモーダル -->
+      <Teleport to="body">
+        <!-- デスクトップ用TaskForm -->
+        <TaskForm
+          v-if="
+            showModal &&
+            !isTimeSideMenuEditMode &&
+            !showTimeSideMenu &&
+            !isMobile
+          "
+          :close="closeForm"
+          :selectedDate="selectedDate"
+          :year="currentYear"
+          :month="currentMonth"
+          :existingTime="
+            selectedDate ? timeData.events[selectedDate] || {} : {}
+          "
+          :timeData="timeData"
+          :is-copy-mode="isCopyMode"
+          :allow-other-edit="timeData.allowOtherEdit || false"
+          :initial-hour="selectedHour"
+          :editing-task-index="editingTaskIndex"
+          :editing-task="editingTask"
+          @save="saveTime"
+          @delete="deleteTime"
+          @copy="handleCopy"
+          @cancel-copy-mode="handleCancelCopyMode"
+          @preview="handlePreview"
+          @open-time-side-menu="handleOpenTimeSideMenu"
+        />
+
+        <!-- モバイル用TaskForm -->
+        <MobileTaskForm
+          v-if="
+            showModal &&
+            !isTimeSideMenuEditMode &&
+            !showTimeSideMenu &&
+            isMobile
+          "
+          :show="showModal"
+          :selectedDate="selectedDate"
+          :year="currentYear"
+          :month="currentMonth"
+          :existingTime="
+            selectedDate ? timeData.events[selectedDate] || {} : {}
+          "
+          :timeData="timeData"
+          :is-copy-mode="isCopyMode"
+          :allow-other-edit="timeData.allowOtherEdit || false"
+          :initial-hour="selectedHour"
+          :editing-task-index="editingTaskIndex"
+          :editing-task="editingTask"
+          @save="saveTime"
+          @delete="deleteTime"
+          @copy="handleCopy"
+          @preview="handlePreview"
+          @close="closeForm"
+        />
+      </Teleport>
+
+      <!-- TimeSideMenu -->
+      <TimeSideMenu
+        v-if="showTimeSideMenu"
+        :show="showTimeSideMenu"
+        :selectedDate="timeSideMenuData.selectedDate"
+        :year="timeSideMenuData.year"
+        :month="timeSideMenuData.month"
+        :day="timeSideMenuData.day"
+        :existingTime="timeSideMenuData.existingTime"
+        :isCopyMode="timeSideMenuData.isCopyMode"
+        :allowOtherEdit="timeSideMenuData.allowOtherEdit"
+        :initialHour="timeSideMenuData.initialHour"
         @save="saveTime"
         @delete="deleteTime"
         @copy="handleCopy"
-        @cancel-copy-mode="handleCancelCopyMode"
         @preview="handlePreview"
-        @open-time-side-menu="handleOpenTimeSideMenu"
+        @close="closeTimeSideMenu"
+        @editModeChanged="handleTimeSideMenuEditModeChanged"
       />
-
-      <!-- モバイル用TaskForm -->
-      <MobileTaskForm
-        v-if="
-          showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && isMobile
-        "
-        :show="showModal"
-        :selectedDate="selectedDate"
-        :year="currentYear"
-        :month="currentMonth"
-        :existingTime="selectedDate ? timeData.events[selectedDate] || {} : {}"
-        :timeData="timeData"
-        :is-copy-mode="isCopyMode"
-        :allow-other-edit="timeData.allowOtherEdit || false"
-        :initial-hour="selectedHour"
-        @save="saveTime"
-        @delete="deleteTime"
-        @copy="handleCopy"
-        @preview="handlePreview"
-        @close="closeForm"
-      />
-    </Teleport>
-
-    <!-- TimeSideMenu -->
-    <TimeSideMenu
-      v-if="showTimeSideMenu"
-      :show="showTimeSideMenu"
-      :selectedDate="timeSideMenuData.selectedDate"
-      :year="timeSideMenuData.year"
-      :month="timeSideMenuData.month"
-      :day="timeSideMenuData.day"
-      :existingTime="timeSideMenuData.existingTime"
-      :isCopyMode="timeSideMenuData.isCopyMode"
-      :allowOtherEdit="timeSideMenuData.allowOtherEdit"
-      :initialHour="timeSideMenuData.initialHour"
-      @save="saveTime"
-      @delete="deleteTime"
-      @copy="handleCopy"
-      @preview="handlePreview"
-      @close="closeTimeSideMenu"
-      @editModeChanged="handleTimeSideMenuEditModeChanged"
-    />
+    </div>
   </div>
 </template>
 
@@ -202,6 +235,9 @@ import { useAuth } from "@/composables/useAuth";
 
 // 認証状態の管理
 const { user, isAuthenticated, isInitialized, initializeAuth } = useAuth();
+
+// クライアントサイドマウント状態
+const isClientMounted = ref(false);
 
 const {
   currentYear,
@@ -234,6 +270,10 @@ const selectedHour = ref<number | undefined>(undefined);
 const isMobile = ref(false);
 const showTimeSideMenu = ref(false);
 const isTimeSideMenuEditMode = ref(false);
+
+// タスク編集用の状態
+const editingTaskIndex = ref<number>(-1);
+const editingTask = ref<any>(null);
 
 // TimeSideMenu関連の状態
 const timeSideMenuData = ref({
@@ -419,14 +459,39 @@ const checkMobile = () => {
 };
 
 // カレンダーコンポーネントからのフォーム開要求を処理
-const handleOpenForm = (data: { date: string; hour?: number }) => {
+const handleOpenForm = (data: {
+  date: string;
+  hour?: number;
+  taskIndex?: number;
+  editMode?: string;
+}) => {
   selectedDate.value = data.date;
   selectedHour.value = data.hour;
+
+  // タスク編集モードの場合は、編集対象のタスク情報を設定
+  if (data.editMode === "edit" && data.taskIndex !== undefined) {
+    const existingTasks = timeData.value.events[data.date];
+    if (
+      existingTasks &&
+      Array.isArray(existingTasks) &&
+      existingTasks[data.taskIndex]
+    ) {
+      // 編集対象のタスクを設定
+      editingTaskIndex.value = data.taskIndex;
+      editingTask.value = { ...existingTasks[data.taskIndex] };
+    }
+  } else {
+    // 新規追加モード
+    editingTaskIndex.value = -1;
+    editingTask.value = null;
+  }
+
   showModal.value = true;
 };
 
 // コンポーネントマウント時に認証状態を初期化
 onMounted(() => {
+  isClientMounted.value = true;
   initializeAuth();
   checkMobile();
   window.addEventListener("resize", checkMobile);
