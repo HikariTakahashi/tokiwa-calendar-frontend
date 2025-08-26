@@ -36,9 +36,9 @@
           @go-to-specific-date="handleGoToSpecificDate"
         />
       </div>
-      <buttons-circle @click="openForm">
+      <!-- <buttons-circle @click="openForm">
         <UIcon name="ic:baseline-file-upload" class="size-5" />
-      </buttons-circle>
+      </buttons-circle> -->
       <buttons-circle
         @click="
           props.viewMode === 'year'
