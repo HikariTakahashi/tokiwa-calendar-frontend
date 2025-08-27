@@ -315,14 +315,13 @@
     ></div>
   </Transition>
 
-  <!-- TokiWa Alarm Modal -->
-  <NotifyModal :show="showTokiWaAlarmModal" @close="closeTokiWaAlarmModal" />
+  <AccessModal :show="showTokiWaAlarmModal" @close="closeTokiWaAlarmModal" />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useDateImportUtils } from "~/utils/DateImportUtils";
-import NotifyModal from "~/components/alarms/NotifyModal.vue";
+import AccessModal from "~/components/alarms/AccessModal.vue";
 
 interface Props {
   show: boolean;
