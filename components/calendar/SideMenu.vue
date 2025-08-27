@@ -23,6 +23,45 @@
             </button>
           </div>
 
+          <!-- アコーディオンメニュー: 日付をインポートする -->
+          <buttons-accordion title="日付をインポートする" :show-beta="true">
+            <textarea
+              v-model="importText"
+              placeholder="例:&#10;7/21(月):09:45~22:00&#10;7/23(水):09:00~22:00&#10;7/24(木):09:45~22:00&#10;7/25(金):09:45~18:00"
+              class="flex w-full h-48 border justify-start items-start border-gray-300 rounded-md p-2 resize-none cursor-text"
+            />
+            <div v-if="importError" class="text-red-500 text-sm mt-2">
+              {{ importError }}
+            </div>
+            <div v-if="importSuccess" class="text-green-500 text-sm mt-2">
+              インポートが完了しました
+            </div>
+            <div class="flex justify-end">
+              <buttons-square
+                @click="handleImport"
+                color="bg-blue-300"
+                class="w-32 mt-4 cursor-pointer"
+              >
+                インポート
+              </buttons-square>
+            </div>
+          </buttons-accordion>
+
+          <!-- アコーディオンメニュー: TokiWa Alarmを接続 -->
+          <buttons-accordion title="TokiWa Alarmを接続">
+            <div class="flex flex-col">
+              <p class="text-sm text-gray-600 whitespace-pre-line">
+                TokiWa Alarmを接続し、部屋全体をリマインダーに。
+              </p>
+              <buttons-square
+                @click="handleConnectTokiWaAlarm"
+                color="bg-blue-200"
+                class="w-4/5 text-lg cursor-pointer"
+                >TokiWa Alarmを接続</buttons-square
+              >
+            </div>
+          </buttons-accordion>
+
           <!-- ClientOnlyで認証状態に依存する部分をラップ -->
           <ClientOnly :key="`desktop-auth-${isInitialized}-${isAuthenticated}`">
             <!-- プロセスクライアントでのみレンダリング -->
@@ -67,7 +106,7 @@
                 </h5>
               </div>
               <!-- 認証済みの場合 -->
-              <div v-else class="flex flex-col gap-y-4">
+              <div v-else class="flex flex-col gap-y-4 mb-2">
                 <div class="flex flex-col gap-y-2">
                   <h5 class="text-sm text-gray-500">ログイン中</h5>
                   <p class="text-sm font-medium text-gray-800">
@@ -97,45 +136,6 @@
               </div>
             </template>
           </ClientOnly>
-
-          <!-- アコーディオンメニュー: 日付をインポートする -->
-          <buttons-accordion title="日付をインポートする" :show-beta="true">
-            <textarea
-              v-model="importText"
-              placeholder="例:&#10;7/21(月):09:45~22:00&#10;7/23(水):09:00~22:00&#10;7/24(木):09:45~22:00&#10;7/25(金):09:45~18:00"
-              class="flex w-full h-48 border justify-start items-start border-gray-300 rounded-md p-2 resize-none cursor-text"
-            />
-            <div v-if="importError" class="text-red-500 text-sm mt-2">
-              {{ importError }}
-            </div>
-            <div v-if="importSuccess" class="text-green-500 text-sm mt-2">
-              インポートが完了しました
-            </div>
-            <div class="flex justify-end">
-              <buttons-square
-                @click="handleImport"
-                color="bg-blue-300"
-                class="w-32 mt-4 cursor-pointer"
-              >
-                インポート
-              </buttons-square>
-            </div>
-          </buttons-accordion>
-
-          <!-- アコーディオンメニュー: TokiWa Alarmを接続 -->
-          <buttons-accordion title="TokiWa Alarmを接続">
-            <div class="flex flex-col">
-              <p class="text-sm text-gray-600 whitespace-pre-line">
-                TokiWa Alarmを接続し、部屋全体をリマインダーに。
-              </p>
-              <buttons-square
-                @click="handleConnectTokiWaAlarm"
-                color="bg-blue-200"
-                class="w-4/5 text-lg cursor-pointer"
-                >TokiWa Alarmを接続</buttons-square
-              >
-            </div>
-          </buttons-accordion>
         </div>
       </div>
     </Transition>
@@ -316,15 +316,13 @@
   </Transition>
 
   <!-- TokiWa Alarm Modal -->
-  <buttons-toki-wa-alarm-modal
-    :show="showTokiWaAlarmModal"
-    @close="closeTokiWaAlarmModal"
-  />
+  <NotifyModal :show="showTokiWaAlarmModal" @close="closeTokiWaAlarmModal" />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useDateImportUtils } from "~/utils/DateImportUtils";
+import NotifyModal from "~/components/alarms/NotifyModal.vue";
 
 interface Props {
   show: boolean;
