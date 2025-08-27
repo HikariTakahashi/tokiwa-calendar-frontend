@@ -15,12 +15,12 @@
         <div class="p-2">
           <div class="flex flex-row items-center justify-between mb-4">
             <h3 class="text-xl font-bold text-gray-800">メニュー</h3>
-            <buttons-hover
-              @click="navigateTo('/dashboard')"
-              :size="5"
-              name="ic:baseline-settings"
-              color="bg-gray-600"
-            />
+            <button
+              @click.stop="navigateTo('/settings')"
+              class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 cursor-pointer"
+            >
+              <UIcon name="ic:baseline-settings" class="size-5" />
+            </button>
           </div>
 
           <!-- ClientOnlyで認証状態に依存する部分をラップ -->
@@ -140,6 +140,7 @@
       </div>
     </Transition>
   </div>
+
   <!-- メインコンテンツのオーバーレイ -->
   <Transition
     enter-active-class="transition-all duration-300 ease-out"
@@ -192,6 +193,7 @@
               </button>
             </div>
           </div>
+
           <!-- アコーディオンメニュー: 日付をインポートする -->
           <buttons-accordion title="日付をインポートする" :show-beta="true">
             <textarea
@@ -321,7 +323,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useDateImportUtils } from "~/utils/DateImportUtils";
 
 interface Props {
@@ -376,11 +378,6 @@ const showTokiWaAlarmModal = ref(false);
 
 // isLoggedInをisAuthenticatedと連動（初期化完了後のみ）
 const isLoggedIn = computed(() => isInitialized.value && isAuthenticated.value);
-
-// デバッグ用のwatcher
-watch([isInitialized, isAuthenticated, user], ([init, auth, userData]) => {}, {
-  immediate: true,
-});
 
 const handleCloseModal = () => {
   emit("toggleSideMenu");
