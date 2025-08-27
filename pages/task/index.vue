@@ -424,8 +424,6 @@ const handleCopy = () => {
 };
 
 const handlePreview = (data: { date: string; timeSlots: TimeSlot[] }) => {
-  // プレビュー処理
-  console.log("Preview:", data);
 };
 
 const handleOpenTimeSideMenu = (data: any) => {
@@ -496,34 +494,17 @@ const handleOpenForm = (data: {
 // タスクデータを取得する関数
 const loadTaskData = async () => {
   try {
-    console.log(
-      "loadTaskData called - isAuthenticated:",
-      isAuthenticated.value,
-      "user:",
-      user.value
-    );
-
     if (isAuthenticated.value && user.value) {
-      console.log("タスクデータを取得中...");
       const response = await getTaskData();
 
       if (response.success && response.events) {
-        console.log("バックエンドから取得した生データ:", response.events);
-
         // バックエンド形式からフロントエンド形式に変換
         const convertedEvents: { [key: string]: any[] } = {};
         Object.entries(response.events).forEach(([date, tasks]) => {
           // null値の場合はスキップ
           if (tasks === null || tasks === undefined) {
-            console.log(`日付 ${date} のタスクはnullのためスキップ`);
             return;
           }
-
-          console.log(`日付 ${date} のタスク数:`, tasks.length);
-          console.log(
-            `日付 ${date} のタスク詳細（JSON）:`,
-            JSON.stringify(tasks, null, 2)
-          );
 
           convertedEvents[date] = tasks.map((task, index) => {
             // バックエンドのTaskSlot形式からフロントエンドのTaskSlot形式に変換
@@ -535,30 +516,30 @@ const loadTaskData = async () => {
               userColor: task.userColor || "#3b82f6",
               order: task.order || index + 1,
             };
-            console.log(`タスク ${index} の変換結果:`, convertedTask);
             return convertedTask;
           });
         });
 
-        console.log("変換後のイベントデータ:", convertedEvents);
         timeData.value.events = convertedEvents;
-        console.log(
-          "timeData.value.events に設定されたデータ:",
-          timeData.value.events
-        );
-        console.log("タスクデータを正常に取得しました:", convertedEvents);
+
+        // 通知データも設定
+        if (response.notifications) {
+          timeData.value.notifications = response.notifications;
+        } else {
+          timeData.value.notifications = {};
+        }
 
         // 強制的な再レンダリングをトリガー
         await nextTick();
-        console.log("再レンダリング後のtimeData:", timeData.value);
       } else {
-        console.log("タスクデータがありません");
         timeData.value.events = {};
+        timeData.value.notifications = {};
       }
     }
   } catch (error) {
     console.error("タスクデータの取得に失敗しました:", error);
     timeData.value.events = {};
+    timeData.value.notifications = {};
   }
 };
 
