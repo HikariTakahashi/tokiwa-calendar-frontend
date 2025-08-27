@@ -8,7 +8,6 @@
     >
       <template
         v-for="(slot, index) in getTaskSlots(date)"
-        z
         :key="`${slot.taskName}-${index}`"
       >
         <div
@@ -71,18 +70,23 @@ const handleTaskClick = (slot: TaskSlot, index: number) => {
 const getTaskSlots = (date: string): TaskSlot[] => {
   const slots = props.timeData.events[date];
 
-  if (!slots) return [];
+  if (!slots) {
+    return [];
+  }
 
   const convertedSlots = Array.isArray(slots) ? slots : [slots];
-  return convertedSlots.map((slot) => ({
-    start: (slot as any).Start || (slot as any).start,
-    end: (slot as any).End || (slot as any).end,
-    order: (slot as any).Order || (slot as any).order || 1,
-    username: (slot as any).Username || (slot as any).username,
-    userColor: (slot as any).UserColor || (slot as any).userColor,
-    taskName: (slot as any).taskName || (slot as any).TaskName || "",
-    description: (slot as any).description || (slot as any).Description || "",
+
+  const result = convertedSlots.map((slot) => ({
+    start: slot.start,
+    end: slot.end,
+    order: slot.order || 1,
+    username: slot.username,
+    userColor: slot.userColor,
+    taskName: (slot as any).taskName || "",
+    description: (slot as any).description || "",
   }));
+
+  return result;
 };
 
 // 説明文を短縮する関数
