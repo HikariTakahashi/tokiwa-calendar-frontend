@@ -132,8 +132,7 @@
         </div>
 
         <!-- 説明 -->
-        <div class="mb-3">
-          <label class="block text-sm text-gray-500 mb-1">説明</label>
+        <buttons-accordion title="説明">
           <textarea
             v-model="editingTaskData.description"
             rows="3"
@@ -162,37 +161,79 @@
               {{ editingTaskData.description.length }}/500
             </div>
           </div>
-        </div>
+        </buttons-accordion>
+
+        <buttons-accordion title="通知設定">
+          <div
+            v-for="(notification, index) in notifications"
+            :key="index"
+            class="mb-2"
+          >
+            <div class="flex items-center gap-x-2">
+              <input
+                type="date"
+                v-model="notification.date"
+                class="p-1 rounded-md border border-gray-400 text-sm"
+                @change="handleNotificationDateChange(index)"
+              />
+              <label class="text-sm">の</label>
+              <InputTime
+                :minute-interval="15"
+                :initial-hours="parseTimeSlot(notification.time).hours"
+                :initial-minutes="parseTimeSlot(notification.time).minutes"
+                @update:time="
+                  (newTime) => handleNotificationTimeChange(newTime, index)
+                "
+                class="p-1 rounded-md border border-gray-400"
+              />
+              <buttons-hover
+                @click="removeNotification(index)"
+                :size="4"
+                name="ic:sharp-delete"
+                color="bg-red-500"
+                :ishover="false"
+              />
+            </div>
+          </div>
+          <button
+            @click="addNotification"
+            class="text-blue-500 hover:underline text-sm"
+          >
+            通知を追加
+          </button>
+        </buttons-accordion>
 
         <!-- タスク色 -->
         <div class="mb-3">
-          <label class="block text-sm text-gray-500 mb-1">タスク色</label>
-          <div class="flex flex-row gap-3">
-            <div class="flex flex-col gap-1">
-              <ColorField v-model="taskColor" />
-            </div>
+          <buttons-accordion title="タスク色">
+            <label class="block text-sm text-gray-500 mb-1">タスク色</label>
+            <div class="flex flex-row gap-3">
+              <div class="flex flex-col gap-1">
+                <ColorField v-model="taskColor" />
+              </div>
 
-            <div class="flex flex-wrap flex-row gap-1">
-              <ColorButton
-                v-for="color in presetColors"
-                :key="color"
-                :color="color"
-                @update:modelValue="taskColor = color"
-              />
+              <div class="flex flex-wrap flex-row gap-1">
+                <ColorButton
+                  v-for="color in presetColors"
+                  :key="color"
+                  :color="color"
+                  @update:modelValue="taskColor = color"
+                />
+              </div>
             </div>
-            <div class="flex flex-col gap-1 justify-end">
-              <buttons-square
-                v-if="isEditMode"
-                @click="deleteTask"
-                color="bg-red-200"
-                class="w-18"
-              >
-                削除
-              </buttons-square>
-              <buttons-square @click="save" color="bg-blue-200" class="w-18">
-                {{ isEditMode ? "更新" : "保存" }}
-              </buttons-square>
-            </div>
+          </buttons-accordion>
+          <div class="flex justify-end gap-1">
+            <buttons-square
+              v-if="isEditMode"
+              @click="deleteTask"
+              color="bg-red-200"
+              class="w-18"
+            >
+              削除
+            </buttons-square>
+            <buttons-square @click="save" color="bg-blue-200" class="w-18">
+              {{ isEditMode ? "更新" : "保存" }}
+            </buttons-square>
           </div>
         </div>
       </div>
@@ -317,6 +358,14 @@ const timeSlots = ref([
   },
 ]);
 
+// 通知設定の状態
+const notifications = ref([
+  {
+    date: props.selectedDate || "",
+    time: "09:00",
+  },
+]);
+
 // 編集モードかどうかを判定
 const isEditMode = computed(() => {
   return props.editingTaskIndex >= 0 && props.editingTask !== null;
@@ -436,6 +485,27 @@ const initializeTaskData = () => {
         },
       ];
     }
+
+    // 通知データを設定（編集モードでは既存の通知データがあれば設定）
+    if (
+      props.timeData.notifications &&
+      props.timeData.notifications[props.selectedDate]
+    ) {
+      const existingNotifications =
+        props.timeData.notifications[props.selectedDate];
+      notifications.value = existingNotifications.map((notif) => ({
+        date: props.selectedDate,
+        time: notif.time,
+      }));
+    } else {
+      // デフォルトの通知設定
+      notifications.value = [
+        {
+          date: props.selectedDate,
+          time: "09:00",
+        },
+      ];
+    }
   } else {
     // 新規追加モードの場合
     if (props.existingTime && Object.keys(props.existingTime).length > 0) {
@@ -538,6 +608,14 @@ const initializeTaskData = () => {
         ];
       }
     }
+
+    // 新規追加モードではデフォルトの通知設定
+    notifications.value = [
+      {
+        date: props.selectedDate,
+        time: "09:00",
+      },
+    ];
   }
 
   // バリデーションエラーをリセット
@@ -678,6 +756,30 @@ const handleEndTimeChange = (newEndTime, index) => {
   timeSlots.value[index].end = newEndTime;
 };
 
+// 通知設定のハンドラー
+const handleNotificationTimeChange = (newTime, index) => {
+  notifications.value[index].time = newTime;
+};
+
+const addNotification = () => {
+  notifications.value.push({
+    date: props.selectedDate,
+    time: "09:00",
+  });
+};
+
+const removeNotification = (index) => {
+  if (notifications.value.length > 1) {
+    notifications.value.splice(index, 1);
+  }
+};
+
+// 通知データの日付が変更された時の処理
+const handleNotificationDateChange = (index) => {
+  // 日付が変更された時の処理（必要に応じて追加）
+  console.log("通知日付が変更されました:", notifications.value[index].date);
+};
+
 const save = async () => {
   // タスク名のバリデーション
   if (!editingTaskData.value.taskName.trim()) {
@@ -713,6 +815,29 @@ const save = async () => {
         ],
       },
     };
+
+    // 通知設定を追加
+    const notificationsData = {};
+    let hasNotifications = false;
+    notifications.value.forEach((notification, index) => {
+      if (notification.date) {
+        hasNotifications = true;
+        if (!notificationsData[notification.date]) {
+          notificationsData[notification.date] = [];
+        }
+        notificationsData[notification.date].push({
+          time: notification.time,
+          order: index + 1,
+        });
+      }
+    });
+
+    // 通知データがある場合のみ設定
+    if (hasNotifications) {
+      taskData.notifications = notificationsData;
+    }
+
+    // デバッグログを追加
 
     // 既存のタスクがある場合は、それらも含める
     if (isEditMode.value) {
