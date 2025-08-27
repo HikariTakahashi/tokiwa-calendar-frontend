@@ -5,6 +5,9 @@ export interface TimeData {
   events: {
     [key: string]: TimeSlot[];
   };
+  notifications?: {
+    [key: string]: NotificationSlot[];
+  };
   spaceId: string;
   username: string;
   userColor: string;
@@ -194,11 +197,20 @@ interface TaskSlot {
   order: number;
 }
 
+// 通知データの型定義
+interface NotificationSlot {
+  time: string;
+  order: number;
+}
+
 // タスク保存リクエストの型定義
 interface TaskSaveRequest {
   useruid: string;
   events: {
     [key: string]: TaskSlot[];
+  };
+  notifications: {
+    [key: string]: NotificationSlot[];
   };
 }
 
@@ -213,6 +225,9 @@ interface TaskSaveResponse {
 interface TaskGetResponse {
   events: {
     [key: string]: TaskSlot[];
+  };
+  notifications: {
+    [key: string]: NotificationSlot[];
   };
   message: string;
   success: boolean;
