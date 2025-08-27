@@ -209,6 +209,8 @@ import {
   validateUsername,
   applyUsernameRestrictions,
 } from "@/utils/ArrayString";
+import { useAPI } from "@/composables/useAPI";
+import { useAuth } from "@/composables/useAuth";
 
 const props = defineProps({
   close: Function,
@@ -261,6 +263,12 @@ const emit = defineEmits([
   "preview",
   "openTimeSideMenu",
 ]);
+
+// API機能を使用
+const { saveTaskData } = useAPI();
+
+// 認証状態を取得
+const { user } = useAuth();
 
 // タスク管理モードでは時間関連の処理をコメントアウト
 // const { timeSlots, validateTime, validateTimeOrder, validateTimeOverlap } =
@@ -670,7 +678,7 @@ const handleEndTimeChange = (newEndTime, index) => {
   timeSlots.value[index].end = newEndTime;
 };
 
-const save = () => {
+const save = async () => {
   // タスク名のバリデーション
   if (!editingTaskData.value.taskName.trim()) {
     errorMessage.value = "タスク名を入力してください";
@@ -688,73 +696,156 @@ const save = () => {
     return;
   }
 
-  if (isEditMode.value) {
-    // 編集モードの場合
-    // 既存のタスクリストを取得
-    const existingTasks = Array.isArray(props.existingTime)
-      ? [...props.existingTime]
-      : props.existingTime && props.existingTime.taskName
-      ? [props.existingTime]
-      : [];
-
-    // 編集対象のタスクを更新
-    if (existingTasks[props.editingTaskIndex]) {
-      existingTasks[props.editingTaskIndex] = {
-        ...existingTasks[props.editingTaskIndex],
-        taskName: editingTaskData.value.taskName.trim(),
-        description: editingTaskData.value.description.trim(),
-        start: timeSlots.value[0].start,
-        end: timeSlots.value[0].end,
-        userColor: taskColor.value,
-      };
-    }
-
-    // プレビューデータをクリアするためのイベントを発火
-    emit("preview", {
-      date: props.selectedDate,
-      timeSlots: [],
-    });
-
-    emit("save", {
-      date: props.selectedDate,
-      timeSlots: existingTasks,
-    });
-  } else {
-    // 新規追加モードの場合
-    // 新しいタスクデータを作成
-    const newTask = {
-      taskName: editingTaskData.value.taskName.trim(),
-      description: editingTaskData.value.description.trim(),
-      start: timeSlots.value[0].start,
-      end: timeSlots.value[0].end,
-      userColor: taskColor.value,
-      order: 1,
+  try {
+    // バックエンドAPI用のデータ構造を作成
+    const taskData = {
+      useruid: user.value?.uid || "",
+      events: {
+        [props.selectedDate]: [
+          {
+            description: editingTaskData.value.description.trim(),
+            start: timeSlots.value[0].start,
+            end: timeSlots.value[0].end,
+            title: editingTaskData.value.taskName.trim(),
+            userColor: taskColor.value,
+            order: 1,
+          },
+        ],
+      },
     };
 
-    // 既存のタスクがある場合は追加、ない場合は新規作成
-    const existingTasks = Array.isArray(props.existingTime)
-      ? [...props.existingTime]
-      : props.existingTime && props.existingTime.taskName
-      ? [props.existingTime]
-      : [];
+    // 既存のタスクがある場合は、それらも含める
+    if (isEditMode.value) {
+      // 編集モードの場合
+      const existingTasks = Array.isArray(props.existingTime)
+        ? [...props.existingTime]
+        : props.existingTime && props.existingTime.taskName
+        ? [props.existingTime]
+        : [];
 
-    const updatedTasks = [...existingTasks, newTask];
+      // 編集対象のタスクを更新
+      if (existingTasks[props.editingTaskIndex]) {
+        existingTasks[props.editingTaskIndex] = {
+          ...existingTasks[props.editingTaskIndex],
+          taskName: editingTaskData.value.taskName.trim(),
+          description: editingTaskData.value.description.trim(),
+          start: timeSlots.value[0].start,
+          end: timeSlots.value[0].end,
+          userColor: taskColor.value,
+        };
+      }
 
-    // プレビューデータをクリアするためのイベントを発火
-    emit("preview", {
-      date: props.selectedDate,
-      timeSlots: [],
-    });
+      // 既存タスクをバックエンド形式に変換
+      taskData.events[props.selectedDate] = existingTasks.map(
+        (task, index) => ({
+          description: task.description || "",
+          start: task.start,
+          end: task.end,
+          title: task.taskName || "",
+          userColor: task.userColor || "#3b82f6",
+          order: index + 1,
+        })
+      );
+    } else {
+      // 新規追加モードの場合
+      const existingTasks = Array.isArray(props.existingTime)
+        ? [...props.existingTime]
+        : props.existingTime && props.existingTime.taskName
+        ? [props.existingTime]
+        : [];
 
-    emit("save", {
-      date: props.selectedDate,
-      timeSlots: updatedTasks,
-    });
+      const updatedTasks = [
+        ...existingTasks,
+        {
+          taskName: editingTaskData.value.taskName.trim(),
+          description: editingTaskData.value.description.trim(),
+          start: timeSlots.value[0].start,
+          end: timeSlots.value[0].end,
+          userColor: taskColor.value,
+          order: existingTasks.length + 1,
+        },
+      ];
+
+      // 既存タスクをバックエンド形式に変換
+      taskData.events[props.selectedDate] = updatedTasks.map((task, index) => ({
+        description: task.description || "",
+        start: task.start,
+        end: task.end,
+        title: task.taskName || "",
+        userColor: task.userColor || "#3b82f6",
+        order: index + 1,
+      }));
+    }
+
+    // バックエンドAPIを呼び出し
+    const response = await saveTaskData(taskData);
+
+    if (response.success) {
+
+      // プレビューデータをクリアするためのイベントを発火
+      emit("preview", {
+        date: props.selectedDate,
+        timeSlots: [],
+      });
+
+      // ローカル状態も更新
+      if (isEditMode.value) {
+        const existingTasks = Array.isArray(props.existingTime)
+          ? [...props.existingTime]
+          : props.existingTime && props.existingTime.taskName
+          ? [props.existingTime]
+          : [];
+
+        if (existingTasks[props.editingTaskIndex]) {
+          existingTasks[props.editingTaskIndex] = {
+            ...existingTasks[props.editingTaskIndex],
+            taskName: editingTaskData.value.taskName.trim(),
+            description: editingTaskData.value.description.trim(),
+            start: timeSlots.value[0].start,
+            end: timeSlots.value[0].end,
+            userColor: taskColor.value,
+          };
+        }
+
+        emit("save", {
+          date: props.selectedDate,
+          timeSlots: existingTasks,
+        });
+      } else {
+        const existingTasks = Array.isArray(props.existingTime)
+          ? [...props.existingTime]
+          : props.existingTime && props.existingTime.taskName
+          ? [props.existingTime]
+          : [];
+
+        const updatedTasks = [
+          ...existingTasks,
+          {
+            taskName: editingTaskData.value.taskName.trim(),
+            description: editingTaskData.value.description.trim(),
+            start: timeSlots.value[0].start,
+            end: timeSlots.value[0].end,
+            userColor: taskColor.value,
+            order: existingTasks.length + 1,
+          },
+        ];
+
+        emit("save", {
+          date: props.selectedDate,
+          timeSlots: updatedTasks,
+        });
+      }
+
+      isInitialized.value = false; // 初期化フラグをリセット
+      hasNewData.value = false; // 新規データフラグをリセット
+      props.close();
+    } else {
+      errorMessage.value = response.error || "タスクの保存に失敗しました";
+    }
+  } catch (error) {
+    console.error("タスク保存エラー:", error);
+    errorMessage.value = "タスクの保存中にエラーが発生しました";
   }
-
-  isInitialized.value = false; // 初期化フラグをリセット
-  hasNewData.value = false; // 新規データフラグをリセット
-  props.close();
 };
 
 const deleteTask = () => {
