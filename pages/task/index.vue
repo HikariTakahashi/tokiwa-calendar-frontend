@@ -513,6 +513,12 @@ const loadTaskData = async () => {
         // バックエンド形式からフロントエンド形式に変換
         const convertedEvents: { [key: string]: any[] } = {};
         Object.entries(response.events).forEach(([date, tasks]) => {
+          // null値の場合はスキップ
+          if (tasks === null || tasks === undefined) {
+            console.log(`日付 ${date} のタスクはnullのためスキップ`);
+            return;
+          }
+
           console.log(`日付 ${date} のタスク数:`, tasks.length);
           console.log(
             `日付 ${date} のタスク詳細（JSON）:`,
