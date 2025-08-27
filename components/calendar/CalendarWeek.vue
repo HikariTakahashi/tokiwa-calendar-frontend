@@ -97,7 +97,9 @@
                     class="flex flex-col text-xs border-l min-h-8 bg-gray-50 gap-y-1 min-w-[100px]"
                     :class="[isDateDisabled(date.date) ? 'bg-gray-200' : '']"
                   >
+                    <!-- 時間管理モードの終日予定 -->
                     <div
+                      v-if="props.displayMode === 'time'"
                       v-for="(slot, index) in getAllDaySlots(date.date)"
                       :key="`${date.date}-allday-${slot.start}-${slot.end}-${
                         slot.username || 'default'
@@ -120,6 +122,32 @@
                         :class="getTextColorClass(slot.userColor)"
                       >
                         {{ slot.username }}
+                      </div>
+                    </div>
+
+                    <!-- タスク管理モードの終日タスク -->
+                    <div
+                      v-if="props.displayMode === 'task'"
+                      v-for="(slot, index) in getAllDayTaskSlots(date.date)"
+                      :key="`${date.date}-task-${slot.taskName}-${index}`"
+                      class="w-full p-1 rounded-t-md rounded-r-md truncate cursor-pointer hover:opacity-80 transition-opacity"
+                      :style="{
+                        backgroundColor: slot.userColor || '#3b82f6',
+                        opacity: slot.order && slot.order > 1000 ? 0.6 : 0.9,
+                        border:
+                          slot.order && slot.order > 1000
+                            ? '2px dashed #666'
+                            : 'none',
+                      }"
+                      @click="openForm(date.date)"
+                    >
+                      <div
+                        class="font-bold text-xs"
+                        :style="{
+                          color: getTextColor(slot.userColor || '#3b82f6'),
+                        }"
+                      >
+                        {{ slot.taskName }}
                       </div>
                     </div>
                   </div>
@@ -153,7 +181,9 @@
                     class="h-8 sm:h-12 border-b border-gray-200 relative"
                     @click="openFormAtTime(date.date, hour - 1)"
                   >
+                    <!-- 時間管理モードの時間スロット -->
                     <div
+                      v-if="props.displayMode === 'time'"
                       v-for="(slot, index) in getDisplaySlotsForHour(
                         date.date,
                         hour - 1
@@ -184,6 +214,31 @@
                         {{ formatTimeForDisplay([slot]) }}
                       </div>
                     </div>
+
+                    <!-- タスク管理モードの時間スロット -->
+                    <div
+                      v-if="props.displayMode === 'task'"
+                      v-for="(slot, index) in getDisplayTaskSlotsForHour(
+                        date.date,
+                        hour - 1
+                      )"
+                      :key="`${date.date}-${hour - 1}-task-${
+                        slot.taskName
+                      }-${index}`"
+                      class="absolute left-0 right-0 mx-1 text-xs p-1 mt-[-16px] overflow-hidden"
+                      :style="getSlotStyle(slot, hour - 1, index, date.date)"
+                      :class="[
+                        'border-l-4 cursor-pointer hover:opacity-80 transition-opacity rounded',
+                      ]"
+                      @click.stop="openForm(date.date)"
+                    >
+                      <div class="font-bold truncate text-white">
+                        {{ slot.taskName }}
+                      </div>
+                      <div class="truncate text-white">
+                        {{ formatTimeForDisplay([slot]) }}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -192,55 +247,6 @@
         </div>
       </div>
     </div>
-
-    <Teleport to="body">
-      <!-- デスクトップ用TimeForm -->
-      <TimeForm
-        v-if="
-          showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && !isMobile
-        "
-        :close="closeForm"
-        :selectedDate="selectedDate"
-        :year="year"
-        :month="month"
-        :existingTime="
-          selectedDate ? props.timeData.events[selectedDate] || {} : {}
-        "
-        :timeData="props.timeData"
-        :isCopyMode="props.isCopyMode"
-        :allowOtherEdit="props.timeData.allowOtherEdit || false"
-        :initialHour="selectedHour"
-        @save="onSave"
-        @delete="onDelete"
-        @copy="handleCopy"
-        @cancel-copy-mode="handleCancelCopyMode"
-        @preview="handlePreview"
-        @openTimeSideMenu="handleOpenTimeSideMenu"
-      />
-
-      <!-- モバイル用TimeForm -->
-      <MobileTimeForm
-        v-if="
-          showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && isMobile
-        "
-        :show="showModal"
-        :selectedDate="selectedDate"
-        :year="year"
-        :month="month"
-        :existingTime="
-          selectedDate ? props.timeData.events[selectedDate] || {} : {}
-        "
-        :timeData="props.timeData"
-        :isCopyMode="props.isCopyMode"
-        :allowOtherEdit="props.timeData.allowOtherEdit || false"
-        :initialHour="selectedHour"
-        @save="onSave"
-        @delete="onDelete"
-        @copy="handleCopy"
-        @preview="handlePreview"
-        @close="closeForm"
-      />
-    </Teleport>
   </div>
 
   <TimeSideMenu
@@ -264,8 +270,6 @@
 </template>
 
 <script setup lang="ts">
-import TimeForm from "@/components/forms/TimeForm.vue";
-import MobileTimeForm from "@/components/forms/MobileTimeForm.vue";
 import TimeSideMenu from "@/components/sidemenu/TimeSideMenu.vue";
 import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
@@ -273,6 +277,8 @@ import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import { type TimeData } from "@/composables/useAPI";
 import SideMenu from "@/components/calendar/SideMenu.vue";
+import TimeDisplay from "@/components/calendar/display/TimeDisplay.vue";
+import TaskDisplay from "@/components/calendar/display/TaskDisplay.vue";
 
 interface CalendarDay {
   date: string;
@@ -287,10 +293,12 @@ interface Props {
   spaceId?: string;
   timeData: TimeData;
   showSideMenu?: boolean;
+  displayMode?: "time" | "task";
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showSideMenu: false,
+  displayMode: "time",
 });
 const emit = defineEmits<{
   (e: "save", data: { date: string; timeSlots: TimeSlot[] }): void;
@@ -301,12 +309,12 @@ const emit = defineEmits<{
   (e: "toggleSideMenu"): void;
   (e: "import-complete", data: any[]): void;
   (e: "preview", data: { date: string; timeSlots: TimeSlot[] }): void;
+  (e: "openForm", data: { date: string; hour?: number }): void;
 }>();
 
 const { formatTimeForDisplay, getTextColorClass } = useTimeUtils();
 const showModal = ref(false);
 const selectedDate = ref<string>("");
-const selectedHour = ref<number | undefined>(undefined);
 const previewData = ref<{ [date: string]: TimeSlot[] }>({});
 const isMobile = ref(false);
 const showTimeSideMenu = ref(false);
@@ -403,6 +411,47 @@ const getAllDaySlots = (date: string): TimeSlot[] => {
   return allDaySlots;
 };
 
+// 終日タスクを取得（タスク管理モード用）
+const getAllDayTaskSlots = (date: string): any[] => {
+  const slots = props.timeData.events[date];
+  const previewSlots = previewData.value[date];
+
+  let allSlots: any[] = [];
+
+  // プレビューデータがある場合は、プレビューデータのみを使用
+  if (previewSlots && previewSlots.length > 0) {
+    allSlots.push(...previewSlots);
+  } else {
+    // プレビューデータがない場合は、既存のデータを使用
+    if (slots) {
+      const convertedSlots = Array.isArray(slots) ? slots : [slots];
+      allSlots.push(
+        ...convertedSlots.map((slot) => ({
+          start: (slot as any).Start || (slot as any).start,
+          end: (slot as any).End || (slot as any).end,
+          order: (slot as any).Order || (slot as any).order || 1,
+          username: (slot as any).Username || (slot as any).username,
+          userColor: (slot as any).UserColor || (slot as any).userColor,
+          taskName: (slot as any).taskName || (slot as any).TaskName || "",
+          description:
+            (slot as any).description || (slot as any).Description || "",
+        }))
+      );
+    }
+  }
+
+  // 終日データのみを抽出（00:00-24:00）
+  const allDaySlots = allSlots
+    .filter((slot) => {
+      const slotStart = parseInt(slot.start || "0:0", 10);
+      const slotEnd = parseInt(slot.end || "0:0", 10);
+      return slotStart === 0 && slotEnd === 24;
+    })
+    .sort((a, b) => (a.order || 1) - (b.order || 1));
+
+  return allDaySlots;
+};
+
 // より効率的な表示制御のための関数
 const shouldDisplaySlotInHour = (slot: TimeSlot, hour: number): boolean => {
   const startHour = parseInt(slot.start || "0", 10);
@@ -453,11 +502,67 @@ const getDisplaySlotsForHour = (date: string, hour: number): TimeSlot[] => {
   return displaySlots;
 };
 
+// 各時間スロットで表示するタスクデータを管理する関数（タスク管理モード用）
+const getDisplayTaskSlotsForHour = (date: string, hour: number): any[] => {
+  const slots = props.timeData.events[date];
+  const previewSlots = previewData.value[date];
+
+  let allSlots: any[] = [];
+
+  // プレビューデータがある場合は、プレビューデータのみを使用
+  if (previewSlots && previewSlots.length > 0) {
+    allSlots.push(...previewSlots);
+  } else {
+    // プレビューデータがない場合は、既存のデータを使用
+    if (slots) {
+      const convertedSlots = Array.isArray(slots) ? slots : [slots];
+      allSlots.push(
+        ...convertedSlots.map((slot) => ({
+          start: (slot as any).Start || (slot as any).start,
+          end: (slot as any).End || (slot as any).end,
+          order: (slot as any).Order || (slot as any).order || 1,
+          username: (slot as any).Username || (slot as any).username,
+          userColor: (slot as any).UserColor || (slot as any).userColor,
+          taskName: (slot as any).taskName || (slot as any).TaskName || "",
+          description:
+            (slot as any).description || (slot as any).Description || "",
+        }))
+      );
+    }
+  }
+
+  // 指定された時間に表示すべきデータのみを抽出
+  const displaySlots = allSlots
+    .filter((slot) => {
+      const shouldDisplay = shouldDisplaySlotInHour(slot, hour);
+
+      return shouldDisplay;
+    })
+    .sort((a, b) => (a.order || 1) - (b.order || 1));
+
+  return displaySlots;
+};
+
 const formatDate = (date: Date): string => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
     2,
     "0"
   )}-${String(date.getDate()).padStart(2, "0")}`;
+};
+
+// 背景色に基づいてテキスト色を決定する関数
+const getTextColor = (backgroundColor: string): string => {
+  // カラーコードをRGB値に変換
+  const hex = backgroundColor.replace("#", "");
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+
+  // 輝度を計算（YIQ式）
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+  // 輝度が128以上なら黒、未満なら白
+  return brightness >= 128 ? "black" : "white";
 };
 
 // 時間をフォーマット（00:00形式）
@@ -570,9 +675,8 @@ const openFormAtTime = (date: string, hour: number) => {
       emit("update:time-data", updatedTimeData);
     }
   } else {
-    selectedDate.value = date;
-    selectedHour.value = hour;
-    showModal.value = true;
+    // 親コンポーネントにフォームを開くイベントを送信
+    emit("openForm", { date, hour });
   }
 };
 
@@ -635,25 +739,8 @@ const openForm = (date: string) => {
       return;
     }
 
-    // TimeFormが開いている場合は、TimeFormの日付を更新
-    if (showModal.value) {
-      selectedDate.value = date;
-      return;
-    }
-
-    // どちらも開いていない場合は、TimeFormを開く
-    selectedDate.value = date;
-    selectedHour.value = undefined; // 通常のクリック時は時間をリセット
-    showModal.value = true;
-  }
-};
-
-const closeForm = () => {
-  showModal.value = false;
-  selectedHour.value = undefined;
-  // プレビューデータをクリア
-  if (selectedDate.value) {
-    delete previewData.value[selectedDate.value];
+    // 親コンポーネントにフォームを開くイベントを送信
+    emit("openForm", { date });
   }
 };
 
@@ -661,7 +748,6 @@ const handleCopy = () => {
   if (!selectedDate.value) return;
   const result = copyLogic(selectedDate.value, props.timeData.events);
   emit("update:is-copy-mode", result.isCopyMode);
-  showModal.value = false;
 };
 
 const handlePreview = (data: { date: string; timeSlots: TimeSlot[] }) => {

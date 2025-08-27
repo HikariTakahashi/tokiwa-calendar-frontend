@@ -184,6 +184,41 @@ interface UserProvidersDetailResponse {
   error?: string;
 }
 
+// タスクデータの型定義
+interface TaskSlot {
+  description: string;
+  start: string;
+  end: string;
+  title: string;
+  userColor: string;
+  order: number;
+}
+
+// タスク保存リクエストの型定義
+interface TaskSaveRequest {
+  useruid: string;
+  events: {
+    [key: string]: TaskSlot[];
+  };
+}
+
+// タスク保存レスポンスの型定義
+interface TaskSaveResponse {
+  message: string;
+  success: boolean;
+  error?: string;
+}
+
+// タスク取得レスポンスの型定義
+interface TaskGetResponse {
+  events: {
+    [key: string]: TaskSlot[];
+  };
+  message: string;
+  success: boolean;
+  error?: string;
+}
+
 export const useAPI = () => {
   const config = useRuntimeConfig();
   const API_BASE_URL = config.public.apiBaseUrl;
@@ -832,6 +867,135 @@ export const useAPI = () => {
       }
     };
 
+  // タスク保存機能
+  const saveTaskData = async (
+    taskData: TaskSaveRequest
+  ): Promise<TaskSaveResponse> => {
+    try {
+      const { getAuthToken } = useAuth();
+      const token = getAuthToken();
+
+      if (!token) {
+        throw new Error("認証トークンが見つかりません");
+      }
+
+      console.log("タスク保存API呼び出し:", {
+        url: `${API_BASE_URL}/api/task`,
+        tokenLength: token.length,
+        taskData,
+      });
+
+      const response = await $fetch<TaskSaveResponse>(
+        `${API_BASE_URL}/api/task`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: taskData,
+        }
+      );
+
+      console.log("タスク保存APIレスポンス:", response);
+      console.log("レスポンスの型:", typeof response);
+
+      // レスポンスが文字列の場合はJSONとしてパース
+      let parsedResponse: TaskSaveResponse;
+      if (typeof response === "string") {
+        try {
+          parsedResponse = JSON.parse(response);
+          console.log("パース後のレスポンス:", parsedResponse);
+        } catch (error) {
+          console.error("JSONパースエラー:", error);
+          throw new Error("レスポンスの解析に失敗しました");
+        }
+      } else {
+        parsedResponse = response as TaskSaveResponse;
+      }
+
+      return parsedResponse;
+    } catch (error: any) {
+      console.error("タスク保存エラー:", error);
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as TaskSaveResponse;
+      }
+      throw error;
+    }
+  };
+
+  // タスク取得機能
+  const getTaskData = async (): Promise<TaskGetResponse> => {
+    try {
+      const { getAuthToken } = useAuth();
+      const token = getAuthToken();
+
+      if (!token) {
+        console.error("認証トークンが見つかりません");
+        throw new Error("認証トークンが見つかりません");
+      }
+
+      console.log("タスク取得API呼び出し:", {
+        url: `${API_BASE_URL}/api/task`,
+        tokenLength: token.length,
+        tokenPreview: token.substring(0, 20) + "...",
+      });
+
+      const response = await $fetch<TaskGetResponse>(
+        `${API_BASE_URL}/api/task`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("タスク取得APIレスポンス:", response);
+      console.log("レスポンスの型:", typeof response);
+
+      // レスポンスが文字列の場合はJSONとしてパース
+      let parsedResponse: TaskGetResponse;
+      if (typeof response === "string") {
+        try {
+          parsedResponse = JSON.parse(response);
+          console.log("パース後のレスポンス:", parsedResponse);
+        } catch (error) {
+          console.error("JSONパースエラー:", error);
+          throw new Error("レスポンスの解析に失敗しました");
+        }
+      } else {
+        parsedResponse = response as TaskGetResponse;
+      }
+
+      console.log(
+        "タスク取得API成功 - イベント数:",
+        Object.keys(parsedResponse.events || {}).length
+      );
+      console.log("取得されたイベント:", parsedResponse.events);
+
+      return parsedResponse;
+    } catch (error: any) {
+      console.error("タスク取得エラー:", error);
+      console.error("エラーの詳細:", {
+        message: error.message,
+        status: error.status,
+        statusText: error.statusText,
+        data: error.data,
+      });
+
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as TaskGetResponse;
+      }
+      throw error;
+    }
+  };
+
   return {
     fetchSpaceData,
     syncTimeData,
@@ -845,5 +1009,7 @@ export const useAPI = () => {
     getUserData,
     updateUserData,
     getUserProvidersDetail,
+    saveTaskData,
+    getTaskData,
   };
 };

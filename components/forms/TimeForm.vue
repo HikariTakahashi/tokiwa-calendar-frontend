@@ -121,9 +121,9 @@
       <div v-else>
         <div class="flex justify-between items-center">
           <h2 class="text-xl font-bold">
-            {{ isCurrentYear ? "" : dateComponents.year + "年" }}
-            {{ isCurrentMonth ? "" : dateComponents.month + "月" }}
-            {{ dateComponents.day }} 日の時間設定
+            {{ isCurrentYear ? "" : dateComponents.year + " 年" }}
+            {{ isCurrentMonth ? "" : dateComponents.month + " 月" }}
+            {{ dateComponents.day }} 日
           </h2>
         </div>
 
