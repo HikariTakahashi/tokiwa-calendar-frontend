@@ -232,9 +232,13 @@ import { useViewMode, createViewModeHandlers } from "@/utils/ViewModeUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import type { TimeData } from "@/composables/useAPI";
 import { useAuth } from "@/composables/useAuth";
+import { useAPI } from "@/composables/useAPI";
 
 // 認証状態の管理
 const { user, isAuthenticated, isInitialized, initializeAuth } = useAuth();
+
+// API機能を使用
+const { getTaskData } = useAPI();
 
 // クライアントサイドマウント状態
 const isClientMounted = ref(false);
@@ -489,12 +493,103 @@ const handleOpenForm = (data: {
   showModal.value = true;
 };
 
+// タスクデータを取得する関数
+const loadTaskData = async () => {
+  try {
+    console.log(
+      "loadTaskData called - isAuthenticated:",
+      isAuthenticated.value,
+      "user:",
+      user.value
+    );
+
+    if (isAuthenticated.value && user.value) {
+      console.log("タスクデータを取得中...");
+      const response = await getTaskData();
+
+      if (response.success && response.events) {
+        console.log("バックエンドから取得した生データ:", response.events);
+
+        // バックエンド形式からフロントエンド形式に変換
+        const convertedEvents: { [key: string]: any[] } = {};
+        Object.entries(response.events).forEach(([date, tasks]) => {
+          console.log(`日付 ${date} のタスク数:`, tasks.length);
+          console.log(
+            `日付 ${date} のタスク詳細（JSON）:`,
+            JSON.stringify(tasks, null, 2)
+          );
+
+          convertedEvents[date] = tasks.map((task, index) => {
+            // バックエンドのTaskSlot形式からフロントエンドのTaskSlot形式に変換
+            const convertedTask = {
+              taskName: task.title || "", // バックエンドではTitleフィールド
+              description: task.description || "",
+              start: task.start || "00:00",
+              end: task.end || "24:00",
+              userColor: task.userColor || "#3b82f6",
+              order: task.order || index + 1,
+            };
+            console.log(`タスク ${index} の変換結果:`, convertedTask);
+            return convertedTask;
+          });
+        });
+
+        console.log("変換後のイベントデータ:", convertedEvents);
+        timeData.value.events = convertedEvents;
+        console.log(
+          "timeData.value.events に設定されたデータ:",
+          timeData.value.events
+        );
+        console.log("タスクデータを正常に取得しました:", convertedEvents);
+
+        // 強制的な再レンダリングをトリガー
+        await nextTick();
+        console.log("再レンダリング後のtimeData:", timeData.value);
+      } else {
+        console.log("タスクデータがありません");
+        timeData.value.events = {};
+      }
+    }
+  } catch (error) {
+    console.error("タスクデータの取得に失敗しました:", error);
+    timeData.value.events = {};
+  }
+};
+
+// 認証状態の変更を監視
+watch(
+  () => isAuthenticated.value,
+  async (newValue) => {
+    if (newValue && user.value) {
+      // 認証されたらタスクデータを取得
+      await loadTaskData();
+    }
+  }
+);
+
+// 認証初期化完了の監視
+watch(
+  () => isInitialized.value,
+  async (newValue) => {
+    if (newValue && isAuthenticated.value && user.value) {
+      // 認証初期化が完了し、認証済みの場合にタスクデータを取得
+      await loadTaskData();
+    }
+  }
+);
+
 // コンポーネントマウント時に認証状態を初期化
-onMounted(() => {
+onMounted(async () => {
   isClientMounted.value = true;
   initializeAuth();
   checkMobile();
   window.addEventListener("resize", checkMobile);
+
+  // 認証状態の初期化を待ってからタスクデータを取得
+  await nextTick();
+  if (isAuthenticated.value && user.value) {
+    await loadTaskData();
+  }
 });
 
 onBeforeUnmount(() => {
