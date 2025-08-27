@@ -90,7 +90,7 @@ const props = defineProps({
   initialHours: {
     type: Number,
     default: 0,
-    validator: (value) => value >= 0 && value <= 24,
+    validator: (value) => value >= 0,
   },
   // 将来的に増減値を変更する設定を追加
   initialMinutes: {
@@ -118,8 +118,21 @@ const formatNumber = (num) => {
 };
 
 const updateTime = () => {
-  const timeString = `${formatNumber(hours.value)}:${formatNumber(
-    minutes.value
+  // 24:01以降の時刻を00:01以降に巻き戻す
+  let adjustedHours = hours.value;
+  let adjustedMinutes = minutes.value;
+
+  // 24:00は特別に許可
+  if (hours.value === 24 && minutes.value === 0) {
+    // 24:00の場合はそのまま
+  } else if (hours.value >= 24) {
+    // 24:01以降の場合は00:01以降に巻き戻す
+    adjustedHours = hours.value - 24;
+    // 分はそのまま保持
+  }
+
+  const timeString = `${formatNumber(adjustedHours)}:${formatNumber(
+    adjustedMinutes
   )}`;
   emit("update:time", timeString);
 };
@@ -148,8 +161,15 @@ const startEditingMinutes = () => {
 
 const finishEditingHours = () => {
   const value = parseInt(hoursInputValue.value);
-  if (!isNaN(value) && value >= 0 && value <= 24) {
-    hours.value = value;
+  if (!isNaN(value) && value >= 0) {
+    // 24:00は特別に許可、それ以外は24を超える場合は巻き戻す
+    if (value === 24) {
+      hours.value = 24;
+    } else if (value > 24) {
+      hours.value = value - 24;
+    } else {
+      hours.value = value;
+    }
     updateTime();
   }
   isEditingHours.value = false;
@@ -195,7 +215,11 @@ const handleMinutesWheel = (event) => {
 };
 
 const incrementHours = () => {
-  hours.value = (hours.value + 1) % 25;
+  if (hours.value === 24) {
+    hours.value = 0; // 24:00の次は00:00
+  } else {
+    hours.value = (hours.value + 1) % 24; // 0-23の範囲で循環
+  }
   updateTime();
 };
 
@@ -205,7 +229,11 @@ const incrementMinutes = () => {
 };
 
 const decrementHours = () => {
-  hours.value = (hours.value - 1 + 25) % 25;
+  if (hours.value === 0) {
+    hours.value = 24; // 00:00の前は24:00
+  } else {
+    hours.value = (hours.value - 1 + 24) % 24; // 0-23の範囲で循環
+  }
   updateTime();
 };
 

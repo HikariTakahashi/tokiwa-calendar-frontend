@@ -1,8 +1,5 @@
 <template>
-  <div class="bg-white bg-opacity-0 sm:bg-opacity-80">
-    <WelcomeHeader />
-  </div>
-  <div class="flex flex-col h-screen mb-[-50px]">
+  <div class="flex flex-col h-screen">
     <NightSky class="z-[-10]" :seed="456" />
     <div class="absolute inset-0 z-50 flex items-center justify-center p-4">
       <div
@@ -74,6 +71,14 @@
                 ログインでお困りの方
               </button>
             </h5>
+            <h5 class="text-sm text-gray-500 text-center">
+              <button
+                @click="navigateTo('/siginup')"
+                class="text-blue-500 hover:underline"
+              >
+                新規登録はこちら
+              </button>
+            </h5>
             <buttons-square
               color="bg-blue-200"
               :isUse="isFormValid && !isLoading"
@@ -81,13 +86,6 @@
               @click="handleLogin"
             >
               {{ isLoading ? "ログイン中..." : "ログイン" }}
-            </buttons-square>
-            <buttons-square
-              @click="navigateTo('/signup')"
-              color="bg-blue-200"
-              class="w-full text-lg"
-            >
-              新規登録
             </buttons-square>
             <div class="h-0.5 w-full bg-gray-200" />
             <div class="flex flex-row items-center justify-between">
@@ -219,9 +217,7 @@ const handleFacebookLogin = () => {
 };
 
 const handleTwitterLogin = () => {
-  const { startTwitterAuth } = useTwitterAuth();
-  const redirectUri = `${window.location.origin}/auth/twitter/callback`;
-  startTwitterAuth(redirectUri);
+  navigateTo("/login/twitter");
 };
 
 // ログイン処理
