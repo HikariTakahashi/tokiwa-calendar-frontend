@@ -3,6 +3,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useDateUtils } from "@/utils/DateUtils";
+import { useViewMode, createViewModeHandlers } from "@/utils/ViewModeUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import CalendarHeader from "@/components/header/CalendarHeader.vue";
 import CopyModeHeader from "@/components/header/CopyModeHeader.vue";
@@ -34,7 +35,9 @@ const timeData = ref<TimeData>({
 });
 const calendarDays = ref<CalendarDay[]>([]);
 const isCopyMode = ref(false);
-const viewMode = ref<"year" | "month" | "week">("month");
+
+// 表示方法の管理
+const viewModeState = useViewMode("month");
 const {
   currentYear,
   currentMonth,
@@ -63,8 +66,20 @@ const handleCalendarSave = (data: { date: string; timeSlots: TimeSlot[] }) => {
   timeData.value.events[data.date] = data.timeSlots;
 };
 
-const deleteTimeData = (data: { date: string }) => {
-  delete timeData.value.events[data.date];
+const deleteTimeData = (data: {
+  date: string;
+  keepUserData?: boolean;
+  userTimeSlots?: TimeSlot[];
+}) => {
+  if (
+    data.keepUserData &&
+    data.userTimeSlots &&
+    data.userTimeSlots.length > 0
+  ) {
+    timeData.value.events[data.date] = data.userTimeSlots;
+  } else {
+    delete timeData.value.events[data.date];
+  }
 };
 
 const updateTimeData = (newTimeData: TimeData) => {
@@ -129,15 +144,16 @@ const handlePrevWeek = () => {
   prevWeek();
 };
 
-const handleViewModeChanged = (mode: "year" | "month" | "week") => {
-  viewMode.value = mode;
-};
-
-const handleMonthSelected = (month: number) => {
-  currentMonth.value = month;
-  viewMode.value = "month";
-  updateCalendarDays();
-};
+// 表示方法のハンドラー
+const { handleViewModeChanged, handleMonthSelected } = createViewModeHandlers(
+  viewModeState,
+  {
+    onMonthSelected: (month: number) => {
+      currentMonth.value = month;
+      updateCalendarDays();
+    },
+  }
+);
 
 const fetchSpaceDataFromServer = async () => {
   try {
@@ -193,6 +209,22 @@ const fetchSpaceDataFromServer = async () => {
   }
 };
 
+const handleGoToToday = () => {
+  const today = new Date();
+  currentYear.value = today.getFullYear();
+  currentMonth.value = today.getMonth() + 1;
+  currentDay.value = today.getDate();
+  updateCalendarDays();
+};
+
+const handleGoToSpecificDate = (date: string) => {
+  const selectedDate = new Date(date);
+  currentYear.value = selectedDate.getFullYear();
+  currentMonth.value = selectedDate.getMonth() + 1;
+  currentDay.value = selectedDate.getDate();
+  updateCalendarDays();
+};
+
 onMounted(() => {
   fetchSpaceDataFromServer();
 });
@@ -225,7 +257,7 @@ onMounted(() => {
         :is-sync="true"
         :time-data="timeData"
         :space-id="route.params.id as string"
-        :view-mode="viewMode"
+        :view-mode="viewModeState.viewMode.value"
         @next-month="handleNextMonth"
         @prev-month="handlePrevMonth"
         @next-year="handleNextYear"
@@ -237,6 +269,8 @@ onMounted(() => {
         @close-copy-mode="closeCopyMode"
         @cancel-copy-mode="handleCancelCopyMode"
         @toggleSideMenu="toggleSideMenu"
+        @go-to-today="handleGoToToday"
+        @go-to-specific-date="handleGoToSpecificDate"
       />
     </div>
 
@@ -248,7 +282,7 @@ onMounted(() => {
       <div class="flex-1 min-h-0 overflow-auto">
         <!-- 年表示 -->
         <CalendarYear
-          v-if="viewMode === 'year'"
+          v-if="viewModeState.isYearView()"
           :year="currentYear"
           :is-copy-mode="isCopyMode"
           :space-id="route.params.id as string"
@@ -266,7 +300,7 @@ onMounted(() => {
 
         <!-- 月表示 -->
         <CalendarMonth
-          v-else-if="viewMode === 'month'"
+          v-else-if="viewModeState.isMonthView()"
           :calendar-days="calendarDays"
           :year="currentYear"
           :month="currentMonth"
@@ -285,7 +319,7 @@ onMounted(() => {
 
         <!-- 週表示 -->
         <CalendarWeek
-          v-else-if="viewMode === 'week'"
+          v-else-if="viewModeState.isWeekView()"
           :year="currentYear"
           :month="currentMonth"
           :day="currentDay"

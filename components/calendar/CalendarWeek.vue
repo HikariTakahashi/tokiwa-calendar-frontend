@@ -1,5 +1,5 @@
 <template>
-  <div class="relative h-full flex flex-col">
+  <div class="relative h-full flex flex-col z-10">
     <SideMenu
       :show="props.showSideMenu"
       @toggleSideMenu="toggleSideMenu"
@@ -8,101 +8,130 @@
 
     <div
       class="flex-1 flex flex-col transition-all duration-300 ease-in-out"
-      :class="props.showSideMenu && !isMobile ? 'ml-80' : 'ml-0'"
+      :class="[
+        props.showSideMenu && !isMobile ? 'ml-80' : 'ml-0',
+        showTimeSideMenu && !isMobile ? 'mr-96' : 'mr-0',
+      ]"
     >
       <div class="flex-1 flex flex-col">
-        <div class="sticky top-0 z-20 bg-white border-b border-gray-200">
-          <div class="flex">
-            <div
-              class="w-12 sm:w-16 flex-shrink-0 flex justify-center font-bold text-sm sm:text-base p-2 bg-white border-r border-gray-200"
-            >
-              時間
-            </div>
-            <div class="flex-1">
-              <div class="grid grid-cols-7 gap-0.5 sm:gap-2">
+        <!-- 全体を横スクロール可能にするコンテナ -->
+        <div class="flex-1 overflow-auto relative">
+          <div class="flex min-h-full overflow-x-auto" ref="scrollContainer">
+            <!-- 時間列（固定幅） -->
+            <div class="flex flex-col w-16 sm:w-16 flex-shrink-0">
+              <!-- ヘッダー部分の時間列 -->
+              <div class="sticky top-0 z-20 bg-white border-b border-gray-200">
                 <div
-                  v-for="date in weekDays"
-                  :key="date.date"
-                  class="flex flex-col items-center justify-center font-bold text-sm sm:text-base p-2 border-l bg-white"
-                  :class="[
-                    isToday(date.date) ? 'bg-green-100' : '',
-                    isDateDisabled(date.date) ? 'bg-gray-300' : '',
-                  ]"
+                  class="flex justify-center font-bold text-sm sm:text-base p-2 bg-white border-r border-gray-200 h-16"
                 >
-                  <div class="text-xs text-gray-600">
-                    {{ getDayOfWeek(date.date) }}
-                  </div>
-                  <div class="text-lg">
-                    {{ new Date(date.date).getDate() }}
+                  時間
+                </div>
+              </div>
+
+              <!-- 終日部分の時間列 -->
+              <div
+                class="sticky top-16 z-20 bg-gray-50 border-b border-gray-200"
+              >
+                <div
+                  class="flex justify-center font-bold text-xs text-gray-600 bg-gray-50 border-r border-gray-200 h-8"
+                >
+                  終日
+                </div>
+              </div>
+
+              <!-- 時間スケール -->
+              <div class="flex flex-col">
+                <div
+                  v-for="hour in 24"
+                  :key="hour - 1"
+                  class="h-8 sm:h-12 border-b border-gray-200 bg-white relative"
+                >
+                  <div
+                    class="absolute top-0 left-0 right-0 h-4 flex items-center justify-center text-xs text-gray-500 bg-gray-50 border-b border-gray-200"
+                  >
+                    {{ formatHour(hour - 1) }}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="flex bg-gray-50">
-            <div
-              class="w-12 sm:w-16 flex-shrink-0 flex justify-center font-bold text-xs text-gray-600 bg-gray-50 border-r border-gray-200"
-            >
-              終日
-            </div>
-            <div class="flex-1">
-              <div class="grid grid-cols-7 gap-0.5 sm:gap-2">
-                <div
-                  v-for="date in weekDays"
-                  :key="`allday-${date.date}`"
-                  class="flex flex-col items-start justify-start text-xs border-l min-h-8 bg-gray-50 gap-y-1"
-                  :class="[isDateDisabled(date.date) ? 'bg-gray-200' : '']"
-                >
+            <!-- 7日分の列（横スクロール可能） -->
+            <div class="flex-1 min-w-[700px] sm:min-w-0">
+              <!-- ヘッダー部分（曜日） -->
+              <div class="sticky top-0 z-20 bg-white border-b border-gray-200">
+                <div class="grid grid-cols-7 gap-0.5 sm:gap-2">
                   <div
-                    v-for="(slot, index) in getAllDaySlots(date.date)"
-                    :key="`${date.date}-allday-${slot.start}-${slot.end}-${
-                      slot.username || 'default'
-                    }-${slot.order || index}`"
-                    class="w-full p-1 rounded-t-md rounded-r-md truncate cursor-pointer hover:opacity-80 transition-opacity"
-                    :class="getTextColorClass(slot.userColor)"
-                    :style="{
-                      backgroundColor: slot.userColor || '#3b82f6',
-                      opacity: 0.9,
-                    }"
-                    @click="openForm(date.date)"
+                    v-for="date in weekDays"
+                    :key="date.date"
+                    class="flex flex-col items-center justify-center font-bold text-sm sm:text-base p-2 border-l bg-white min-w-[100px] h-16"
+                    :class="[
+                      isToday(date.date) ? 'bg-green-100' : '',
+                      isDateDisabled(date.date) ? 'bg-gray-300' : '',
+                    ]"
                   >
+                    <div class="text-xs text-gray-600">
+                      {{ getDayOfWeek(date.date) }}
+                    </div>
                     <div
-                      v-if="slot.username"
-                      class="font-bold text-xs"
-                      :class="getTextColorClass(slot.userColor)"
+                      class="flex items-center justify-center text-lg"
+                      :class="[
+                        isToday(date.date)
+                          ? 'rounded-full px-1 bg-green-500 text-white'
+                          : '',
+                      ]"
                     >
-                      {{ slot.username }}
+                      {{ new Date(date.date).getDate() }}
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        <div class="flex-1 overflow-auto relative">
-          <div class="flex min-h-full">
-            <div class="flex flex-col w-12 sm:w-16 flex-shrink-0">
+              <!-- 終日予定部分 -->
               <div
-                v-for="hour in 24"
-                :key="hour - 1"
-                class="h-8 sm:h-12 border-b border-gray-200 bg-white relative"
+                class="sticky top-16 z-20 bg-gray-50 border-b border-gray-200"
               >
-                <div
-                  class="absolute top-0 left-0 right-0 h-4 flex items-center justify-center text-xs text-gray-500 bg-gray-50 border-b border-gray-200"
-                >
-                  {{ formatHour(hour - 1) }}
+                <div class="grid grid-cols-7 gap-0.5 sm:gap-2">
+                  <div
+                    v-for="date in weekDays"
+                    :key="`allday-${date.date}`"
+                    class="flex flex-col text-xs border-l min-h-8 bg-gray-50 gap-y-1 min-w-[100px]"
+                    :class="[isDateDisabled(date.date) ? 'bg-gray-200' : '']"
+                  >
+                    <div
+                      v-for="(slot, index) in getAllDaySlots(date.date)"
+                      :key="`${date.date}-allday-${slot.start}-${slot.end}-${
+                        slot.username || 'default'
+                      }-${slot.order || index}`"
+                      class="w-full p-1 rounded-t-md rounded-r-md truncate cursor-pointer hover:opacity-80 transition-opacity"
+                      :class="getTextColorClass(slot.userColor)"
+                      :style="{
+                        backgroundColor: slot.userColor || '#3b82f6',
+                        opacity: slot.order && slot.order > 1000 ? 0.6 : 0.9,
+                        border:
+                          slot.order && slot.order > 1000
+                            ? '2px dashed #666'
+                            : 'none',
+                      }"
+                      @click="openForm(date.date)"
+                    >
+                      <div
+                        v-if="slot.username"
+                        class="font-bold text-xs"
+                        :class="getTextColorClass(slot.userColor)"
+                      >
+                        {{ slot.username }}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div class="flex-1">
+              <!-- メインコンテンツ部分（時間スロット） -->
               <div class="grid grid-cols-7 gap-0.5 sm:gap-2 min-h-full">
                 <div
                   v-for="date in weekDays"
                   :key="date.date"
-                  class="flex flex-col relative border-l"
+                  class="flex flex-col relative border-l min-w-[100px]"
                   :class="[isDateDisabled(date.date) ? 'bg-gray-100' : '']"
                 >
                   <div
@@ -132,7 +161,7 @@
                       :key="`${date.date}-${hour - 1}-${slot.start}-${
                         slot.end
                       }-${slot.username || 'default'}-${slot.order || index}`"
-                      class="absolute left-0 right-0 mx-1 text-xs p-1 overflow-hidden"
+                      class="absolute left-0 right-0 mx-1 text-xs p-1 mt-[-16px] overflow-hidden"
                       :style="getSlotStyle(slot, hour - 1, index, date.date)"
                       :class="[
                         slot.username
@@ -165,8 +194,11 @@
     </div>
 
     <Teleport to="body">
+      <!-- デスクトップ用TimeForm -->
       <TimeForm
-        v-if="showModal"
+        v-if="
+          showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && !isMobile
+        "
         :close="closeForm"
         :selectedDate="selectedDate"
         :year="year"
@@ -174,20 +206,68 @@
         :existingTime="
           selectedDate ? props.timeData.events[selectedDate] || {} : {}
         "
+        :timeData="props.timeData"
         :isCopyMode="props.isCopyMode"
         :allowOtherEdit="props.timeData.allowOtherEdit || false"
+        :initialHour="selectedHour"
         @save="onSave"
         @delete="onDelete"
         @copy="handleCopy"
         @cancel-copy-mode="handleCancelCopyMode"
+        @preview="handlePreview"
+        @openTimeSideMenu="handleOpenTimeSideMenu"
+      />
+
+      <!-- モバイル用TimeForm -->
+      <MobileTimeForm
+        v-if="
+          showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && isMobile
+        "
+        :show="showModal"
+        :selectedDate="selectedDate"
+        :year="year"
+        :month="month"
+        :existingTime="
+          selectedDate ? props.timeData.events[selectedDate] || {} : {}
+        "
+        :timeData="props.timeData"
+        :isCopyMode="props.isCopyMode"
+        :allowOtherEdit="props.timeData.allowOtherEdit || false"
+        :initialHour="selectedHour"
+        @save="onSave"
+        @delete="onDelete"
+        @copy="handleCopy"
+        @preview="handlePreview"
+        @close="closeForm"
       />
     </Teleport>
   </div>
+
+  <TimeSideMenu
+    v-if="showTimeSideMenu"
+    :show="showTimeSideMenu"
+    :selectedDate="timeSideMenuData.selectedDate"
+    :year="timeSideMenuData.year"
+    :month="timeSideMenuData.month"
+    :day="timeSideMenuData.day"
+    :existingTime="timeSideMenuData.existingTime"
+    :isCopyMode="timeSideMenuData.isCopyMode"
+    :allowOtherEdit="timeSideMenuData.allowOtherEdit"
+    :initialHour="timeSideMenuData.initialHour"
+    @save="onSave"
+    @delete="onDelete"
+    @copy="handleCopy"
+    @preview="handlePreview"
+    @close="closeTimeSideMenu"
+    @editModeChanged="handleTimeSideMenuEditModeChanged"
+  />
 </template>
 
 <script setup lang="ts">
 import TimeForm from "@/components/forms/TimeForm.vue";
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import MobileTimeForm from "@/components/forms/MobileTimeForm.vue";
+import TimeSideMenu from "@/components/sidemenu/TimeSideMenu.vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
@@ -220,12 +300,28 @@ const emit = defineEmits<{
   (e: "cancel-copy-mode"): void;
   (e: "toggleSideMenu"): void;
   (e: "import-complete", data: any[]): void;
+  (e: "preview", data: { date: string; timeSlots: TimeSlot[] }): void;
 }>();
 
 const { formatTimeForDisplay, getTextColorClass } = useTimeUtils();
 const showModal = ref(false);
 const selectedDate = ref<string>("");
+const selectedHour = ref<number | undefined>(undefined);
+const previewData = ref<{ [date: string]: TimeSlot[] }>({});
 const isMobile = ref(false);
+const showTimeSideMenu = ref(false);
+const isTimeSideMenuEditMode = ref(false);
+const scrollContainer = ref<HTMLElement | null>(null);
+const timeSideMenuData = ref({
+  selectedDate: "",
+  year: 0,
+  month: 0,
+  day: 0,
+  existingTime: {},
+  isCopyMode: false,
+  allowOtherEdit: false,
+  initialHour: undefined as number | undefined,
+});
 
 // レスポンシブ判定
 const checkMobile = () => {
@@ -272,30 +368,36 @@ const weekDays = computed(() => {
 // 終日予定を取得（終日列ヘッダー用）
 const getAllDaySlots = (date: string): TimeSlot[] => {
   const slots = props.timeData.events[date];
-  if (!slots) return [];
+  const previewSlots = previewData.value[date];
 
-  const convertedSlots = Array.isArray(slots) ? slots : [slots];
+  let allSlots: TimeSlot[] = [];
+
+  // プレビューデータがある場合は、プレビューデータのみを使用
+  if (previewSlots && previewSlots.length > 0) {
+    allSlots.push(...previewSlots);
+  } else {
+    // プレビューデータがない場合は、既存のデータを使用
+    if (slots) {
+      const convertedSlots = Array.isArray(slots) ? slots : [slots];
+      allSlots.push(
+        ...convertedSlots.map((slot) => ({
+          start: (slot as any).Start || (slot as any).start,
+          end: (slot as any).End || (slot as any).end,
+          order: (slot as any).Order || (slot as any).order || 1,
+          username: (slot as any).Username || (slot as any).username,
+          userColor: (slot as any).UserColor || (slot as any).userColor,
+        }))
+      );
+    }
+  }
 
   // 終日データのみを抽出（00:00-24:00）
-  const allDaySlots = convertedSlots
+  const allDaySlots = allSlots
     .filter((slot) => {
-      const slotStart = parseInt(
-        (slot as any).Start || (slot as any).start || "0:0",
-        10
-      );
-      const slotEnd = parseInt(
-        (slot as any).End || (slot as any).end || "0:0",
-        10
-      );
+      const slotStart = parseInt(slot.start || "0:0", 10);
+      const slotEnd = parseInt(slot.end || "0:0", 10);
       return slotStart === 0 && slotEnd === 24;
     })
-    .map((slot) => ({
-      start: (slot as any).Start || (slot as any).start,
-      end: (slot as any).End || (slot as any).end,
-      order: (slot as any).Order || (slot as any).order || 1,
-      username: (slot as any).Username || (slot as any).username,
-      userColor: (slot as any).UserColor || (slot as any).userColor,
-    }))
     .sort((a, b) => (a.order || 1) - (b.order || 1));
 
   return allDaySlots;
@@ -316,56 +418,37 @@ const shouldDisplaySlotInHour = (slot: TimeSlot, hour: number): boolean => {
 // 各時間スロットで表示するデータを管理する関数（改善版）
 const getDisplaySlotsForHour = (date: string, hour: number): TimeSlot[] => {
   const slots = props.timeData.events[date];
-  if (!slots) return [];
+  const previewSlots = previewData.value[date];
 
-  const convertedSlots = Array.isArray(slots) ? slots : [slots];
+  let allSlots: TimeSlot[] = [];
 
-  // デバッグ用ログ
-  if (convertedSlots.length > 2) {
-    console.log(
-      `[DEBUG] ${date} ${hour}:00 - Processing ${convertedSlots.length} slots:`,
-      convertedSlots
-    );
+  // プレビューデータがある場合は、プレビューデータのみを使用
+  if (previewSlots && previewSlots.length > 0) {
+    allSlots.push(...previewSlots);
+  } else {
+    // プレビューデータがない場合は、既存のデータを使用
+    if (slots) {
+      const convertedSlots = Array.isArray(slots) ? slots : [slots];
+      allSlots.push(
+        ...convertedSlots.map((slot) => ({
+          start: (slot as any).Start || (slot as any).start,
+          end: (slot as any).End || (slot as any).end,
+          order: (slot as any).Order || (slot as any).order || 1,
+          username: (slot as any).Username || (slot as any).username,
+          userColor: (slot as any).UserColor || (slot as any).userColor,
+        }))
+      );
+    }
   }
 
   // 指定された時間に表示すべきデータのみを抽出
-  const displaySlots = convertedSlots
+  const displaySlots = allSlots
     .filter((slot) => {
-      const normalizedSlot = {
-        start: (slot as any).Start || (slot as any).start,
-        end: (slot as any).End || (slot as any).end,
-        order: (slot as any).Order || (slot as any).order || 1,
-        username: (slot as any).Username || (slot as any).username,
-        userColor: (slot as any).UserColor || (slot as any).userColor,
-      };
-
-      const shouldDisplay = shouldDisplaySlotInHour(normalizedSlot, hour);
-
-      // デバッグ用ログ
-      if (convertedSlots.length > 2) {
-        console.log(
-          `[DEBUG] ${date} ${hour}:00 - Slot ${normalizedSlot.username} (${normalizedSlot.start}-${normalizedSlot.end}) should display: ${shouldDisplay}`
-        );
-      }
+      const shouldDisplay = shouldDisplaySlotInHour(slot, hour);
 
       return shouldDisplay;
     })
-    .map((slot) => ({
-      start: (slot as any).Start || (slot as any).start,
-      end: (slot as any).End || (slot as any).end,
-      order: (slot as any).Order || (slot as any).order || 1,
-      username: (slot as any).Username || (slot as any).username,
-      userColor: (slot as any).UserColor || (slot as any).userColor,
-    }))
     .sort((a, b) => (a.order || 1) - (b.order || 1));
-
-  // デバッグ用ログ
-  if (displaySlots.length > 0) {
-    console.log(
-      `[DEBUG] ${date} ${hour}:00 - Display slots: ${displaySlots.length}`,
-      displaySlots
-    );
-  }
 
   return displaySlots;
 };
@@ -413,19 +496,20 @@ const getSlotStyle = (
       s.order === slot.order
   );
 
-  // デバッグ用ログ
-  if (displaySlots.length > 2) {
-    console.log(
-      `[DEBUG] ${date} ${hour}:00 - Slot ${slot.username} (${slot.start}-${slot.end}) index: ${slotIndex}, total slots: ${displaySlots.length}`
-    );
-  }
+  // 終日データの数を取得
+  const allDaySlots = getAllDaySlots(date);
+  const allDayCount = allDaySlots.length;
 
-  // カラム分割の計算
+  // 終日データの表示幅を計算（1つにつき5px + 余白2px）
+  const allDayWidth = allDayCount * 7; // 5px + 2px余白
+  const allDayMargin = Math.max(allDayWidth, 0);
+
+  // カラム分割の計算（終日データの幅を考慮）
   let slotWidth: number;
   let leftPosition: number;
 
   if (displaySlots.length <= 1) {
-    // 1つの場合は全幅
+    // 1つの場合は全幅（終日データの幅を除く）
     slotWidth = 100;
     leftPosition = 0;
   } else if (displaySlots.length === 2) {
@@ -439,23 +523,34 @@ const getSlotStyle = (
     leftPosition = (slotIndex % maxSlots) * slotWidth;
   }
 
-  // デバッグ用ログ
-  if (displaySlots.length > 2) {
-    console.log(
-      `[DEBUG] ${date} ${hour}:00 - Slot ${slot.username} - width: ${slotWidth}%, left: ${leftPosition}%`
-    );
+  // 終日データがある場合、幅を調整
+  if (allDayCount > 0) {
+    const adjustedWidth = Math.max(slotWidth - allDayCount * 2, 20); // 最小20%は確保
+    slotWidth = adjustedWidth;
+  }
+
+  // 終日データがある場合、右寄せにするための左位置を調整
+  let adjustedLeftPosition = leftPosition;
+  if (allDayCount > 0) {
+    // 終日データの幅分だけ右にずらす
+    adjustedLeftPosition = leftPosition + allDayCount * 2;
   }
 
   // スロットの高さを計算（開始時間から終了時間まで）
   const slotHeight = (endHour - startHour) * hourHeight;
 
+  // プレビューデータかどうかを判定
+  const isPreview = slot.order && slot.order > 1000;
+
   return {
-    top: `${timeLabelHeight}px`, // 時間表示の下に配置
+    top: `${timeLabelHeight}px`,
     height: `${slotHeight}px`,
     backgroundColor: slot.userColor || "#3b82f6",
+    opacity: isPreview ? 0.6 : 1,
+    border: isPreview ? "2px dashed #666" : "none",
     zIndex: 1 + index,
     width: `${slotWidth}%`,
-    left: `${leftPosition}%`,
+    left: `${adjustedLeftPosition}%`,
   };
 };
 
@@ -476,11 +571,18 @@ const openFormAtTime = (date: string, hour: number) => {
     }
   } else {
     selectedDate.value = date;
+    selectedHour.value = hour;
     showModal.value = true;
   }
 };
 
 const onSave = async (data: { date: string; timeSlots: TimeSlot[] }) => {
+  // プレビューデータをクリア
+  if (data.date) {
+    delete previewData.value[data.date];
+  }
+
+  // 親コンポーネントに保存イベントを送信
   emit("save", data);
 };
 
@@ -525,13 +627,34 @@ const openForm = (date: string) => {
       emit("update:time-data", updatedTimeData);
     }
   } else {
+    // TimeSideMenuが開いている場合は、TimeSideMenuの日付を更新
+    if (showTimeSideMenu.value) {
+      timeSideMenuData.value.selectedDate = date;
+      // 既存の時間データを更新
+      timeSideMenuData.value.existingTime = props.timeData.events[date] || {};
+      return;
+    }
+
+    // TimeFormが開いている場合は、TimeFormの日付を更新
+    if (showModal.value) {
+      selectedDate.value = date;
+      return;
+    }
+
+    // どちらも開いていない場合は、TimeFormを開く
     selectedDate.value = date;
+    selectedHour.value = undefined; // 通常のクリック時は時間をリセット
     showModal.value = true;
   }
 };
 
 const closeForm = () => {
   showModal.value = false;
+  selectedHour.value = undefined;
+  // プレビューデータをクリア
+  if (selectedDate.value) {
+    delete previewData.value[selectedDate.value];
+  }
 };
 
 const handleCopy = () => {
@@ -539,6 +662,14 @@ const handleCopy = () => {
   const result = copyLogic(selectedDate.value, props.timeData.events);
   emit("update:is-copy-mode", result.isCopyMode);
   showModal.value = false;
+};
+
+const handlePreview = (data: { date: string; timeSlots: TimeSlot[] }) => {
+  if (data.timeSlots.length > 0) {
+    previewData.value[data.date] = data.timeSlots;
+  } else {
+    delete previewData.value[data.date];
+  }
 };
 
 const handleCancelCopyMode = () => {
@@ -576,10 +707,6 @@ const hasUsernameInDate = (date: string): boolean => {
   return !!(timeSlot as TimeSlot).username;
 };
 
-const isPastedDate = (date: string): boolean => {
-  return pastedDates.value.has(date);
-};
-
 const isToday = (dateString: string): boolean => {
   const today = new Date();
   const date = new Date(dateString);
@@ -613,4 +740,56 @@ const isDateDisabled = (date: string): boolean => {
 const toggleSideMenu = () => {
   emit("toggleSideMenu");
 };
+
+const handleOpenTimeSideMenu = (data: any) => {
+  // dayがundefinedの場合はselectedDateから抽出
+  let day = data.day;
+  if (day === undefined && data.selectedDate) {
+    const dateParts = data.selectedDate.split("-");
+    day = parseInt(dateParts[2], 10);
+  }
+
+  timeSideMenuData.value = {
+    selectedDate: data.selectedDate,
+    year: data.year,
+    month: data.month,
+    day: day,
+    existingTime: data.existingTime,
+    isCopyMode: data.isCopyMode,
+    allowOtherEdit: data.allowOtherEdit,
+    initialHour: data.initialHour,
+  };
+  showTimeSideMenu.value = true;
+
+  // TimeFormを閉じる
+  showModal.value = false;
+};
+
+const closeTimeSideMenu = () => {
+  showTimeSideMenu.value = false;
+};
+
+const handleTimeSideMenuEditModeChanged = (isEditMode: boolean) => {
+  isTimeSideMenuEditMode.value = isEditMode;
+
+  // 編集モードが開始された時は、TimeFormを確実に閉じる
+  if (isEditMode) {
+    showModal.value = false;
+  }
+};
+
+// TimeSideMenuの編集モードを検証する関数
+const isTimeSideMenuInEditMode = () => {
+  return isTimeSideMenuEditMode.value;
+};
+
+// TimeSideMenuが開かれた時にshowModalを確実にfalseにする
+watch(
+  () => showTimeSideMenu.value,
+  (newShow) => {
+    if (newShow) {
+      showModal.value = false;
+    }
+  }
+);
 </script>

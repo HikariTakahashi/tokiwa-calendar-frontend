@@ -1,171 +1,153 @@
 <template>
-  <div
-    ref="modalRef"
-    class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border bg-white rounded shadow-lg"
-    :style="modalStyle"
-    style="z-index: 9999"
+  <div class="absolute top-0 right-0 h-full z-40">
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="transform translate-x-full opacity-0"
+      enter-to-class="transform translate-x-0 opacity-100"
+      leave-active-class="transition-all duration-300 ease-in"
+      leave-from-class="transform translate-x-0 opacity-100"
+      leave-to-class="transform translate-x-full opacity-0"
+    >
+      <div
+        v-show="show && !isMobile"
+        class="absolute right-0 top-0 w-96 h-full border-l border-t rounded-tl-lg border-gray-300 bg-white z-[60] shadow-lg overflow-y-auto"
+      >
+        <div class="p-4">
+          <div class="flex flex-row items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-800">時間設定</h3>
+            <buttons-hover
+              @click="closeTimeSideMenu"
+              :size="6"
+              name="ic:baseline-close"
+              color="bg-red-500"
+              :ishover="false"
+            />
+          </div>
+
+          <!-- 日付表示 -->
+          <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+            <h4 class="text-lg font-semibold text-gray-800">
+              {{ isCurrentYear ? "" : dateComponents.year + "年" }}
+              {{ isCurrentMonth ? "" : dateComponents.month + "月" }}
+              {{ dateComponents.day }} 日
+            </h4>
+          </div>
+
+          <!-- エラーメッセージ -->
+          <div
+            v-if="errorMessage"
+            class="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg"
+          >
+            <h6 class="text-sm font-bold text-red-500">
+              {{ errorMessage }}
+            </h6>
+          </div>
+
+          <!-- 時間スロット入力エリア -->
+          <TimeInputDate
+            :timeSlots="timeSlots"
+            :allowOtherEdit="props.allowOtherEdit"
+            @update:timeSlots="updateTimeSlots"
+            @startTimeChange="handleStartTimeChange"
+            @endTimeChange="handleEndTimeChange"
+          />
+
+          <!-- アクションボタン -->
+          <div class="mt-6 flex flex-col gap-y-2">
+            <div
+              v-if="hasTimeData && !hasOnlyUserTimeSlots"
+              class="flex gap-x-2 mb-2"
+            >
+              <button
+                @click="copy"
+                class="flex-1 py-2 px-3 flex justify-center items-center rounded-lg hover:bg-gray-200 border border-gray-300"
+              >
+                <UIcon name="mdi:calendar-blank-multiple" class="size-4 mr-2" />
+                コピー
+              </button>
+              <button
+                @click="copyClipboard"
+                class="flex-1 py-2 px-3 flex justify-center items-center rounded-lg hover:bg-gray-200 border border-gray-300"
+              >
+                <UIcon
+                  name="mdi:clipboard-multiple-outline"
+                  class="size-4 mr-2"
+                />
+                クリップボード
+              </button>
+              <button
+                @click="deleteTime"
+                class="flex-1 py-2 px-3 flex justify-center items-center rounded-lg hover:bg-red-100 border border-red-300 text-red-600"
+              >
+                <UIcon name="ic:baseline-delete" class="size-4 mr-2" />
+                削除
+              </button>
+            </div>
+            <buttons-square @click="save" color="bg-blue-200" class="w-full">
+              保存
+            </buttons-square>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </div>
+
+  <!-- デスクトップ用メインコンテンツのオーバーレイ -->
+  <Transition
+    enter-active-class="transition-all duration-300 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition-all duration-300 ease-in"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
   >
     <div
-      class="flex items-center py-1 px-2 border-b-2 hover:bg-gray-100 cursor-move"
-      @mousedown="startDrag"
-    >
-      <div class="flex flex-row justify-between w-full">
-        <div
-          v-if="hasTimeData && !hasOnlyUserTimeSlots && hasNonUserTimeSlots"
-          class="flex gap-x-2"
-        >
-          <buttons-hover
-            @click="copy"
-            :size="5"
-            name="mdi:calendar-blank-multiple"
-            color="bg-blue-500"
-          />
-          <buttons-hover
-            @click="inputRepetitionDate"
-            :size="5"
-            name="ic:baseline-calendar-month"
-            color="bg-blue-600"
-          />
-          <buttons-hover
-            @click="copyClipboard"
-            :size="5"
-            name="mdi:clipboard-multiple-outline"
-            color="bg-green-500"
-          />
-          <buttons-hover
-            @click="deleteTime"
-            :size="5"
-            name="ic:baseline-delete"
-            color="bg-red-500"
-          />
-        </div>
-        <div class="flex flex-row mr-auto ml-2 gap-x-2">
-          <buttons-hover
-            v-if="!isMobile"
-            @click="openTimeSideMenu"
-            :size="5"
-            name="material-symbols:side-navigation"
-            color="bg-gray-600"
-          />
-        </div>
-        <buttons-hover
-          @click="props.close"
-          :size="5"
-          name="ic:sharp-clear"
-          color="bg-red-500"
-          :ishover="false"
-          :class="{ 'ml-auto': !hasTimeData }"
-        />
-      </div>
-    </div>
-
-    <div
-      class="pl-5 pr-2 pt-1 pb-5 rounded-lg shadow-lg relative"
-      :class="isRepetitionMode && !isMobile ? 'w-[800px]' : 'w-96'"
-    >
-      <h6 class="text-sm font-bold text-red-500">
-        {{ errorMessage }}
-      </h6>
-
-      <div v-if="isRepetitionMode">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-bold">繰り返し日付の設定</h2>
-          <button
-            @click="cancelRepetitionMode"
-            class="text-gray-500 hover:text-gray-700 text-sm"
-          >
-            キャンセル
-          </button>
-        </div>
-
-        <div
-          :class="isMobile ? 'flex flex-col gap-y-4' : 'flex flex-row gap-x-6'"
-        >
-          <div :class="isMobile ? 'w-full' : 'flex-1'">
-            <TimeRepetitionDate
-              :selectedDate="props.selectedDate"
-              :startDate="props.startDate"
-              :endDate="props.endDate"
-              @update:repetitionDates="updateRepetitionDates"
-              @update:selectedRepetitionDates="updateSelectedRepetitionDates"
-              @update:repetitionPattern="updateRepetitionPattern"
-              @update:repetitionStartDate="updateRepetitionStartDate"
-              @update:repetitionEndDate="updateRepetitionEndDate"
-              @update:selectedWeekdays="updateSelectedWeekdays"
-            />
-          </div>
-
-          <div :class="isMobile ? 'w-full' : 'flex-1'">
-            <TimeInputDate
-              :timeSlots="timeSlots"
-              :allowOtherEdit="props.allowOtherEdit"
-              @update:timeSlots="updateTimeSlots"
-              @startTimeChange="handleStartTimeChange"
-              @endTimeChange="handleEndTimeChange"
-            />
-          </div>
-        </div>
-
-        <div class="mt-3 flex justify-end gap-x-2">
-          <buttons-square
-            @click="saveRepetition"
-            color="bg-blue-200"
-            class="w-32"
-          >
-            繰り返し保存
-          </buttons-square>
-        </div>
-      </div>
-
-      <!-- 通常モードの場合は従来のUIを表示 -->
-      <div v-else>
-        <div class="flex justify-between items-center">
-          <h2 class="text-xl font-bold">
-            {{ isCurrentYear ? "" : dateComponents.year + "年" }}
-            {{ isCurrentMonth ? "" : dateComponents.month + "月" }}
-            {{ dateComponents.day }} 日の時間設定
-          </h2>
-        </div>
-
-        <TimeInputDate
-          :timeSlots="timeSlots"
-          :allowOtherEdit="props.allowOtherEdit"
-          @update:timeSlots="updateTimeSlots"
-          @startTimeChange="handleStartTimeChange"
-          @endTimeChange="handleEndTimeChange"
-        />
-        <div class="mt-3 flex justify-end gap-x-2">
-          <buttons-square @click="save" color="bg-blue-200">
-            保存
-          </buttons-square>
-        </div>
-      </div>
-    </div>
-  </div>
+      v-show="show && !isMobile"
+      class="absolute right-0 top-0 w-96 h-full z-30"
+      @click="closeTimeSideMenu"
+    ></div>
+  </Transition>
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, computed, ref, watch } from "vue";
+import {
+  onMounted,
+  onBeforeUnmount,
+  computed,
+  ref,
+  watch,
+  nextTick,
+} from "vue";
 import TimeInputDate from "@/components/buttons/TimeInputDate.vue";
-import TimeRepetitionDate from "@/components/buttons/TimeRepetitionDate.vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useDeleteUtils } from "@/utils/DeleteUtils";
 import { copySingleDateToClipboard } from "@/utils/CopyDate";
-import { useRepetitionUtils } from "@/utils/RepetitionUtils";
+import { useEventListener } from "@vueuse/core";
 
 const props = defineProps({
-  close: Function,
-  selectedDate: String,
-  year: Number,
-  month: Number,
-  day: Number,
+  show: {
+    type: Boolean,
+    default: false,
+  },
+  selectedDate: {
+    type: String,
+    required: true,
+  },
+  year: {
+    type: Number,
+    required: true,
+  },
+  month: {
+    type: Number,
+    required: true,
+  },
+  day: {
+    type: Number,
+    required: true,
+  },
   existingTime: {
     type: Object,
     default: () => ({}),
-  },
-  timeData: {
-    type: Object,
-    default: () => ({ events: {} }),
   },
   isCopyMode: {
     type: Boolean,
@@ -194,60 +176,33 @@ const emit = defineEmits([
   "delete",
   "copy",
   "preview",
-  "openTimeSideMenu",
+  "close",
+  "editModeChanged",
 ]);
 
-const openTimeSideMenu = () => {
-  // selectedDateから日付を抽出
-  const dateParts = props.selectedDate.split("-");
-  const day = parseInt(dateParts[2], 10);
-
-  // TimeSideMenuを開くためのイベントを発火
-  emit("openTimeSideMenu", {
-    selectedDate: props.selectedDate,
-    year: props.year,
-    month: props.month,
-    day: day,
-    existingTime: props.existingTime,
-    isCopyMode: props.isCopyMode,
-    allowOtherEdit: props.allowOtherEdit,
-    initialHour: props.initialHour,
-  });
-
-  // TimeFormを閉じる
-  props.close();
-};
-
-const { timeSlots, validateTime, validateTimeOrder, validateTimeOverlap } =
-  useTimeUtils();
-
-const { analyzeTimeSlotsForDeletion } = useDeleteUtils();
-
 const {
-  validateRepetitionSave,
-  generateRepetitionSaveData,
-  shouldShowRepetitionButton,
-} = useRepetitionUtils();
+  timeSlots,
+  addTimeSlot: addTimeSlotBase,
+  validateTime,
+  validateTimeOrder,
+  validateTimeOverlap,
+} = useTimeUtils();
+
+const { analyzeTimeSlotsForDeletion, removeTimeSlotAtIndex } = useDeleteUtils();
 
 const isInitialized = ref(false);
 const hasNewData = ref(false);
 const isMobile = ref(false);
-const isRepetitionMode = ref(false);
-const repetitionDates = ref([]);
-const selectedRepetitionDates = ref([]);
-const repetitionPattern = ref("daily");
-const repetitionStartDate = ref("");
-const repetitionEndDate = ref("");
-const selectedWeekdays = ref([]);
 
 // レスポンシブ判定
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 768; // md breakpoint
 };
 
-// 繰り返し日付入力モードを開始
-const inputRepetitionDate = () => {
-  isRepetitionMode.value = true;
+const closeTimeSideMenu = () => {
+  // 編集モードを終了
+  emit("editModeChanged", false);
+  emit("close");
 };
 
 // 新しいコンポーネントからのイベントハンドラー
@@ -255,98 +210,18 @@ const updateTimeSlots = (newTimeSlots) => {
   timeSlots.value = newTimeSlots;
 };
 
-const updateRepetitionDates = (newRepetitionDates) => {
-  repetitionDates.value = newRepetitionDates;
-};
-
-const updateSelectedRepetitionDates = (newSelectedRepetitionDates) => {
-  selectedRepetitionDates.value = newSelectedRepetitionDates;
-};
-
-const updateRepetitionPattern = (newRepetitionPattern) => {
-  repetitionPattern.value = newRepetitionPattern;
-};
-
-const updateRepetitionStartDate = (newRepetitionStartDate) => {
-  repetitionStartDate.value = newRepetitionStartDate;
-};
-
-const updateRepetitionEndDate = (newRepetitionEndDate) => {
-  repetitionEndDate.value = newRepetitionEndDate;
-};
-
-const updateSelectedWeekdays = (newSelectedWeekdays) => {
-  selectedWeekdays.value = newSelectedWeekdays;
-};
-
-// 繰り返しモードをキャンセル
-const cancelRepetitionMode = () => {
-  isRepetitionMode.value = false;
-  repetitionDates.value = [];
-  selectedRepetitionDates.value = [];
-  repetitionPattern.value = "daily";
-  repetitionStartDate.value = "";
-  repetitionEndDate.value = "";
-  selectedWeekdays.value = [];
-};
-
-// 繰り返し保存を実行
-const saveRepetition = () => {
-  // RepetitionUtilsを使用してバリデーション
-  const validation = validateRepetitionSave(
-    repetitionStartDate.value,
-    repetitionEndDate.value,
-    repetitionPattern.value,
-    selectedWeekdays.value,
-    selectedRepetitionDates.value,
-    timeSlots.value,
-    props.startDate,
-    props.endDate,
-    validateTime,
-    validateTimeOrder,
-    validateTimeOverlap
-  );
-
-  if (!validation.isValid) {
-    errorMessage.value = validation.errorMessage;
-    return;
-  }
-
-  errorMessage.value = "";
-
-  // RepetitionUtilsを使用して保存データを生成
-  const saveDataList = generateRepetitionSaveData(
-    selectedRepetitionDates.value,
-    timeSlots.value,
-    props.timeData
-  );
-
-  // 選択された日付に時間データを保存
-  saveDataList.forEach((saveData) => {
-    emit("save", saveData);
-  });
-
-  isInitialized.value = false;
-  hasNewData.value = false;
-  isRepetitionMode.value = false;
-  repetitionDates.value = [];
-  selectedRepetitionDates.value = [];
-  repetitionPattern.value = "daily";
-  repetitionStartDate.value = "";
-  repetitionEndDate.value = "";
-  selectedWeekdays.value = [];
-  props.close();
-};
-
 const initializeTimeSlots = () => {
-  // 初期化後は、既に有効な時間スロットが存在する場合は、それらを保持
+  // 日付が変更された場合は、初期化フラグをリセットして新しい日付のデータを読み込む
   if (isInitialized.value) {
     const hasValidTimeSlots = timeSlots.value.some(
       (slot) => !(slot.start === "00:00" && slot.end === "00:00")
     );
 
-    if (hasValidTimeSlots) {
-      // 既に時間が入力されている場合は、現在の状態を維持
+    // 日付が変更された場合は、新しい日付のデータを読み込む
+    if (hasValidTimeSlots && props.selectedDate !== timeSlots.value[0]?.date) {
+      isInitialized.value = false;
+    } else if (hasValidTimeSlots) {
+      // 同じ日付で有効な時間スロットが存在する場合は、現在の状態を維持
       return;
     }
   }
@@ -443,6 +318,16 @@ const initializeTimeSlots = () => {
 // 初期化時に実行
 initializeTimeSlots();
 
+// TimeSideMenuが開かれた時に編集モードを開始
+watch(
+  () => props.show,
+  (newShow) => {
+    if (newShow) {
+      emit("editModeChanged", true);
+    }
+  }
+);
+
 // selectedDateが変更された時に実行
 watch(
   () => props.selectedDate,
@@ -471,30 +356,6 @@ watch(
   }
 );
 
-// プレビュー機能を無効化（時間変更の問題を解決するため）
-// watch(
-//   timeSlots,
-//   (newTimeSlots) => {
-//     // 空のスロット（startが00:00かつendが00:00）を除外
-//     const validTimeSlots = newTimeSlots.filter(
-//       (slot) => !(slot.start === "00:00" && slot.end === "00:00")
-//     );
-
-//     if (validTimeSlots.length > 0) {
-//       emit("preview", {
-//         date: props.selectedDate,
-//         timeSlots: validTimeSlots,
-//       });
-//     } else {
-//       emit("preview", {
-//         date: props.selectedDate,
-//         timeSlots: [],
-//       });
-//     }
-//   },
-//   { deep: true }
-// );
-
 const dateComponents = computed(() => {
   const parts = props.selectedDate.split("-");
   return {
@@ -522,11 +383,6 @@ const isCurrentMonth = computed(() => {
 const errorMessage = ref("");
 
 const save = () => {
-  // 空のスロット（startが00:00かつendが00:00）を除外
-  const validTimeSlots = timeSlots.value.filter(
-    (slot) => !(slot.start === "00:00" && slot.end === "00:00")
-  );
-
   // 空のスロットが含まれているかチェック
   const emptySlots = timeSlots.value.filter(
     (slot) => slot.start === "00:00" && slot.end === "00:00"
@@ -536,6 +392,11 @@ const save = () => {
     errorMessage.value = "空の時間スロットがあります。";
     return;
   }
+
+  // 空のスロット（startが00:00かつendが00:00）を除外
+  const validTimeSlots = timeSlots.value.filter(
+    (slot) => !(slot.start === "00:00" && slot.end === "00:00")
+  );
 
   // 有効なスロットがない場合は保存しない
   if (validTimeSlots.length === 0) {
@@ -551,7 +412,7 @@ const save = () => {
     });
     isInitialized.value = false; // 初期化フラグをリセット
     hasNewData.value = false; // 新規データフラグをリセット
-    props.close();
+    closeTimeSideMenu();
     return;
   }
 
@@ -588,7 +449,7 @@ const save = () => {
 
   isInitialized.value = false; // 初期化フラグをリセット
   hasNewData.value = false; // 新規データフラグをリセット
-  props.close();
+  closeTimeSideMenu();
 };
 
 const deleteTime = () => {
@@ -665,6 +526,12 @@ const deleteTime = () => {
   // 時間スロットを更新
   timeSlots.value = finalTimeSlots;
 
+  // プレビューデータをクリアするためのイベントを発火
+  emit("preview", {
+    date: props.selectedDate,
+    timeSlots: [],
+  });
+
   // 削除イベントを発火
   if (deleteResult.keepUserData) {
     emit("delete", {
@@ -681,7 +548,7 @@ const deleteTime = () => {
 
   isInitialized.value = false; // 初期化フラグをリセット
   hasNewData.value = false; // 新規データフラグをリセット
-  props.close();
+  closeTimeSideMenu();
 };
 
 const copy = () => {
@@ -698,12 +565,6 @@ const copyClipboard = () => {
   );
 };
 
-const onKeyDown = (e) => {
-  if (e.key === "Escape") {
-    props.close();
-  }
-};
-
 const hasOnlyUserTimeSlots = computed(() => {
   // 空のスロットを除外して判定
   const nonEmptySlots = timeSlots.value.filter(
@@ -714,114 +575,8 @@ const hasOnlyUserTimeSlots = computed(() => {
   );
 });
 
-const hasNonUserTimeSlots = computed(() => {
-  return shouldShowRepetitionButton(
-    hasTimeData.value,
-    hasOnlyUserTimeSlots.value,
-    timeSlots.value
-  );
-});
-
 const hasTimeData = computed(() => {
   return props.existingTime && Object.keys(props.existingTime).length > 0;
-});
-
-//モーダル移動
-const isDragging = ref(false);
-const dragStartX = ref(0);
-const dragStartY = ref(0);
-const offsetX = ref(0);
-const offsetY = ref(0);
-const modalStyle = ref({
-  transform: "translate(-50%, -50%)",
-});
-
-const modalRef = ref(null);
-const modalWidth = ref(0);
-const modalHeight = ref(0);
-
-const updateModalSize = () => {
-  if (modalRef.value && modalRef.value.getBoundingClientRect) {
-    try {
-      const rect = modalRef.value.getBoundingClientRect();
-      modalWidth.value = rect.width;
-      modalHeight.value = rect.height;
-    } catch (error) {
-      // フォールバック値を使用
-      modalWidth.value = 400;
-      modalHeight.value = 300;
-    }
-  }
-};
-
-const startDrag = (e) => {
-  e.preventDefault();
-  isDragging.value = true;
-  updateModalSize();
-  dragStartX.value = e.clientX;
-  dragStartY.value = e.clientY;
-  document.addEventListener("mousemove", onDrag);
-  document.addEventListener("mouseup", stopDrag);
-};
-
-const onDrag = (e) => {
-  if (!isDragging.value) return;
-
-  const dx = e.clientX - dragStartX.value;
-  const dy = e.clientY - dragStartY.value;
-
-  // 新しい位置を計算
-  let newOffsetX = offsetX.value + dx;
-  let newOffsetY = offsetY.value + dy;
-
-  // 画面の端との距離を計算
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
-
-  // モーダルのサイズを更新
-  updateModalSize();
-
-  // X軸の制限（左右の余白を考慮）
-  const maxOffsetX = (windowWidth - modalWidth.value) / 2 - 2;
-  const minOffsetX = -(windowWidth - modalWidth.value) / 2 + 2;
-  newOffsetX = Math.min(Math.max(newOffsetX, minOffsetX), maxOffsetX);
-
-  // Y軸の制限（上下の余白を考慮）
-  const maxOffsetY = (windowHeight - modalHeight.value) / 2 - 2;
-  const minOffsetY = -(windowHeight - modalHeight.value) / 2 + 2;
-  newOffsetY = Math.min(Math.max(newOffsetY, minOffsetY), maxOffsetY);
-
-  // 制限された位置を適用
-  offsetX.value = newOffsetX;
-  offsetY.value = newOffsetY;
-
-  modalStyle.value = {
-    transform: `translate(calc(-50% + ${offsetX.value}px), calc(-50% + ${offsetY.value}px))`,
-  };
-
-  dragStartX.value = e.clientX;
-  dragStartY.value = e.clientY;
-};
-
-const stopDrag = () => {
-  isDragging.value = false;
-  document.removeEventListener("mousemove", onDrag);
-  document.removeEventListener("mouseup", stopDrag);
-};
-
-// ウィンドウのリサイズ時にモーダルのサイズを更新
-onMounted(() => {
-  window.addEventListener("keydown", onKeyDown);
-  window.addEventListener("resize", updateModalSize);
-  window.addEventListener("resize", checkMobile);
-  updateModalSize();
-  checkMobile();
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("keydown", onKeyDown);
-  window.removeEventListener("resize", updateModalSize);
-  window.removeEventListener("resize", checkMobile);
 });
 
 const handleStartTimeChange = (data) => {
@@ -907,4 +662,23 @@ const updatePreview = () => {
     });
   }
 };
+
+// コンポーネントマウント時とリサイズ時に判定
+onMounted(() => {
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", checkMobile);
+});
+
+// Escapeキーで閉じる
+const handleEscapeKey = (event) => {
+  if (event.key === "Escape") {
+    closeTimeSideMenu();
+  }
+};
+
+useEventListener(window, "keydown", handleEscapeKey);
 </script>

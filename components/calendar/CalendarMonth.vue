@@ -1,5 +1,5 @@
 <template>
-  <div class="relative h-full flex flex-col">
+  <div class="relative h-full flex flex-col z-10">
     <SideMenu
       :show="props.showSideMenu"
       @toggleSideMenu="toggleSideMenu"
@@ -8,7 +8,10 @@
 
     <div
       class="flex-1 flex flex-col transition-all duration-300 ease-in-out"
-      :class="props.showSideMenu && !isMobile ? 'ml-80' : 'ml-0'"
+      :class="[
+        props.showSideMenu && !isMobile ? 'ml-80' : 'ml-0',
+        showTimeSideMenu && !isMobile ? 'mr-96' : 'mr-0',
+      ]"
     >
       <CalendarWeek />
       <div
@@ -86,8 +89,11 @@
       </div>
     </div>
 
+    <!-- デスクトップ用TimeForm -->
     <TimeForm
-      v-if="showModal"
+      v-if="
+        showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && !isMobile
+      "
       :close="closeForm"
       :selectedDate="selectedDate"
       :year="year"
@@ -95,19 +101,86 @@
       :existingTime="
         selectedDate ? props.timeData.events[selectedDate] || {} : {}
       "
+      :timeData="props.timeData"
       :isCopyMode="props.isCopyMode"
       :allowOtherEdit="props.timeData.allowOtherEdit || false"
+      :startDate="
+        props.timeData.startDate && props.timeData.startDate !== null
+          ? props.timeData.startDate
+          : undefined
+      "
+      :endDate="
+        props.timeData.endDate && props.timeData.endDate !== null
+          ? props.timeData.endDate
+          : undefined
+      "
       @save="onSave"
       @delete="onDelete"
       @copy="handleCopy"
       @cancel-copy-mode="handleCancelCopyMode"
+      @openTimeSideMenu="handleOpenTimeSideMenu"
+    />
+
+    <!-- モバイル用TimeForm -->
+    <MobileTimeForm
+      v-if="
+        showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && isMobile
+      "
+      :show="showModal"
+      :selectedDate="selectedDate"
+      :year="year"
+      :month="month"
+      :existingTime="
+        selectedDate ? props.timeData.events[selectedDate] || {} : {}
+      "
+      :timeData="props.timeData"
+      :isCopyMode="props.isCopyMode"
+      :allowOtherEdit="props.timeData.allowOtherEdit || false"
+      :startDate="
+        props.timeData.startDate && props.timeData.startDate !== null
+          ? props.timeData.startDate
+          : undefined
+      "
+      :endDate="
+        props.timeData.endDate && props.timeData.endDate !== null
+          ? props.timeData.endDate
+          : undefined
+      "
+      @save="onSave"
+      @delete="onDelete"
+      @copy="handleCopy"
+      @preview="handlePreview"
+      @close="closeForm"
     />
   </div>
+
+  <TimeSideMenu
+    v-if="showTimeSideMenu"
+    :show="showTimeSideMenu"
+    :selectedDate="timeSideMenuData.selectedDate"
+    :year="timeSideMenuData.year"
+    :month="timeSideMenuData.month"
+    :day="timeSideMenuData.day"
+    :existingTime="timeSideMenuData.existingTime"
+    :isCopyMode="timeSideMenuData.isCopyMode"
+    :allowOtherEdit="timeSideMenuData.allowOtherEdit"
+    :initialHour="timeSideMenuData.initialHour"
+    :startDate="props.timeData.startDate"
+    :endDate="props.timeData.endDate"
+    @save="onSave"
+    @delete="onDelete"
+    @copy="handleCopy"
+    @preview="handlePreview"
+    @close="closeTimeSideMenu"
+    @editModeChanged="handleTimeSideMenuEditModeChanged"
+  />
 </template>
 
 <script setup lang="ts">
 import TimeForm from "@/components/forms/TimeForm.vue";
-import { ref, onMounted, onUnmounted } from "vue";
+import MobileTimeForm from "@/components/forms/MobileTimeForm.vue";
+import TimeSideMenu from "@/components/sidemenu/TimeSideMenu.vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
@@ -147,6 +220,18 @@ const { formatTimeForDisplay } = useTimeUtils();
 const showModal = ref(false);
 const selectedDate = ref<string>("");
 const isMobile = ref(false);
+const showTimeSideMenu = ref(false);
+const isTimeSideMenuEditMode = ref(false);
+const timeSideMenuData = ref({
+  selectedDate: "",
+  year: 0,
+  month: 0,
+  day: 0,
+  existingTime: {},
+  isCopyMode: false,
+  allowOtherEdit: false,
+  initialHour: undefined as number | undefined,
+});
 
 // レスポンシブ判定
 const checkMobile = () => {
@@ -174,6 +259,7 @@ const {
 const { fetchSpaceData, syncTimeData } = useAPI();
 
 const onSave = async (data: { date: string; timeSlots: TimeSlot[] }) => {
+  // 親コンポーネントに保存イベントを送信
   emit("save", data);
 };
 
@@ -223,6 +309,21 @@ const openForm = (date: string) => {
       emit("update:time-data", updatedTimeData);
     }
   } else {
+    // TimeSideMenuが開いている場合は、TimeSideMenuの日付を更新
+    if (showTimeSideMenu.value) {
+      timeSideMenuData.value.selectedDate = date;
+      // 既存の時間データを更新
+      timeSideMenuData.value.existingTime = props.timeData.events[date] || {};
+      return;
+    }
+
+    // TimeFormが開いている場合は、TimeFormの日付を更新
+    if (showModal.value) {
+      selectedDate.value = date;
+      return;
+    }
+
+    // どちらも開いていない場合は、TimeFormを開く
     selectedDate.value = date;
     showModal.value = true;
   }
@@ -311,4 +412,61 @@ const isDateDisabled = (date: string): boolean => {
 const toggleSideMenu = () => {
   emit("toggleSideMenu");
 };
+
+const handleOpenTimeSideMenu = (data: any) => {
+  // dayがundefinedの場合はselectedDateから抽出
+  let day = data.day;
+  if (day === undefined && data.selectedDate) {
+    const dateParts = data.selectedDate.split("-");
+    day = parseInt(dateParts[2], 10);
+  }
+
+  timeSideMenuData.value = {
+    selectedDate: data.selectedDate,
+    year: data.year,
+    month: data.month,
+    day: day,
+    existingTime: data.existingTime,
+    isCopyMode: data.isCopyMode,
+    allowOtherEdit: data.allowOtherEdit,
+    initialHour: data.initialHour,
+  };
+  showTimeSideMenu.value = true;
+
+  // TimeFormを閉じる
+  showModal.value = false;
+};
+
+const closeTimeSideMenu = () => {
+  showTimeSideMenu.value = false;
+};
+
+const handleTimeSideMenuEditModeChanged = (isEditMode: boolean) => {
+  isTimeSideMenuEditMode.value = isEditMode;
+
+  // 編集モードが開始された時は、TimeFormを確実に閉じる
+  if (isEditMode) {
+    showModal.value = false;
+  }
+};
+
+const handlePreview = (data: { date: string; timeSlots: TimeSlot[] }) => {
+  // プレビュー処理を実装（必要に応じて）
+  console.log("Preview:", data);
+};
+
+// TimeSideMenuの編集モードを検証する関数
+const isTimeSideMenuInEditMode = () => {
+  return isTimeSideMenuEditMode.value;
+};
+
+// TimeSideMenuが開かれた時にshowModalを確実にfalseにする
+watch(
+  () => showTimeSideMenu.value,
+  (newShow) => {
+    if (newShow) {
+      showModal.value = false;
+    }
+  }
+);
 </script>

@@ -1,8 +1,5 @@
 <template>
-  <div class="bg-white bg-opacity-0 sm:bg-opacity-80 z-10">
-    <WelcomeHeader />
-  </div>
-  <div class="flex flex-col h-screen mb-[-50px]">
+  <div class="flex flex-col h-screen">
     <NightSky class="z-[-10]" :seed="123" />
     <div class="absolute inset-0 z-50 flex items-center justify-center p-4">
       <div
@@ -27,7 +24,7 @@
             </div>
             <div class="flex flex-col gap-y-2">
               <h5 class="text-sm text-gray-500">パスワード</h5>
-              <PassInput v-model="password" placeholder="8文字以上で入力" />
+              <PassInput v-model="password" placeholder="パスワードを入力" />
               <p
                 v-if="password && !isPasswordValid"
                 class="text-red-500 text-xs"

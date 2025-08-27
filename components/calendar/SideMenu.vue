@@ -15,12 +15,12 @@
         <div class="p-2">
           <div class="flex flex-row items-center justify-between mb-4">
             <h3 class="text-xl font-bold text-gray-800">メニュー</h3>
-            <button
-              @click.stop="navigateTo('/dashboard')"
-              class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 cursor-pointer"
-            >
-              <UIcon name="ic:baseline-settings" class="size-5" />
-            </button>
+            <buttons-hover
+              @click="navigateTo('/dashboard')"
+              :size="5"
+              name="ic:baseline-settings"
+              color="bg-gray-600"
+            />
           </div>
 
           <!-- ClientOnlyで認証状態に依存する部分をラップ -->
@@ -378,23 +378,11 @@ const showTokiWaAlarmModal = ref(false);
 const isLoggedIn = computed(() => isInitialized.value && isAuthenticated.value);
 
 // デバッグ用のwatcher
-watch(
-  [isInitialized, isAuthenticated, user],
-  ([init, auth, userData]) => {
-    console.log("SideMenu認証状態変更:", {
-      isInitialized: init,
-      isAuthenticated: auth,
-      hasUser: !!userData,
-      userEmail: userData?.email,
-      processClient: process.client,
-      processServer: process.server,
-    });
-  },
-  { immediate: true }
-);
+watch([isInitialized, isAuthenticated, user], ([init, auth, userData]) => {}, {
+  immediate: true,
+});
 
 const handleCloseModal = () => {
-  console.log("モーダルを閉じるボタンがクリックされました");
   emit("toggleSideMenu");
 };
 
@@ -423,7 +411,7 @@ const handleImport = () => {
 };
 
 const handleEscapeKey = (event: KeyboardEvent) => {
-  if (event.key === "Escape") {
+  if (event.key === "Tab") {
     emit("toggleSideMenu");
   }
 };

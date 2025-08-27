@@ -32,6 +32,8 @@
         <CalendarDays
           :current-year="currentYear"
           :current-month="currentMonth"
+          @go-to-today="handleGoToToday"
+          @go-to-specific-date="handleGoToSpecificDate"
         />
       </div>
       <buttons-circle @click="openForm">
@@ -111,6 +113,8 @@ const emit = defineEmits<{
   (e: "cancelCopyMode"): void;
   (e: "toggleSideMenu"): void;
   (e: "viewModeChanged", mode: "year" | "month" | "week"): void;
+  (e: "goToToday"): void;
+  (e: "goToSpecificDate", date: string): void;
 }>();
 
 const openForm = () => {
@@ -148,6 +152,14 @@ const nextWeek = () => {
 
 const toggleSideMenu = () => {
   emit("toggleSideMenu");
+};
+
+const handleGoToToday = () => {
+  emit("goToToday");
+};
+
+const handleGoToSpecificDate = (date: string) => {
+  emit("goToSpecificDate", date);
 };
 
 // 右矢印キーで次の月に、左矢印キーで前の月に移動する
