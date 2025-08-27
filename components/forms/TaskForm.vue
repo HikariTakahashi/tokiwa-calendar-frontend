@@ -781,7 +781,6 @@ const save = async () => {
     const response = await saveTaskData(taskData);
 
     if (response.success) {
-
       // プレビューデータをクリアするためのイベントを発火
       emit("preview", {
         date: props.selectedDate,
@@ -848,34 +847,80 @@ const save = async () => {
   }
 };
 
-const deleteTask = () => {
-  // 編集モードで特定のタスクを削除
-  const existingTasks = Array.isArray(props.existingTime)
-    ? [...props.existingTime]
-    : props.existingTime && props.existingTime.taskName
-    ? [props.existingTime]
-    : [];
+const deleteTask = async () => {
+  try {
+    // 編集モードで特定のタスクを削除
+    const existingTasks = Array.isArray(props.existingTime)
+      ? [...props.existingTime]
+      : props.existingTime && props.existingTime.taskName
+      ? [props.existingTime]
+      : [];
 
-  // 指定されたタスクを削除
-  existingTasks.splice(props.editingTaskIndex, 1);
+    // 指定されたタスクを削除
+    existingTasks.splice(props.editingTaskIndex, 1);
 
-  if (existingTasks.length === 0) {
-    // すべてのタスクが削除された場合
-    emit("delete", {
-      date: props.selectedDate,
-      keepUserData: false,
-    });
-  } else {
-    // 残りのタスクを保存
-    emit("save", {
-      date: props.selectedDate,
-      timeSlots: existingTasks,
-    });
+    // バックエンドAPI用のデータ構造を作成
+    const taskData = {
+      useruid: user.value?.uid || "",
+      events: {},
+    };
+
+    if (existingTasks.length === 0) {
+      // すべてのタスクが削除された場合、空の配列を送信
+      taskData.events[props.selectedDate] = [];
+    } else {
+      // 残りのタスクをバックエンド形式に変換
+      taskData.events[props.selectedDate] = existingTasks.map(
+        (task, index) => ({
+          description: task.description || "",
+          start: task.start,
+          end: task.end,
+          title: task.taskName || "",
+          userColor: task.userColor || "#3b82f6",
+          order: index + 1,
+        })
+      );
+    }
+
+    console.log("削除後のタスクデータ（バックエンド送信用）:", taskData);
+
+    // バックエンドAPIを呼び出し
+    const response = await saveTaskData(taskData);
+
+    if (response.success) {
+      console.log("タスク削除成功:", response.message);
+
+      // プレビューデータをクリアするためのイベントを発火
+      emit("preview", {
+        date: props.selectedDate,
+        timeSlots: [],
+      });
+
+      // ローカル状態も更新
+      if (existingTasks.length === 0) {
+        // すべてのタスクが削除された場合
+        emit("delete", {
+          date: props.selectedDate,
+          keepUserData: false,
+        });
+      } else {
+        // 残りのタスクを保存
+        emit("save", {
+          date: props.selectedDate,
+          timeSlots: existingTasks,
+        });
+      }
+
+      isInitialized.value = false;
+      hasNewData.value = false;
+      props.close();
+    } else {
+      errorMessage.value = response.error || "タスクの削除に失敗しました";
+    }
+  } catch (error) {
+    console.error("タスク削除エラー:", error);
+    errorMessage.value = "タスクの削除中にエラーが発生しました";
   }
-
-  isInitialized.value = false;
-  hasNewData.value = false;
-  props.close();
 };
 
 // 不要になった関数を削除
