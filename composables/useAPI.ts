@@ -187,6 +187,16 @@ interface UserProvidersDetailResponse {
   error?: string;
 }
 
+// 統合されたユーザープロフィール情報レスポンスの型定義
+interface UserProfileResponse {
+  userName?: string;
+  userColor?: string;
+  providers?: string[];
+  providerDetails?: ProviderDetail[];
+  message?: string;
+  error?: string;
+}
+
 // タスクデータの型定義
 interface TaskSlot {
   description: string;
@@ -882,6 +892,61 @@ export const useAPI = () => {
       }
     };
 
+  // 統合されたユーザープロフィール情報取得機能
+  const getUserProfile = async (): Promise<UserProfileResponse> => {
+    try {
+      const { getAuthToken } = useAuth();
+      const token = getAuthToken();
+
+      if (!token) {
+        throw new Error("認証トークンが見つかりません");
+      }
+
+      console.log("統合ユーザープロフィール情報API呼び出し:", {
+        url: `${API_BASE_URL}/api/user-profile`,
+        tokenLength: token.length,
+      });
+
+      const response = await $fetch<UserProfileResponse>(
+        `${API_BASE_URL}/api/user-profile`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("統合ユーザープロフィール情報APIレスポンス:", response);
+      console.log("レスポンスの型:", typeof response);
+
+      // レスポンスが文字列の場合はJSONとしてパース
+      let parsedResponse: UserProfileResponse;
+      if (typeof response === "string") {
+        try {
+          parsedResponse = JSON.parse(response);
+          console.log("パース後のレスポンス:", parsedResponse);
+        } catch (error) {
+          console.error("JSONパースエラー:", error);
+          throw new Error("レスポンスの解析に失敗しました");
+        }
+      } else {
+        parsedResponse = response as UserProfileResponse;
+      }
+
+      return parsedResponse;
+    } catch (error: any) {
+      console.error("統合ユーザープロフィール情報取得エラー:", error);
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as UserProfileResponse;
+      }
+      throw error;
+    }
+  };
+
   // タスク保存機能
   const saveTaskData = async (
     taskData: TaskSaveRequest
@@ -1024,6 +1089,7 @@ export const useAPI = () => {
     getUserData,
     updateUserData,
     getUserProvidersDetail,
+    getUserProfile,
     saveTaskData,
     getTaskData,
   };
