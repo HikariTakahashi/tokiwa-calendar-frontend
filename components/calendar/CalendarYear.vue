@@ -76,7 +76,7 @@ import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import { type TimeData } from "@/composables/useAPI";
-import SideMenu from "@/components/calendar/SideMenu.vue";
+import SideMenu from "~/components/sidemenu/SideMenu.vue";
 
 interface CalendarDay {
   date: string;
