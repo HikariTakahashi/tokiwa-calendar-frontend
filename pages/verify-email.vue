@@ -139,18 +139,6 @@ const verifyEmail = async () => {
       errorMessage.value = response.message || "認証に失敗しました";
     }
   } catch (error: any) {
-    // メール認証スキップ機能のチェック
-    const { shouldSkipEmailVerification, getEmailSkipMessage } = await import(
-      "~/utils/skip-email"
-    );
-
-    if (shouldSkipEmailVerification()) {
-      // Lambda環境でメール認証スキップが有効な場合、ログインページに直接遷移
-      console.log("Lambda環境でメール認証をスキップしました");
-      await navigateTo("/login");
-      return;
-    }
-
     isError.value = true;
     errorMessage.value =
       error.data?.error || "認証処理中にエラーが発生しました";
