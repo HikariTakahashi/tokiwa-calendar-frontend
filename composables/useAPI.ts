@@ -68,13 +68,6 @@ interface SignupResponse {
   message: string;
   uid?: string;
   error?: string;
-  lambdaMode?: boolean; // Lambda環境でのメール認証スキップフラグ
-  debug?: {
-    emailSendError?: string;
-    emailConfig?: any;
-    targetEmail?: string;
-    lambdaEnvironment?: boolean;
-  };
 }
 
 // ログインリクエストの型定義
