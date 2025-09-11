@@ -24,7 +24,6 @@
         @toggleSideMenu="toggleSideMenu"
         @go-to-today="handleGoToToday"
         @go-to-specific-date="handleGoToSpecificDate"
-        @open-form="handleOpenForm"
       />
     </div>
     <!-- スクロール可能なコンテンツ -->
@@ -111,7 +110,6 @@
         @delete="deleteTime"
         @copy="handleCopy"
         @cancel-copy-mode="handleCancelCopyMode"
-        @preview="handlePreview"
         @open-time-side-menu="handleOpenTimeSideMenu"
       />
 
@@ -132,7 +130,6 @@
         @save="saveTime"
         @delete="deleteTime"
         @copy="handleCopy"
-        @preview="handlePreview"
         @close="closeForm"
       />
     </Teleport>
@@ -152,7 +149,6 @@
       @save="saveTime"
       @delete="deleteTime"
       @copy="handleCopy"
-      @preview="handlePreview"
       @close="closeTimeSideMenu"
       @editModeChanged="handleTimeSideMenuEditModeChanged"
     />
@@ -349,11 +345,6 @@ const handleCopy = () => {
   // コピーモードの処理
   isCopyMode.value = true;
   showModal.value = false;
-};
-
-const handlePreview = (data: { date: string; timeSlots: TimeSlot[] }) => {
-  // プレビュー処理
-  console.log("Preview:", data);
 };
 
 const handleOpenTimeSideMenu = (data: any) => {
