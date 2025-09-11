@@ -36,6 +36,15 @@ export const useDateImportUtils = () => {
 
   // 時間文字列を解析してTimeSlotに変換
   const parseTimeString = (timeStr: string): TimeSlot | null => {
+    // "終日" の場合は 00:00~24:00 として処理
+    if (timeStr === "終日") {
+      return {
+        start: "00:00",
+        end: "24:00",
+        order: 1,
+      };
+    }
+
     // "09:45~22:00" のような形式を解析
     const match = timeStr.match(/^(\d{1,2}):(\d{2})~(\d{1,2}):(\d{2})$/);
     if (!match) return null;
