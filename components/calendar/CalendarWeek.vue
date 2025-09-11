@@ -276,7 +276,7 @@ import { useTimeUtils } from "@/utils/TimeUtils";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import { type TimeData } from "@/composables/useAPI";
-import SideMenu from "@/components/calendar/SideMenu.vue";
+import SideMenu from "~/components/sidemenu/SideMenu.vue";
 import TimeDisplay from "@/components/calendar/display/TimeDisplay.vue";
 import TaskDisplay from "@/components/calendar/display/TaskDisplay.vue";
 
