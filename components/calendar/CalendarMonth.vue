@@ -103,7 +103,7 @@ import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import { useAPI, type TimeData } from "@/composables/useAPI";
 import CalendarWeek from "@/components/calendar/CalendarWeeks.vue";
-import SideMenu from "@/components/calendar/SideMenu.vue";
+import SideMenu from "~/components/sidemenu/SideMenu.vue";
 import TimeDisplay from "@/components/calendar/display/TimeDisplay.vue";
 import TaskDisplay from "@/components/calendar/display/TaskDisplay.vue";
 
