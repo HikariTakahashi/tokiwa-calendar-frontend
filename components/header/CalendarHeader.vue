@@ -102,7 +102,6 @@ const handleViewModeChanged = (mode: "year" | "month" | "week") => {
 };
 
 const emit = defineEmits<{
-  (e: "openForm"): void;
   (e: "prevMonth"): void;
   (e: "nextMonth"): void;
   (e: "prevYear"): void;
@@ -119,7 +118,6 @@ const emit = defineEmits<{
 
 const openForm = () => {
   showModal.value = true;
-  emit("openForm");
 };
 
 const closeForm = () => {
