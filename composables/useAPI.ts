@@ -303,16 +303,11 @@ export const useAPI = () => {
     allowOtherEdit: boolean = false
   ): Promise<APIResponse> => {
     try {
-      console.log("syncTimeData: received timeData", timeData);
-      console.log("syncTimeData: received spaceId", spaceId);
-
       // 新しいリクエスト構造に変換
       const events: { [key: string]: APITimeSlot[] } = {};
       Object.entries(timeData.events).forEach(([date, slots]) => {
-        console.log(`syncTimeData: processing date ${date}, slots:`, slots);
         // slotsが配列でない場合は配列に変換
         const slotsArray = Array.isArray(slots) ? slots : [slots];
-        console.log(`syncTimeData: slotsArray for ${date}:`, slotsArray);
         events[date] = slotsArray.map((slot, index) => ({
           start: slot.start,
           end: slot.end,
@@ -387,17 +382,12 @@ export const useAPI = () => {
         body: backendRequest,
       });
 
-      console.log("createNewSpace APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: APIResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
-          console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
         }
       } else {
@@ -417,11 +407,7 @@ export const useAPI = () => {
     password: string
   ): Promise<SignupResponse> => {
     try {
-      // パスワードを暗号化
       const encryptedPassword = await encryptPassword(password);
-
-      // セキュリティログ（本番環境では削除）
-      console.log("サインアップリクエスト送信:", { email, password: "***" });
 
       const response = await $fetch<SignupResponse>(
         `${API_BASE_URL}/api/signup`,
@@ -438,15 +424,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("サインアップAPIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: SignupResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -475,12 +457,6 @@ export const useAPI = () => {
       // パスワードを暗号化
       const encryptedPassword = await encryptPassword(password);
 
-      console.log("ログインAPI呼び出し:", {
-        url: `${API_BASE_URL}/api/login`,
-        email,
-        passwordLength: encryptedPassword.length,
-      });
-
       const response = await $fetch<LoginResponse>(
         `${API_BASE_URL}/api/login`,
         {
@@ -496,16 +472,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("ログインAPIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-      console.log("レスポンスのキー:", Object.keys(response));
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: LoginResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -541,15 +512,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("認証APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: VerifyResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -592,15 +559,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("Google認証APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: GoogleAuthResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -643,15 +606,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("GitHub認証APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: GitHubAuthResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -694,15 +653,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("Twitter認証APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: TwitterAuthResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -732,11 +687,6 @@ export const useAPI = () => {
         throw new Error("認証トークンが見つかりません");
       }
 
-      console.log("ユーザーデータ取得API呼び出し:", {
-        url: `${API_BASE_URL}/api/user-data`,
-        tokenLength: token.length,
-      });
-
       const response = await $fetch<UserDataResponse>(
         `${API_BASE_URL}/api/user-data`,
         {
@@ -749,15 +699,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("ユーザーデータ取得APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: UserDataResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -788,12 +734,6 @@ export const useAPI = () => {
       if (!token) {
         throw new Error("認証トークンが見つかりません");
       }
-
-      console.log("ユーザーデータ更新API呼び出し:", {
-        url: `${API_BASE_URL}/api/user-data`,
-        tokenLength: token.length,
-        userData,
-      });
 
       const response = await $fetch<UserDataResponse>(
         `${API_BASE_URL}/api/user-data`,
@@ -1017,12 +957,6 @@ export const useAPI = () => {
         throw new Error("認証トークンが見つかりません");
       }
 
-      console.log("タスク取得API呼び出し:", {
-        url: `${API_BASE_URL}/api/task`,
-        tokenLength: token.length,
-        tokenPreview: token.substring(0, 20) + "...",
-      });
-
       const response = await $fetch<TaskGetResponse>(
         `${API_BASE_URL}/api/task`,
         {
@@ -1035,15 +969,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("タスク取得APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: TaskGetResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -1051,12 +981,6 @@ export const useAPI = () => {
       } else {
         parsedResponse = response as TaskGetResponse;
       }
-
-      console.log(
-        "タスク取得API成功 - イベント数:",
-        Object.keys(parsedResponse.events || {}).length
-      );
-      console.log("取得されたイベント:", parsedResponse.events);
 
       return parsedResponse;
     } catch (error: any) {
