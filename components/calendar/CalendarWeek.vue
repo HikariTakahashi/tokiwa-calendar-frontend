@@ -1,16 +1,17 @@
 <template>
   <div class="relative h-full flex flex-col z-10">
-    <SideMenu
+    <LeftSideMenu
       :show="props.showSideMenu"
       @toggleSideMenu="toggleSideMenu"
       @import-complete="handleImportComplete"
+      @google-calendar-sync="handleGoogleCalendarSync"
     />
 
     <div
       class="flex-1 flex flex-col transition-all duration-300 ease-in-out"
       :class="[
         props.showSideMenu && !isMobile ? 'ml-80' : 'ml-0',
-        showTimeSideMenu && !isMobile ? 'mr-96' : 'mr-0',
+        props.showTimeSideMenu && !isMobile ? 'mr-96' : 'mr-0',
       ]"
     >
       <div class="flex-1 flex flex-col">
@@ -249,9 +250,9 @@
     </div>
   </div>
 
-  <TimeSideMenu
-    v-if="showTimeSideMenu"
-    :show="showTimeSideMenu"
+  <RightSideMenu
+    v-if="props.showTimeSideMenu"
+    :show="props.showTimeSideMenu"
     :selectedDate="timeSideMenuData.selectedDate"
     :year="timeSideMenuData.year"
     :month="timeSideMenuData.month"
@@ -270,13 +271,13 @@
 </template>
 
 <script setup lang="ts">
-import TimeSideMenu from "@/components/sidemenu/TimeSideMenu.vue";
+import RightSideMenu from "@/components/sidemenu/RightSideMenu.vue";
 import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { useTimeUtils } from "@/utils/TimeUtils";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import { type TimeData } from "@/composables/useAPI";
-import SideMenu from "~/components/sidemenu/SideMenu.vue";
+import LeftSideMenu from "~/components/sidemenu/LeftSideMenu.vue";
 import TimeDisplay from "@/components/calendar/display/TimeDisplay.vue";
 import TaskDisplay from "@/components/calendar/display/TaskDisplay.vue";
 
@@ -290,16 +291,48 @@ interface Props {
   month: number;
   day: number;
   isCopyMode: boolean;
+  copiedTimeData?: any;
+  pastedDates?: Set<string>;
+  copiedFromDate?: string | null;
+  pasteHandler?: (date: string, timeData: Record<string, any>) => any;
   spaceId?: string;
   timeData: TimeData;
   showSideMenu?: boolean;
+  showTimeSideMenu?: boolean;
   displayMode?: "time" | "task";
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showSideMenu: false,
+  showTimeSideMenu: false,
   displayMode: "time",
 });
+
+// デバッグログ: コピーモード関連のpropsを確認
+console.log("📅 CalendarWeek props:", {
+  isCopyMode: props.isCopyMode,
+  copiedTimeData: props.copiedTimeData,
+  pastedDates: props.pastedDates,
+  timeData: props.timeData,
+});
+
+// propsの変更を監視
+watch(
+  () => props.isCopyMode,
+  (newValue, oldValue) => {
+    console.log("📅 CalendarWeek isCopyMode changed:", { oldValue, newValue });
+  }
+);
+
+watch(
+  () => props.copiedTimeData,
+  (newValue, oldValue) => {
+    console.log("📅 CalendarWeek copiedTimeData changed:", {
+      oldValue,
+      newValue,
+    });
+  }
+);
 const emit = defineEmits<{
   (e: "save", data: { date: string; timeSlots: TimeSlot[] }): void;
   (e: "delete", data: { date: string }): void;
@@ -310,6 +343,8 @@ const emit = defineEmits<{
   (e: "import-complete", data: any[]): void;
   (e: "preview", data: { date: string; timeSlots: TimeSlot[] }): void;
   (e: "openForm", data: { date: string; hour?: number }): void;
+  (e: "openTimeSideMenu", data: any): void;
+  (e: "closeTimeSideMenu"): void;
 }>();
 
 const { formatTimeForDisplay, getTextColorClass } = useTimeUtils();
@@ -317,7 +352,6 @@ const showModal = ref(false);
 const selectedDate = ref<string>("");
 const previewData = ref<{ [date: string]: TimeSlot[] }>({});
 const isMobile = ref(false);
-const showTimeSideMenu = ref(false);
 const isTimeSideMenuEditMode = ref(false);
 const scrollContainer = ref<HTMLElement | null>(null);
 const timeSideMenuData = ref({
@@ -346,13 +380,15 @@ onUnmounted(() => {
   window.removeEventListener("resize", checkMobile);
 });
 
-const {
-  copiedTimeData,
-  handleCopy: copyLogic,
-  handlePaste,
-  handleCancelCopyMode: cancelCopyLogic,
-  pastedDates,
-} = useCopyLogic();
+// 親コンポーネントからコピーデータを受け取る場合は、それを使用
+// そうでなければ独自のuseCopyLogicを使用
+const localCopyLogic = useCopyLogic();
+const effectiveCopiedTimeData =
+  props.copiedTimeData || localCopyLogic.copiedTimeData;
+const effectivePastedDates = props.pastedDates || localCopyLogic.pastedDates;
+const effectiveHandlePaste = props.copiedTimeData
+  ? localCopyLogic.handlePaste
+  : localCopyLogic.handlePaste;
 
 // 週の日付を計算
 const weekDays = computed(() => {
@@ -665,8 +701,13 @@ const openFormAtTime = (date: string, hour: number) => {
     return;
   }
 
+  // コピーモードでコピー元の日付をクリックした場合は何もしない
+  if (props.isCopyMode && date === props.copiedFromDate) {
+    return;
+  }
+
   if (props.isCopyMode) {
-    const result = handlePaste(date, props.timeData.events);
+    const result = effectiveHandlePaste(date, props.timeData.events);
     if (result.isPasted) {
       const updatedTimeData = {
         ...props.timeData,
@@ -716,13 +757,56 @@ const handleImportComplete = (importedData: any[]) => {
   emit("update:time-data", updatedTimeData);
 };
 
+// Googleカレンダー同期処理
+const handleGoogleCalendarSync = (tasks: any[]) => {
+  const updatedEvents = { ...props.timeData.events };
+
+  tasks.forEach((task) => {
+    // イベントの日付を使用（convertToTokiwaTaskで設定されたeventDate）
+    const eventDate = task.eventDate || new Date().toISOString().split("T")[0];
+
+    // タスクをTokiwaの形式に変換
+    const tokiwaTask = {
+      taskName: task.taskName,
+      description: task.description,
+      start: task.start,
+      end: task.end,
+      userColor: task.userColor || "#3b82f6",
+      order: task.order || 1,
+      googleEventId: task.googleEventId,
+      location: task.location || "",
+      isAllDay: task.isAllDay || false, // 終日フラグを追加
+    };
+
+    // 既存のタスクがある場合は追加、ない場合は新規作成
+    if (updatedEvents[eventDate]) {
+      updatedEvents[eventDate].push(tokiwaTask);
+    } else {
+      updatedEvents[eventDate] = [tokiwaTask];
+    }
+  });
+
+  const updatedTimeData = {
+    ...props.timeData,
+    events: updatedEvents,
+  };
+
+  emit("update:time-data", updatedTimeData);
+  console.log("Googleカレンダー同期完了:", updatedEvents);
+};
+
 const openForm = (date: string) => {
   if (isDateDisabled(date)) {
     return;
   }
 
+  // コピーモードでコピー元の日付をクリックした場合は何もしない
+  if (props.isCopyMode && date === props.copiedFromDate) {
+    return;
+  }
+
   if (props.isCopyMode) {
-    const result = handlePaste(date, props.timeData.events);
+    const result = effectiveHandlePaste(date, props.timeData.events);
     if (result.isPasted) {
       const updatedTimeData = {
         ...props.timeData,
@@ -732,7 +816,7 @@ const openForm = (date: string) => {
     }
   } else {
     // TimeSideMenuが開いている場合は、TimeSideMenuの日付を更新
-    if (showTimeSideMenu.value) {
+    if (props.showTimeSideMenu) {
       timeSideMenuData.value.selectedDate = date;
       // 既存の時間データを更新
       timeSideMenuData.value.existingTime = props.timeData.events[date] || {};
@@ -746,7 +830,10 @@ const openForm = (date: string) => {
 
 const handleCopy = () => {
   if (!selectedDate.value) return;
-  const result = copyLogic(selectedDate.value, props.timeData.events);
+  const result = localCopyLogic.handleCopy(
+    selectedDate.value,
+    props.timeData.events
+  );
   emit("update:is-copy-mode", result.isCopyMode);
 };
 
@@ -756,16 +843,6 @@ const handlePreview = (data: { date: string; timeSlots: TimeSlot[] }) => {
   } else {
     delete previewData.value[data.date];
   }
-};
-
-const handleCancelCopyMode = () => {
-  const result = cancelCopyLogic(props.timeData.events);
-  const updatedTimeData = {
-    ...props.timeData,
-    events: result.timeData,
-  };
-  emit("update:time-data", updatedTimeData);
-  emit("update:is-copy-mode", result.isCopyMode);
 };
 
 const getTimeSlots = (date: string): TimeSlot[] => {
@@ -845,14 +922,15 @@ const handleOpenTimeSideMenu = (data: any) => {
     allowOtherEdit: data.allowOtherEdit,
     initialHour: data.initialHour,
   };
-  showTimeSideMenu.value = true;
+
+  emit("openTimeSideMenu", timeSideMenuData.value);
 
   // TimeFormを閉じる
   showModal.value = false;
 };
 
 const closeTimeSideMenu = () => {
-  showTimeSideMenu.value = false;
+  emit("closeTimeSideMenu");
 };
 
 const handleTimeSideMenuEditModeChanged = (isEditMode: boolean) => {
@@ -871,7 +949,7 @@ const isTimeSideMenuInEditMode = () => {
 
 // TimeSideMenuが開かれた時にshowModalを確実にfalseにする
 watch(
-  () => showTimeSideMenu.value,
+  () => props.showTimeSideMenu,
   (newShow) => {
     if (newShow) {
       showModal.value = false;
