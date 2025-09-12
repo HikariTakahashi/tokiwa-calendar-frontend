@@ -132,16 +132,22 @@
         </div>
 
         <!-- 説明 -->
-        <buttons-accordion title="説明">
-          <textarea
-            v-model="editingTaskData.description"
-            rows="3"
-            class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            :class="{ 'border-red-500': descriptionErrors.length > 0 }"
-            placeholder="タスクの詳細を入力してください"
-            maxlength="500"
-            @input="handleDescriptionInput"
-          ></textarea>
+        <buttons-accordion>
+          <template #title>
+            <h4 class="text-gray-800">説明</h4> 
+          </template>
+          <template #content>
+            <textarea
+              v-model="editingTaskData.description"
+              rows="3"
+              class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              :class="{ 'border-red-500': descriptionErrors.length > 0 }"
+              placeholder="タスクの詳細を入力してください"
+              maxlength="500"
+              @input="handleDescriptionInput"
+            ></textarea>
+          </template>
+
           <!-- 警告欄 -->
           <div class="flex flex-row gap-x-2 items-center justify-between">
             <div
@@ -163,64 +169,74 @@
           </div>
         </buttons-accordion>
 
-        <buttons-accordion title="通知設定">
-          <div
-            v-for="(notification, index) in notifications"
-            :key="index"
-            class="mb-2"
-          >
-            <div class="flex items-center gap-x-2">
-              <input
-                type="date"
-                v-model="notification.date"
-                class="p-1 rounded-md border border-gray-400 text-sm"
-                @change="handleNotificationDateChange(index)"
-              />
-              <label class="text-sm">の</label>
-              <InputTime
-                :minute-interval="15"
-                :initial-hours="parseTimeSlot(notification.time).hours"
-                :initial-minutes="parseTimeSlot(notification.time).minutes"
-                @update:time="
-                  (newTime) => handleNotificationTimeChange(newTime, index)
-                "
-                class="p-1 rounded-md border border-gray-400"
-              />
-              <buttons-hover
-                @click="removeNotification(index)"
-                :size="4"
-                name="ic:sharp-delete"
-                color="bg-red-500"
-                :ishover="false"
-              />
+        <buttons-accordion>
+          <template #title>
+            <h4 class="text-gray-800">通知設定</h4>
+          </template>
+          <template #content>
+            <div
+              v-for="(notification, index) in notifications"
+              :key="index"
+              class="mb-2"
+            >
+              <div class="flex items-center gap-x-2">
+                <input
+                  type="date"
+                  v-model="notification.date"
+                  class="p-1 rounded-md border border-gray-400 text-sm"
+                  @change="handleNotificationDateChange(index)"
+                />
+                <label class="text-sm">の</label>
+                <InputTime
+                  :minute-interval="15"
+                  :initial-hours="parseTimeSlot(notification.time).hours"
+                  :initial-minutes="parseTimeSlot(notification.time).minutes"
+                  @update:time="
+                    (newTime) => handleNotificationTimeChange(newTime, index)
+                  "
+                  class="p-1 rounded-md border border-gray-400"
+                />
+                <buttons-hover
+                  @click="removeNotification(index)"
+                  :size="4"
+                  name="ic:sharp-delete"
+                  color="bg-red-500"
+                  :ishover="false"
+                />
+              </div>
             </div>
-          </div>
-          <button
-            @click="addNotification"
-            class="text-blue-500 hover:underline text-sm"
-          >
-            通知を追加
-          </button>
+            <button
+              @click="addNotification"
+              class="text-blue-500 hover:underline text-sm"
+            >
+              通知を追加
+            </button>
+          </template>
         </buttons-accordion>
 
         <!-- タスク色 -->
         <div class="mb-3">
-          <buttons-accordion title="タスク色">
-            <label class="block text-sm text-gray-500 mb-1">タスク色</label>
-            <div class="flex flex-row gap-3">
-              <div class="flex flex-col gap-1">
-                <ColorField v-model="taskColor" />
-              </div>
+          <buttons-accordion>
+            <template #title>
+              <h4 class="text-gray-800">タスク色</h4>
+            </template>
+            <template #content>
+              <label class="block text-sm text-gray-500 mb-1">タスク色</label>
+              <div class="flex flex-row gap-3">
+                <div class="flex flex-col gap-1">
+                  <ColorField v-model="taskColor" />
+                </div>
 
-              <div class="flex flex-wrap flex-row gap-1">
-                <ColorButton
-                  v-for="color in presetColors"
-                  :key="color"
-                  :color="color"
-                  @update:modelValue="taskColor = color"
-                />
+                <div class="flex flex-wrap flex-row gap-1">
+                  <ColorButton
+                    v-for="color in presetColors"
+                    :key="color"
+                    :color="color"
+                    @update:modelValue="taskColor = color"
+                  />
+                </div>
               </div>
-            </div>
+            </template>
           </buttons-accordion>
           <div class="flex justify-end gap-1">
             <buttons-square
