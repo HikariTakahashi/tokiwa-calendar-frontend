@@ -7,6 +7,7 @@ export interface TimeSlot {
   order?: number;
   username?: string;
   userColor?: string;
+  isAllDay?: boolean; // 終日フラグを追加
 }
 
 export const useTimeUtils = () => {
