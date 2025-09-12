@@ -1,3 +1,6 @@
+import { useAPI } from "./useAPI";
+import { useAuth } from "./useAuth";
+
 export const useGoogleAuth = () => {
   const config = useRuntimeConfig();
   const { googleAuth } = useAPI();
@@ -14,7 +17,7 @@ export const useGoogleAuth = () => {
       client_id: clientId,
       redirect_uri: redirectUri,
       response_type: "code",
-      scope: "openid email profile",
+      scope: "openid email profile", // 基本情報のみ（カレンダー読み取り権限は除外）
       access_type: "offline",
       prompt: "consent",
     });
@@ -51,17 +54,28 @@ export const useGoogleAuth = () => {
         return { success: false, error: response.error };
       }
 
-      if (response.sessionToken && response.uid && response.email) {
-        // useAuthでログイン状態を管理
-        authLogin({
-          uid: response.uid,
-          email: response.email,
-          sessionToken: response.sessionToken,
-        });
-
-        return { success: true };
+      // アカウントリンクの場合（linkUIDが指定されている場合）は、emailフィールドをチェックしない
+      if (linkUID) {
+        if (response.sessionToken && response.uid) {
+          // アカウントリンクの場合は、既存のユーザー情報を使用
+          return { success: true };
+        } else {
+          return { success: false, error: "認証レスポンスが不完全です" };
+        }
       } else {
-        return { success: false, error: "認証レスポンスが不完全です" };
+        // 通常のログインの場合は、emailフィールドもチェック
+        if (response.sessionToken && response.uid && response.email) {
+          // useAuthでログイン状態を管理
+          authLogin({
+            uid: response.uid,
+            email: response.email,
+            sessionToken: response.sessionToken,
+          });
+
+          return { success: true };
+        } else {
+          return { success: false, error: "認証レスポンスが不完全です" };
+        }
       }
     } catch (error: any) {
       console.error("Google認証エラー:", error);
