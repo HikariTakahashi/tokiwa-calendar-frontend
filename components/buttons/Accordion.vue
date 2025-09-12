@@ -1,17 +1,18 @@
 <template>
-  <div class="border border-gray-200 rounded-lg mb-4">
+  <div
+    class="border border-gray-200 rounded-lg mb-4"
+    :style="backgroundImageStyle"
+  >
     <button
       @click="toggleAccordion"
-      class="w-full flex items-center justify-between p-2 text-left hover:bg-gray-50 rounded-lg transition-colors"
+      class="w-full flex items-center justify-between p-2 text-left hover:bg-gray-300 rounded-t-md transition-colors"
+      :class="[
+        isOpen ? 'hover:rounded-b-none' : 'hover:rounded-b-md',
+        backgroundImageStyle ? 'hover:bg-opacity-50' : '',
+      ]"
     >
       <div class="flex items-center">
-        <h4 class="text-gray-800">{{ title }}</h4>
-        <h6
-          v-if="showBeta"
-          class="font-bold ml-2 mr-4 mt-1 bg-blue-500 rounded-sm px-1.5 text-white font-mono"
-        >
-          Beta
-        </h6>
+        <slot name="title" />
       </div>
       <UIcon
         :name="isOpen ? 'ic:baseline-expand-less' : 'ic:baseline-expand-more'"
@@ -28,27 +29,38 @@
       leave-to-class="opacity-0 max-h-0"
     >
       <div v-show="isOpen" class="px-4 pb-4">
-        <slot />
+        <slot name="content" />
       </div>
     </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
 interface Props {
-  title: string;
-  showBeta?: boolean;
   defaultOpen?: boolean;
+  backgroundImage?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showBeta: false,
   defaultOpen: false,
+  backgroundImage: undefined,
 });
 
 const isOpen = ref(props.defaultOpen);
+
+// 背景画像のスタイルを計算
+const backgroundImageStyle = computed(() => {
+  if (!props.backgroundImage) return {};
+
+  return {
+    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${props.backgroundImage})`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+  };
+});
 
 const toggleAccordion = () => {
   isOpen.value = !isOpen.value;
