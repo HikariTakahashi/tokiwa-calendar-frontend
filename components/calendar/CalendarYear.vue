@@ -1,16 +1,17 @@
 <template>
   <div class="relative max-h-full flex flex-col z-10">
-    <SideMenu
+    <LeftSideMenu
       :show="props.showSideMenu"
       @toggleSideMenu="toggleSideMenu"
       @import-complete="handleImportComplete"
+      @google-calendar-sync="handleGoogleCalendarSync"
     />
 
     <div
       class="flex-1 flex flex-col transition-all duration-300 ease-in-out"
       :class="[
         props.showSideMenu && !isMobile ? 'ml-80' : 'ml-0',
-        showTimeSideMenu && !isMobile ? 'mr-96' : 'mr-0',
+        props.showTimeSideMenu && !isMobile ? 'mr-96' : 'mr-0',
       ]"
     >
       <div
@@ -50,7 +51,7 @@
     </div>
   </div>
 
-  <TimeSideMenu
+  <RightSideMenu
     v-if="showTimeSideMenu"
     :show="showTimeSideMenu"
     :selectedDate="timeSideMenuData.selectedDate"
@@ -71,12 +72,12 @@
 </template>
 
 <script setup lang="ts">
-import TimeSideMenu from "@/components/sidemenu/TimeSideMenu.vue";
+import RightSideMenu from "@/components/sidemenu/RightSideMenu.vue";
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import { type TimeData } from "@/composables/useAPI";
-import SideMenu from "~/components/sidemenu/SideMenu.vue";
+import LeftSideMenu from "~/components/sidemenu/LeftSideMenu.vue";
 
 interface CalendarDay {
   date: string;
@@ -91,11 +92,13 @@ interface Props {
   spaceId?: string;
   timeData: TimeData;
   showSideMenu?: boolean;
+  showTimeSideMenu?: boolean;
   displayMode?: "time" | "task";
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showSideMenu: false,
+  showTimeSideMenu: false,
   displayMode: "time",
 });
 const emit = defineEmits<{
@@ -108,6 +111,8 @@ const emit = defineEmits<{
   (e: "import-complete", data: any[]): void;
   (e: "month-selected", month: number): void;
   (e: "openForm", data: { date: string; hour?: number }): void;
+  (e: "openTimeSideMenu", data: any): void;
+  (e: "closeTimeSideMenu"): void;
 }>();
 
 const showModal = ref(false);
@@ -281,6 +286,44 @@ const handleImportComplete = (importedData: any[]) => {
   emit("update:time-data", updatedTimeData);
 };
 
+// Googleカレンダー同期処理
+const handleGoogleCalendarSync = (tasks: any[]) => {
+  const updatedEvents = { ...props.timeData.events };
+
+  tasks.forEach((task) => {
+    // イベントの日付を使用（convertToTokiwaTaskで設定されたeventDate）
+    const eventDate = task.eventDate || new Date().toISOString().split("T")[0];
+
+    // タスクをTokiwaの形式に変換
+    const tokiwaTask = {
+      taskName: task.taskName,
+      description: task.description,
+      start: task.start,
+      end: task.end,
+      userColor: task.userColor || "#3b82f6",
+      order: task.order || 1,
+      googleEventId: task.googleEventId,
+      location: task.location || "",
+      isAllDay: task.isAllDay || false, // 終日フラグを追加
+    };
+
+    // 既存のタスクがある場合は追加、ない場合は新規作成
+    if (updatedEvents[eventDate]) {
+      updatedEvents[eventDate].push(tokiwaTask);
+    } else {
+      updatedEvents[eventDate] = [tokiwaTask];
+    }
+  });
+
+  const updatedTimeData = {
+    ...props.timeData,
+    events: updatedEvents,
+  };
+
+  emit("update:time-data", updatedTimeData);
+  console.log("Googleカレンダー同期完了:", updatedEvents);
+};
+
 const handleCopy = () => {
   if (!selectedDate.value) return;
   const result = copyLogic(selectedDate.value, props.timeData.events);
@@ -339,14 +382,15 @@ const handleOpenTimeSideMenu = (data: any) => {
     allowOtherEdit: data.allowOtherEdit,
     initialHour: data.initialHour,
   };
-  showTimeSideMenu.value = true;
+
+  emit("openTimeSideMenu", timeSideMenuData.value);
 
   // TimeFormを閉じる
   showModal.value = false;
 };
 
 const closeTimeSideMenu = () => {
-  showTimeSideMenu.value = false;
+  emit("closeTimeSideMenu");
 };
 
 const handleTimeSideMenuEditModeChanged = (isEditMode: boolean) => {
