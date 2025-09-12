@@ -17,11 +17,6 @@ export const useAccountLink = () => {
       const config = useRuntimeConfig();
       const API_BASE_URL = config.public.apiBaseUrl;
 
-      console.log("プロバイダー情報取得API呼び出し:", {
-        url: `${API_BASE_URL}/api/user-providers`,
-        tokenLength: token.length,
-      });
-
       const response = await $fetch<{ providers: string[] }>(
         `${API_BASE_URL}/api/user-providers`,
         {
@@ -31,8 +26,6 @@ export const useAccountLink = () => {
           },
         }
       );
-
-      console.log("プロバイダー情報取得APIレスポンス:", response);
 
       return response.providers || [];
     } catch (error) {
@@ -58,11 +51,6 @@ export const useAccountLink = () => {
       const config = useRuntimeConfig();
       const API_BASE_URL = config.public.apiBaseUrl;
 
-      console.log("GoogleアカウントリンクAPI呼び出し:", {
-        url: `${API_BASE_URL}/api/link-account`,
-        tokenLength: token.length,
-      });
-
       const response = await $fetch<{ success: boolean; error?: string }>(
         `${API_BASE_URL}/api/link-account`,
         {
@@ -77,8 +65,6 @@ export const useAccountLink = () => {
           },
         }
       );
-
-      console.log("GoogleアカウントリンクAPIレスポンス:", response);
 
       return response;
     } catch (error: any) {
@@ -104,11 +90,6 @@ export const useAccountLink = () => {
       const config = useRuntimeConfig();
       const API_BASE_URL = config.public.apiBaseUrl;
 
-      console.log("GitHubアカウントリンクAPI呼び出し:", {
-        url: `${API_BASE_URL}/api/link-account`,
-        tokenLength: token.length,
-      });
-
       const response = await $fetch<{ success: boolean; error?: string }>(
         `${API_BASE_URL}/api/link-account`,
         {
@@ -123,8 +104,6 @@ export const useAccountLink = () => {
           },
         }
       );
-
-      console.log("GitHubアカウントリンクAPIレスポンス:", response);
 
       return response;
     } catch (error: any) {
@@ -150,11 +129,6 @@ export const useAccountLink = () => {
       const config = useRuntimeConfig();
       const API_BASE_URL = config.public.apiBaseUrl;
 
-      console.log("TwitterアカウントリンクAPI呼び出し:", {
-        url: `${API_BASE_URL}/api/link-account`,
-        tokenLength: token.length,
-      });
-
       const response = await $fetch<{ success: boolean; error?: string }>(
         `${API_BASE_URL}/api/link-account`,
         {
@@ -169,8 +143,6 @@ export const useAccountLink = () => {
           },
         }
       );
-
-      console.log("TwitterアカウントリンクAPIレスポンス:", response);
 
       return response;
     } catch (error: any) {
@@ -196,12 +168,6 @@ export const useAccountLink = () => {
       const config = useRuntimeConfig();
       const API_BASE_URL = config.public.apiBaseUrl;
 
-      console.log("アカウント解除API呼び出し:", {
-        url: `${API_BASE_URL}/api/unlink-account`,
-        tokenLength: token.length,
-        providerId,
-      });
-
       const response = await $fetch<{ success: boolean; error?: string }>(
         `${API_BASE_URL}/api/unlink-account`,
         {
@@ -215,8 +181,6 @@ export const useAccountLink = () => {
           },
         }
       );
-
-      console.log("アカウント解除APIレスポンス:", response);
 
       return response;
     } catch (error: any) {
