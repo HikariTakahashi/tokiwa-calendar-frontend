@@ -685,9 +685,10 @@ const deleteTime = () => {
 };
 
 const copy = () => {
-  emit("copy");
+  emit("copy", props.selectedDate);
   isInitialized.value = false; // 初期化フラグをリセット
   hasNewData.value = false; // 新規データフラグをリセット
+  props.close(); // モーダルを閉じる
 };
 
 const copyClipboard = () => {
