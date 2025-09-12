@@ -78,6 +78,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import type { TimeSlot } from "@/utils/TimeUtils";
+import type { TimeData } from "@/composables/useAPI";
 import UploadForm from "@/components/forms/UploadForm.vue";
 import Title from "@/components/calendar/Title.vue";
 import Select from "@/components/buttons/Select.vue";
@@ -88,9 +89,7 @@ const props = defineProps<{
   currentDay: number;
   currentWeek: number;
   isSync: boolean;
-  timeData: {
-    [key: string]: TimeSlot | TimeSlot[];
-  };
+  timeData: TimeData;
   spaceId: string;
   viewMode?: "year" | "month" | "week";
 }>();
