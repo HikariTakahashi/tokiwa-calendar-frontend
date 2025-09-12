@@ -31,8 +31,22 @@
       <div v-else-if="isAuthenticated" class="h-full flex flex-col">
         <!-- 固定ヘッダー -->
         <div class="flex-shrink-0 sticky top-0 z-30 bg-white">
-          <component
-            :is="isCopyMode ? CopyModeHeader : TaskHeader"
+          <!-- コピーモード用ヘッダー -->
+          <CopyModeHeader
+            v-if="isCopyMode"
+            :current-year="currentYear"
+            :current-month="currentMonth"
+            :current-day="currentDay"
+            :current-week="currentWeek"
+            :time-data="timeData"
+            @next-month="handleNextMonth"
+            @prev-month="handlePrevMonth"
+            @close-copy-mode="closeCopyMode"
+          />
+
+          <!-- 通常のタスクヘッダー -->
+          <TaskHeader
+            v-else
             :current-year="currentYear"
             :current-month="currentMonth"
             :current-day="currentDay"
@@ -48,7 +62,6 @@
             @next-week="handleNextWeek"
             @prev-week="handlePrevWeek"
             @view-mode-changed="handleViewModeChanged"
-            @close-copy-mode="closeCopyMode"
             @cancel-copy-mode="handleCancelCopyMode"
             @toggleSideMenu="toggleSideMenu"
             @go-to-today="handleGoToToday"
@@ -66,6 +79,7 @@
             :space-id="spaceId"
             :time-data="timeData"
             :show-side-menu="showSideMenu"
+            :show-time-side-menu="showTimeSideMenu"
             :display-mode="'task'"
             @save="saveTime"
             @delete="deleteTime"
@@ -88,6 +102,7 @@
             :space-id="spaceId"
             :time-data="timeData"
             :show-side-menu="showSideMenu"
+            :show-time-side-menu="showTimeSideMenu"
             :display-mode="'task'"
             @save="saveTime"
             @delete="deleteTime"
@@ -109,6 +124,7 @@
             :space-id="spaceId"
             :time-data="timeData"
             :show-side-menu="showSideMenu"
+            :show-time-side-menu="showTimeSideMenu"
             :display-mode="'task'"
             @save="saveTime"
             @delete="deleteTime"
@@ -192,8 +208,8 @@
         />
       </Teleport>
 
-      <!-- TimeSideMenu -->
-      <TimeSideMenu
+      <!-- RightSideMenu -->
+      <RightSideMenu
         v-if="showTimeSideMenu"
         :show="showTimeSideMenu"
         :selectedDate="timeSideMenuData.selectedDate"
@@ -225,7 +241,7 @@ import CalendarYear from "@/components/calendar/CalendarYear.vue";
 import LoginPrompt from "@/components/forms/LoginPrompt.vue";
 import TaskForm from "@/components/forms/TaskForm.vue";
 import MobileTaskForm from "@/components/forms/MobileTaskForm.vue";
-import TimeSideMenu from "@/components/sidemenu/TimeSideMenu.vue";
+import RightSideMenu from "@/components/sidemenu/RightSideMenu.vue";
 
 import { useDateUtils } from "@/utils/DateUtils";
 import { useViewMode, createViewModeHandlers } from "@/utils/ViewModeUtils";
@@ -395,6 +411,43 @@ const handleImportComplete = (importedData: any[]) => {
   };
 };
 
+// Googleカレンダー同期処理
+const handleGoogleCalendarSync = (tasks: any[]) => {
+  const updatedEvents = { ...timeData.value.events };
+
+  tasks.forEach((task) => {
+    // イベントの日付を使用（convertToTokiwaTaskで設定されたeventDate）
+    const eventDate = task.eventDate || new Date().toISOString().split("T")[0];
+
+    // タスクをTokiwaの形式に変換
+    const tokiwaTask = {
+      taskName: task.taskName,
+      description: task.description,
+      start: task.start,
+      end: task.end,
+      userColor: task.userColor || "#3b82f6",
+      order: task.order || 1,
+      googleEventId: task.googleEventId,
+      location: task.location || "",
+      isAllDay: task.isAllDay || false, // 終日フラグを追加
+    };
+
+    // 既存のタスクがある場合は追加、ない場合は新規作成
+    if (updatedEvents[eventDate]) {
+      updatedEvents[eventDate].push(tokiwaTask);
+    } else {
+      updatedEvents[eventDate] = [tokiwaTask];
+    }
+  });
+
+  timeData.value = {
+    ...timeData.value,
+    events: updatedEvents,
+  };
+
+  console.log("Googleカレンダー同期完了:", updatedEvents);
+};
+
 const handleGoToToday = () => {
   const today = new Date();
   currentYear.value = today.getFullYear();
@@ -423,8 +476,7 @@ const handleCopy = () => {
   showModal.value = false;
 };
 
-const handlePreview = (data: { date: string; timeSlots: TimeSlot[] }) => {
-};
+const handlePreview = (data: { date: string; timeSlots: TimeSlot[] }) => {};
 
 const handleOpenTimeSideMenu = (data: any) => {
   // TimeSideMenuを開く処理
