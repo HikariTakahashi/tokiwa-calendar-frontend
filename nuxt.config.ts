@@ -12,6 +12,7 @@ export default defineNuxtConfig({
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID,
       githubClientId: process.env.NUXT_PUBLIC_GITHUB_CLIENT_ID,
       twitterClientId: process.env.NUXT_PUBLIC_TWITTER_CLIENT_ID,
+      googleSiteVerification: process.env.NUXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
       skipEmailVerification:
         process.env.NUXT_PUBLIC_SKIP_EMAIL_VERIFICATION || "false",
     },
@@ -31,6 +32,10 @@ export default defineNuxtConfig({
         },
       ],
       meta: [
+        {
+          name: "google-site-verification",
+          content: process.env.NUXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "",
+        },
         {
           name: "description",
           content: "TokiWa-Calendar | タスク管理に特化したカレンダーアプリ",
