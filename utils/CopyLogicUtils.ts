@@ -6,6 +6,7 @@ export const useCopyLogic = () => {
   const isCopyMode = ref(false);
   const pastedDates = ref<Set<string>>(new Set());
   const originalData = ref<Record<string, any>>({});
+  const copiedFromDate = ref<string | null>(null);
 
   const handleCopy = (selectedDate: string, timeData: Record<string, any>) => {
     if (selectedDate) {
@@ -19,6 +20,7 @@ export const useCopyLogic = () => {
           isCopyMode.value = true;
           pastedDates.value.clear();
           originalData.value = {};
+          copiedFromDate.value = selectedDate;
           return {
             isCopyMode: true,
             copiedTimeData: nonUserTimeSlots,
@@ -30,6 +32,7 @@ export const useCopyLogic = () => {
         isCopyMode.value = true;
         pastedDates.value.clear();
         originalData.value = {};
+        copiedFromDate.value = selectedDate;
         return {
           isCopyMode: true,
           copiedTimeData: timeSlot,
@@ -39,11 +42,13 @@ export const useCopyLogic = () => {
       // Usernameが存在するデータのみの場合はコピーを無効化
       copiedTimeData.value = null;
       isCopyMode.value = false;
+      copiedFromDate.value = null;
       return {
         isCopyMode: false,
         copiedTimeData: null,
       };
     }
+    copiedFromDate.value = null;
     return {
       isCopyMode: false,
       copiedTimeData: null,
@@ -54,16 +59,19 @@ export const useCopyLogic = () => {
     if (isCopyMode.value && copiedTimeData.value) {
       const targetTimeSlot = timeData[date];
 
+      // timeDataを直接変更せず、新しいオブジェクトを作成
+      const newTimeData = { ...timeData };
+
       if (pastedDates.value.has(date)) {
         // 貼り付けの取り消し
         if (originalData.value[date]) {
-          timeData[date] = originalData.value[date];
+          newTimeData[date] = originalData.value[date];
         } else {
-          delete timeData[date];
+          delete newTimeData[date];
         }
         pastedDates.value.delete(date);
         return {
-          timeData: { ...timeData },
+          timeData: newTimeData,
           isPasted: false,
           isCancelled: true,
         };
@@ -83,7 +91,7 @@ export const useCopyLogic = () => {
 
         if (userTimeSlots.length > 0) {
           // Usernameが存在するデータがある場合は、それらを保持して新しいデータを追加
-          timeData[date] = [
+          newTimeData[date] = [
             ...userTimeSlots,
             ...(Array.isArray(copiedTimeData.value)
               ? copiedTimeData.value
@@ -91,13 +99,13 @@ export const useCopyLogic = () => {
           ];
         } else {
           // Usernameが存在しないデータのみの場合は、新しいデータで置き換え
-          timeData[date] = Array.isArray(copiedTimeData.value)
+          newTimeData[date] = Array.isArray(copiedTimeData.value)
             ? copiedTimeData.value
             : [copiedTimeData.value];
         }
       } else if (targetTimeSlot?.username) {
         // 単一のデータでUsernameが存在する場合は、新しいデータを追加
-        timeData[date] = [
+        newTimeData[date] = [
           targetTimeSlot,
           ...(Array.isArray(copiedTimeData.value)
             ? copiedTimeData.value
@@ -105,12 +113,12 @@ export const useCopyLogic = () => {
         ];
       } else {
         // その他の場合は新しいデータで置き換え
-        timeData[date] = copiedTimeData.value;
+        newTimeData[date] = copiedTimeData.value;
       }
 
       pastedDates.value.add(date);
       return {
-        timeData: { ...timeData },
+        timeData: newTimeData,
         isPasted: true,
         isCancelled: false,
       };
@@ -138,6 +146,7 @@ export const useCopyLogic = () => {
     isCopyMode.value = false;
     pastedDates.value.clear();
     originalData.value = {};
+    copiedFromDate.value = null;
     return {
       timeData: { ...timeData },
       isCopyMode: false,
@@ -148,6 +157,7 @@ export const useCopyLogic = () => {
     isCopyMode.value = false;
     pastedDates.value.clear();
     originalData.value = {};
+    copiedFromDate.value = null;
     return {
       isCopyMode: false,
     };
@@ -158,6 +168,7 @@ export const useCopyLogic = () => {
     isCopyMode,
     pastedDates,
     originalData,
+    copiedFromDate,
     handleCopy,
     handlePaste,
     handleCancelCopyMode,

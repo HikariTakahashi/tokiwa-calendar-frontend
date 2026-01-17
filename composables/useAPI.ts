@@ -5,6 +5,9 @@ export interface TimeData {
   events: {
     [key: string]: TimeSlot[];
   };
+  notifications?: {
+    [key: string]: NotificationSlot[];
+  };
   spaceId: string;
   username: string;
   userColor: string;
@@ -65,13 +68,6 @@ interface SignupResponse {
   message: string;
   uid?: string;
   error?: string;
-  lambdaMode?: boolean; // Lambda環境でのメール認証スキップフラグ
-  debug?: {
-    emailSendError?: string;
-    emailConfig?: any;
-    targetEmail?: string;
-    lambdaEnvironment?: boolean;
-  };
 }
 
 // ログインリクエストの型定義
@@ -184,6 +180,63 @@ interface UserProvidersDetailResponse {
   error?: string;
 }
 
+// 統合されたユーザープロフィール情報レスポンスの型定義
+interface UserProfileResponse {
+  userName?: string;
+  userColor?: string;
+  providers?: string[];
+  providerDetails?: ProviderDetail[];
+  message?: string;
+  error?: string;
+}
+
+// タスクデータの型定義
+interface TaskSlot {
+  description: string;
+  start: string;
+  end: string;
+  title: string;
+  userColor: string;
+  order: number;
+}
+
+// 通知データの型定義
+interface NotificationSlot {
+  time: string;
+  order: number;
+}
+
+// タスク保存リクエストの型定義
+interface TaskSaveRequest {
+  useruid: string;
+  events: {
+    [key: string]: TaskSlot[];
+  };
+  notifications: {
+    [key: string]: NotificationSlot[];
+  };
+}
+
+// タスク保存レスポンスの型定義
+interface TaskSaveResponse {
+  message: string;
+  success: boolean;
+  error?: string;
+}
+
+// タスク取得レスポンスの型定義
+interface TaskGetResponse {
+  events: {
+    [key: string]: TaskSlot[];
+  };
+  notifications: {
+    [key: string]: NotificationSlot[];
+  };
+  message: string;
+  success: boolean;
+  error?: string;
+}
+
 export const useAPI = () => {
   const config = useRuntimeConfig();
   const API_BASE_URL = config.public.apiBaseUrl;
@@ -243,16 +296,11 @@ export const useAPI = () => {
     allowOtherEdit: boolean = false
   ): Promise<APIResponse> => {
     try {
-      console.log("syncTimeData: received timeData", timeData);
-      console.log("syncTimeData: received spaceId", spaceId);
-
       // 新しいリクエスト構造に変換
       const events: { [key: string]: APITimeSlot[] } = {};
       Object.entries(timeData.events).forEach(([date, slots]) => {
-        console.log(`syncTimeData: processing date ${date}, slots:`, slots);
         // slotsが配列でない場合は配列に変換
         const slotsArray = Array.isArray(slots) ? slots : [slots];
-        console.log(`syncTimeData: slotsArray for ${date}:`, slotsArray);
         events[date] = slotsArray.map((slot, index) => ({
           start: slot.start,
           end: slot.end,
@@ -327,17 +375,12 @@ export const useAPI = () => {
         body: backendRequest,
       });
 
-      console.log("createNewSpace APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: APIResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
-          console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
         }
       } else {
@@ -357,11 +400,7 @@ export const useAPI = () => {
     password: string
   ): Promise<SignupResponse> => {
     try {
-      // パスワードを暗号化
       const encryptedPassword = await encryptPassword(password);
-
-      // セキュリティログ（本番環境では削除）
-      console.log("サインアップリクエスト送信:", { email, password: "***" });
 
       const response = await $fetch<SignupResponse>(
         `${API_BASE_URL}/api/signup`,
@@ -378,15 +417,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("サインアップAPIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: SignupResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -415,12 +450,6 @@ export const useAPI = () => {
       // パスワードを暗号化
       const encryptedPassword = await encryptPassword(password);
 
-      console.log("ログインAPI呼び出し:", {
-        url: `${API_BASE_URL}/api/login`,
-        email,
-        passwordLength: encryptedPassword.length,
-      });
-
       const response = await $fetch<LoginResponse>(
         `${API_BASE_URL}/api/login`,
         {
@@ -436,16 +465,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("ログインAPIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-      console.log("レスポンスのキー:", Object.keys(response));
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: LoginResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -481,15 +505,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("認証APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: VerifyResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -532,15 +552,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("Google認証APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: GoogleAuthResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -583,15 +599,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("GitHub認証APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: GitHubAuthResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -634,15 +646,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("Twitter認証APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: TwitterAuthResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -672,11 +680,6 @@ export const useAPI = () => {
         throw new Error("認証トークンが見つかりません");
       }
 
-      console.log("ユーザーデータ取得API呼び出し:", {
-        url: `${API_BASE_URL}/api/user-data`,
-        tokenLength: token.length,
-      });
-
       const response = await $fetch<UserDataResponse>(
         `${API_BASE_URL}/api/user-data`,
         {
@@ -689,15 +692,11 @@ export const useAPI = () => {
         }
       );
 
-      console.log("ユーザーデータ取得APIレスポンス:", response);
-      console.log("レスポンスの型:", typeof response);
-
       // レスポンスが文字列の場合はJSONとしてパース
       let parsedResponse: UserDataResponse;
       if (typeof response === "string") {
         try {
           parsedResponse = JSON.parse(response);
-          console.log("パース後のレスポンス:", parsedResponse);
         } catch (error) {
           console.error("JSONパースエラー:", error);
           throw new Error("レスポンスの解析に失敗しました");
@@ -728,12 +727,6 @@ export const useAPI = () => {
       if (!token) {
         throw new Error("認証トークンが見つかりません");
       }
-
-      console.log("ユーザーデータ更新API呼び出し:", {
-        url: `${API_BASE_URL}/api/user-data`,
-        tokenLength: token.length,
-        userData,
-      });
 
       const response = await $fetch<UserDataResponse>(
         `${API_BASE_URL}/api/user-data`,
@@ -832,6 +825,174 @@ export const useAPI = () => {
       }
     };
 
+  // 統合されたユーザープロフィール情報取得機能
+  const getUserProfile = async (): Promise<UserProfileResponse> => {
+    try {
+      const { getAuthToken } = useAuth();
+      const token = getAuthToken();
+
+      if (!token) {
+        throw new Error("認証トークンが見つかりません");
+      }
+
+      console.log("統合ユーザープロフィール情報API呼び出し:", {
+        url: `${API_BASE_URL}/api/user-profile`,
+        tokenLength: token.length,
+      });
+
+      const response = await $fetch<UserProfileResponse>(
+        `${API_BASE_URL}/api/user-profile`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("統合ユーザープロフィール情報APIレスポンス:", response);
+      console.log("レスポンスの型:", typeof response);
+
+      // レスポンスが文字列の場合はJSONとしてパース
+      let parsedResponse: UserProfileResponse;
+      if (typeof response === "string") {
+        try {
+          parsedResponse = JSON.parse(response);
+          console.log("パース後のレスポンス:", parsedResponse);
+        } catch (error) {
+          console.error("JSONパースエラー:", error);
+          throw new Error("レスポンスの解析に失敗しました");
+        }
+      } else {
+        parsedResponse = response as UserProfileResponse;
+      }
+
+      return parsedResponse;
+    } catch (error: any) {
+      console.error("統合ユーザープロフィール情報取得エラー:", error);
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as UserProfileResponse;
+      }
+      throw error;
+    }
+  };
+
+  // タスク保存機能
+  const saveTaskData = async (
+    taskData: TaskSaveRequest
+  ): Promise<TaskSaveResponse> => {
+    try {
+      const { getAuthToken } = useAuth();
+      const token = getAuthToken();
+
+      if (!token) {
+        throw new Error("認証トークンが見つかりません");
+      }
+
+      console.log("タスク保存API呼び出し:", {
+        url: `${API_BASE_URL}/api/task`,
+        tokenLength: token.length,
+        taskData,
+      });
+
+      const response = await $fetch<TaskSaveResponse>(
+        `${API_BASE_URL}/api/task`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: taskData,
+        }
+      );
+
+      console.log("タスク保存APIレスポンス:", response);
+      console.log("レスポンスの型:", typeof response);
+
+      // レスポンスが文字列の場合はJSONとしてパース
+      let parsedResponse: TaskSaveResponse;
+      if (typeof response === "string") {
+        try {
+          parsedResponse = JSON.parse(response);
+          console.log("パース後のレスポンス:", parsedResponse);
+        } catch (error) {
+          console.error("JSONパースエラー:", error);
+          throw new Error("レスポンスの解析に失敗しました");
+        }
+      } else {
+        parsedResponse = response as TaskSaveResponse;
+      }
+
+      return parsedResponse;
+    } catch (error: any) {
+      console.error("タスク保存エラー:", error);
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as TaskSaveResponse;
+      }
+      throw error;
+    }
+  };
+
+  // タスク取得機能
+  const getTaskData = async (): Promise<TaskGetResponse> => {
+    try {
+      const { getAuthToken } = useAuth();
+      const token = getAuthToken();
+
+      if (!token) {
+        console.error("認証トークンが見つかりません");
+        throw new Error("認証トークンが見つかりません");
+      }
+
+      const response = await $fetch<TaskGetResponse>(
+        `${API_BASE_URL}/api/task`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // レスポンスが文字列の場合はJSONとしてパース
+      let parsedResponse: TaskGetResponse;
+      if (typeof response === "string") {
+        try {
+          parsedResponse = JSON.parse(response);
+        } catch (error) {
+          console.error("JSONパースエラー:", error);
+          throw new Error("レスポンスの解析に失敗しました");
+        }
+      } else {
+        parsedResponse = response as TaskGetResponse;
+      }
+
+      return parsedResponse;
+    } catch (error: any) {
+      console.error("タスク取得エラー:", error);
+      console.error("エラーの詳細:", {
+        message: error.message,
+        status: error.status,
+        statusText: error.statusText,
+        data: error.data,
+      });
+
+      // エラーレスポンスを適切に処理
+      if (error.data) {
+        return error.data as TaskGetResponse;
+      }
+      throw error;
+    }
+  };
+
   return {
     fetchSpaceData,
     syncTimeData,
@@ -845,5 +1006,8 @@ export const useAPI = () => {
     getUserData,
     updateUserData,
     getUserProvidersDetail,
+    getUserProfile,
+    saveTaskData,
+    getTaskData,
   };
 };

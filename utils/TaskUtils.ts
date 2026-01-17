@@ -1,19 +1,22 @@
 import { ref } from "vue";
 import { useWindowSize } from "@vueuse/core";
 
-export interface TimeSlot {
+export interface TaskSlot {
+  taskName: string;
+  description: string;
   start: string;
   end: string;
   order?: number;
   username?: string;
   userColor?: string;
-  isAllDay?: boolean; // 終日フラグを追加
 }
 
-export const useTimeUtils = () => {
+export const useTaskUtils = () => {
   const { width } = useWindowSize();
-  const timeSlots = ref<TimeSlot[]>([
+  const taskSlots = ref<TaskSlot[]>([
     {
+      taskName: "",
+      description: "",
       start: "",
       end: "",
       order: 1,
@@ -37,24 +40,26 @@ export const useTimeUtils = () => {
     return brightness >= 128 ? "text-black" : "text-white";
   };
 
-  const assignOrder = (slots: TimeSlot[]) => {
+  const assignOrder = (slots: TaskSlot[]) => {
     return slots.map((slot, index) => ({
       ...slot,
       order: index + 1,
     }));
   };
 
-  const addTimeSlot = () => {
-    timeSlots.value.push({
+  const addTaskSlot = () => {
+    taskSlots.value.push({
+      taskName: "",
+      description: "",
       start: "",
       end: "",
-      order: timeSlots.value.length + 1,
+      order: taskSlots.value.length + 1,
     });
   };
 
-  const removeTimeSlot = (index: number) => {
-    timeSlots.value.splice(index, 1);
-    timeSlots.value = assignOrder(timeSlots.value);
+  const removeTaskSlot = (index: number) => {
+    taskSlots.value.splice(index, 1);
+    taskSlots.value = assignOrder(taskSlots.value);
   };
 
   // 時刻の妥当性をチェックする関数
@@ -72,10 +77,19 @@ export const useTimeUtils = () => {
     return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
   };
 
-  const validateTime = (timeSlots: TimeSlot[]) => {
-    return !timeSlots.some((slot) => {
+  // タスク名の妥当性をチェックする関数
+  const validateTaskName = (taskName: string): boolean => {
+    return taskName.trim().length > 0;
+  };
+
+  const validateTask = (taskSlots: TaskSlot[]) => {
+    return !taskSlots.some((slot) => {
+      // タスク名が空の場合
+      if (!validateTaskName(slot.taskName)) return true;
+
       // startまたはendが空の場合
       if (!slot.start || !slot.end) return true;
+
       // startが00:00かつendが00:00の場合（空のスロット）
       if (slot.start === "00:00" && slot.end === "00:00") return false;
 
@@ -88,7 +102,7 @@ export const useTimeUtils = () => {
     });
   };
 
-  const validateTimeOrder = (slots: TimeSlot[]) => {
+  const validateTaskOrder = (slots: TaskSlot[]) => {
     for (const slot of slots) {
       if (!slot.start || !slot.end) continue;
       // startが00:00かつendが00:00の場合は空のスロットとしてスキップ
@@ -131,7 +145,7 @@ export const useTimeUtils = () => {
     };
   };
 
-  const validateTimeOverlap = (slots: TimeSlot[]) => {
+  const validateTaskOverlap = (slots: TaskSlot[]) => {
     // 空のスロット（startが00:00かつendが00:00）を除外
     const validSlots = slots.filter(
       (slot) => !(slot.start === "00:00" && slot.end === "00:00")
@@ -162,7 +176,7 @@ export const useTimeUtils = () => {
     });
 
     // ユーザー名ごとにグループ化
-    const userGroups = new Map<string, TimeSlot[]>();
+    const userGroups = new Map<string, TaskSlot[]>();
     const nonUserSlots = sortedSlots.filter((slot) => !slot.username);
 
     // ユーザー名が存在するスロットをグループ化
@@ -220,59 +234,66 @@ export const useTimeUtils = () => {
     };
   };
 
-  // 時間の表示テキストを変更(表示用)
-  const formatTimeForDisplay = (timeSlots: TimeSlot[]) => {
+  // タスクの表示テキストを変更(表示用)
+  const formatTaskForDisplay = (taskSlots: TaskSlot[]) => {
     const isMobile = width.value < 640; // sm: 640px未満をモバイルと判定
 
-    return timeSlots
-      .map((time) => {
+    return taskSlots
+      .map((task) => {
         // 開始時刻が00:00かつ終了時刻が24:00の場合
-        if (time.start === "00:00" && time.end === "24:00") {
-          return "終日";
+        if (task.start === "00:00" && task.end === "24:00") {
+          return `${task.taskName}\n終日`;
         }
         // 終了時刻が00:00の場合
-        else if (time.end === "24:00") {
-          return isMobile ? `(${time.start}\n終日)` : `${time.start}~終日`;
+        else if (task.end === "24:00") {
+          return isMobile
+            ? `${task.taskName}\n(${task.start}\n終日)`
+            : `${task.taskName}\n${task.start}~終日`;
         }
         // 開始時刻が00:00の場合
-        else if (time.start === "00:00") {
-          return isMobile ? `(開始\n${time.end})` : `~${time.end}`;
+        else if (task.start === "00:00") {
+          return isMobile
+            ? `${task.taskName}\n(開始\n${task.end})`
+            : `${task.taskName}\n~${task.end}`;
         }
         // 通常の時間表示
         return isMobile
-          ? `(${time.start}\n${time.end})`
-          : `${time.start}~${time.end}`;
+          ? `${task.taskName}\n(${task.start}\n${task.end})`
+          : `${task.taskName}\n${task.start}~${task.end}`;
       })
       .join("\n");
   };
 
-  // 時間の表示テキストを変更(コピー用)
-  const formatTimeForCopy = (timeSlots: TimeSlot[]) => {
-    return timeSlots
-      .map((time) => {
-        if (time.start === "00:00" && time.end === "24:00") {
-          return "終日";
-        } else if (time.end === "00:00") {
-          return `${time.start}~終日`;
-        } else if (time.start === "00:00") {
-          return `~${time.end}`;
+  // タスクの表示テキストを変更(コピー用)
+  const formatTaskForCopy = (taskSlots: TaskSlot[]) => {
+    return taskSlots
+      .map((task) => {
+        if (task.start === "00:00" && task.end === "24:00") {
+          return `${task.taskName} (終日)`;
+        } else if (task.end === "24:00") {
+          return `${task.taskName} (${task.start}~終日)`;
+        } else if (task.start === "00:00") {
+          return `${task.taskName} (~${task.end})`;
         }
-        return `${time.start}~${time.end}`;
+        return `${task.taskName} (${task.start}~${task.end})`;
       })
       .join(", ");
   };
 
+  // 優先度・ステータス関連の関数は削除
+
   return {
-    timeSlots,
-    addTimeSlot,
-    removeTimeSlot,
-    validateTime,
-    validateTimeOrder,
-    validateTimeOverlap,
-    formatTimeForDisplay,
-    formatTimeForCopy,
+    taskSlots,
+    addTaskSlot,
+    removeTaskSlot,
+    validateTask,
+    validateTaskOrder,
+    validateTaskOverlap,
+    formatTaskForDisplay,
+    formatTaskForCopy,
     assignOrder,
     getTextColorClass,
     isValidTimeFormat,
+    validateTaskName,
   };
 };

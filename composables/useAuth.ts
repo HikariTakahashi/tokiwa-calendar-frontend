@@ -19,20 +19,6 @@ export const useAuth = () => {
         const uid = localStorage.getItem("userUID");
         const email = localStorage.getItem("userEmail");
 
-        // 詳細なデバッグ情報
-        console.log("initializeAuth デバッグ:", {
-          hasSessionToken: !!sessionToken,
-          hasUID: !!uid,
-          hasEmail: !!email,
-          sessionTokenLength: sessionToken?.length,
-          sessionTokenPreview: sessionToken
-            ? sessionToken.substring(0, 20) + "..."
-            : null,
-          uid,
-          email,
-          allLocalStorageKeys: Object.keys(localStorage),
-        });
-
         if (sessionToken && uid && email) {
           globalUser.value = {
             uid,
@@ -40,14 +26,7 @@ export const useAuth = () => {
             sessionToken,
           };
           globalIsAuthenticated.value = true;
-          console.log("認証状態を初期化しました:", { uid, email });
         } else {
-          console.log("ローカルストレージに認証情報が見つかりません");
-          console.log("不足している項目:", {
-            sessionToken: !sessionToken,
-            uid: !uid,
-            email: !email,
-          });
         }
       } catch (error) {
         console.error("認証状態の初期化中にエラーが発生しました:", error);
@@ -63,8 +42,6 @@ export const useAuth = () => {
 
   // ログイン処理
   const login = (userData: User) => {
-    console.log("useAuth.login 呼び出し:", userData);
-
     if (process.client) {
       localStorage.setItem("sessionToken", userData.sessionToken);
       localStorage.setItem("userUID", userData.uid);
@@ -72,16 +49,6 @@ export const useAuth = () => {
 
       globalUser.value = userData;
       globalIsAuthenticated.value = true;
-
-      console.log("認証状態を更新しました:", {
-        globalUser: globalUser.value,
-        globalIsAuthenticated: globalIsAuthenticated.value,
-        localStorage: {
-          sessionToken: localStorage.getItem("sessionToken"),
-          userUID: localStorage.getItem("userUID"),
-          userEmail: localStorage.getItem("userEmail"),
-        },
-      });
     }
   };
 
@@ -101,12 +68,6 @@ export const useAuth = () => {
   const getAuthToken = (): string | null => {
     if (process.client) {
       const sessionToken = localStorage.getItem("sessionToken");
-
-      // デバッグ情報
-      console.log("getAuthToken デバッグ:", {
-        hasSessionToken: !!sessionToken,
-        sessionTokenLength: sessionToken?.length,
-      });
 
       return sessionToken;
     }

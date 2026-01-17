@@ -221,23 +221,8 @@ const handleSignup = async () => {
       return;
     }
 
-    // メール認証スキップ機能を使用して遷移先を決定
-    const {
-      getEmailVerificationRedirectPath,
-      isLambdaEmailSkip,
-      getEmailSkipMessage,
-    } = await import("~/utils/skip-email");
-
-    const redirectPath = getEmailVerificationRedirectPath(signupResult);
-
-    // Lambda環境でメール認証がスキップされた場合の処理
-    if (isLambdaEmailSkip(signupResult)) {
-      // 成功メッセージを表示してからログインページに遷移
-      console.log("Lambda環境でメール認証をスキップしました");
-      // 注意: 本番環境ではより適切な通知システムを使用することを推奨
-    }
-
-    await navigateTo(redirectPath);
+    // サインアップ成功後の処理（メール認証ページにリダイレクト）
+    await navigateTo("/signup/verification-email");
   } catch (error: any) {
     if (error.data?.error) {
       signupError.value = error.data.error;

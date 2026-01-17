@@ -2,8 +2,22 @@
   <div class="h-full flex flex-col">
     <!-- 固定ヘッダー -->
     <div class="flex-shrink-0 sticky top-0 z-30 bg-white">
-      <component
-        :is="isCopyMode ? CopyModeHeader : CalendarHeader"
+      <!-- コピーモード用ヘッダー -->
+      <CopyModeHeader
+        v-if="isCopyMode"
+        :current-year="currentYear"
+        :current-month="currentMonth"
+        :current-day="currentDay"
+        :current-week="currentWeek"
+        :time-data="timeData"
+        @next-month="handleNextMonth"
+        @prev-month="handlePrevMonth"
+        @close-copy-mode="closeCopyMode"
+      />
+
+      <!-- 通常のカレンダーヘッダー -->
+      <CalendarHeader
+        v-else
         :current-year="currentYear"
         :current-month="currentMonth"
         :current-day="currentDay"
@@ -19,7 +33,6 @@
         @next-week="handleNextWeek"
         @prev-week="handlePrevWeek"
         @view-mode-changed="handleViewModeChanged"
-        @close-copy-mode="closeCopyMode"
         @cancel-copy-mode="handleCancelCopyMode"
         @toggleSideMenu="toggleSideMenu"
         @go-to-today="handleGoToToday"
@@ -36,6 +49,8 @@
         :space-id="spaceId"
         :time-data="timeData"
         :show-side-menu="showSideMenu"
+        :show-time-side-menu="showTimeSideMenu"
+        :display-mode="'time'"
         @save="saveTime"
         @delete="deleteTime"
         @update:time-data="updateTimeData"
@@ -44,6 +59,9 @@
         @toggleSideMenu="toggleSideMenu"
         @import-complete="handleImportComplete"
         @month-selected="handleMonthSelected"
+        @open-form="handleOpenForm"
+        @open-time-side-menu="handleOpenTimeSideMenu"
+        @close-time-side-menu="closeTimeSideMenu"
       />
 
       <!-- 月表示 -->
@@ -53,9 +71,14 @@
         :year="currentYear"
         :month="currentMonth"
         :is-copy-mode="isCopyMode"
+        :copied-time-data="copiedTimeData"
+        :pasted-dates="pastedDates"
+        :copied-from-date="copiedFromDate"
+        :paste-handler="handlePaste"
         :space-id="spaceId"
         :time-data="timeData"
         :show-side-menu="showSideMenu"
+        :show-time-side-menu="showTimeSideMenu"
         @save="saveTime"
         @delete="deleteTime"
         @update:time-data="updateTimeData"
@@ -63,6 +86,9 @@
         @cancel-copy-mode="handleCancelCopyMode"
         @toggleSideMenu="toggleSideMenu"
         @import-complete="handleImportComplete"
+        @open-form="handleOpenForm"
+        @open-time-side-menu="handleOpenTimeSideMenu"
+        @close-time-side-menu="closeTimeSideMenu"
       />
 
       <!-- 週表示 -->
@@ -72,9 +98,15 @@
         :month="currentMonth"
         :day="currentDay"
         :is-copy-mode="isCopyMode"
+        :copied-time-data="copiedTimeData"
+        :pasted-dates="pastedDates"
+        :copied-from-date="copiedFromDate"
+        :paste-handler="handlePaste"
         :space-id="spaceId"
         :time-data="timeData"
         :show-side-menu="showSideMenu"
+        :show-time-side-menu="showTimeSideMenu"
+        :display-mode="'time'"
         @save="saveTime"
         @delete="deleteTime"
         @update:time-data="updateTimeData"
@@ -82,21 +114,91 @@
         @cancel-copy-mode="handleCancelCopyMode"
         @toggleSideMenu="toggleSideMenu"
         @import-complete="handleImportComplete"
+        @open-form="handleOpenForm"
+        @open-time-side-menu="handleOpenTimeSideMenu"
+        @close-time-side-menu="closeTimeSideMenu"
       />
     </div>
+
+    <!-- フォームモーダル -->
+    <Teleport to="body">
+      <!-- デスクトップ用TimeForm -->
+      <TimeForm
+        v-if="
+          showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && !isMobile
+        "
+        :close="closeForm"
+        :selectedDate="selectedDate"
+        :year="currentYear"
+        :month="currentMonth"
+        :existingTime="selectedDate ? timeData.events[selectedDate] || {} : {}"
+        :timeData="timeData"
+        :is-copy-mode="isCopyMode"
+        :allow-other-edit="timeData.allowOtherEdit || false"
+        :initial-hour="selectedHour"
+        @save="saveTime"
+        @delete="deleteTime"
+        @copy="handleCopy"
+        @cancel-copy-mode="handleCancelCopyMode"
+        @open-time-side-menu="handleOpenTimeSideMenu"
+      />
+
+      <!-- モバイル用TimeForm -->
+      <MobileTimeForm
+        v-if="
+          showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && isMobile
+        "
+        :show="showModal"
+        :selectedDate="selectedDate"
+        :year="currentYear"
+        :month="currentMonth"
+        :existingTime="selectedDate ? timeData.events[selectedDate] || {} : {}"
+        :timeData="timeData"
+        :is-copy-mode="isCopyMode"
+        :allow-other-edit="timeData.allowOtherEdit || false"
+        :initial-hour="selectedHour"
+        @save="saveTime"
+        @delete="deleteTime"
+        @copy="handleCopy"
+        @close="closeForm"
+      />
+    </Teleport>
+
+    <!-- RightSideMenu -->
+    <RightSideMenu
+      v-if="showTimeSideMenu"
+      :show="showTimeSideMenu"
+      :selectedDate="timeSideMenuData.selectedDate"
+      :year="timeSideMenuData.year"
+      :month="timeSideMenuData.month"
+      :day="timeSideMenuData.day"
+      :existingTime="timeSideMenuData.existingTime"
+      :isCopyMode="timeSideMenuData.isCopyMode"
+      :allowOtherEdit="timeSideMenuData.allowOtherEdit"
+      :initialHour="timeSideMenuData.initialHour"
+      @save="saveTime"
+      @delete="deleteTime"
+      @copy="handleCopy"
+      @close="closeTimeSideMenu"
+      @editModeChanged="handleTimeSideMenuEditModeChanged"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import CalendarHeader from "@/components/header/CalendarHeader.vue";
 import CopyModeHeader from "@/components/header/CopyModeHeader.vue";
 import CalendarMonth from "@/components/calendar/CalendarMonth.vue";
 import CalendarWeek from "@/components/calendar/CalendarWeek.vue";
 import CalendarYear from "@/components/calendar/CalendarYear.vue";
+import TimeForm from "@/components/forms/TimeForm.vue";
+import MobileTimeForm from "@/components/forms/MobileTimeForm.vue";
+import RightSideMenu from "@/components/sidemenu/RightSideMenu.vue";
 
 import { useDateUtils } from "@/utils/DateUtils";
 import { useViewMode, createViewModeHandlers } from "@/utils/ViewModeUtils";
+import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import type { TimeData } from "@/composables/useAPI";
 
@@ -120,9 +222,41 @@ const timeData = ref<TimeData>({
   username: "",
   userColor: "",
 });
-const isCopyMode = ref(false);
+
+// コピーロジックの状態管理
+const {
+  copiedTimeData,
+  isCopyMode,
+  pastedDates,
+  copiedFromDate,
+  handleCopy: copyLogic,
+  handlePaste,
+  handleCancelCopyMode: cancelCopyLogic,
+} = useCopyLogic();
+
 const showSideMenu = ref(false);
 const spaceId = ref<string | undefined>(undefined);
+
+// フォーム関連の状態
+const showModal = ref(false);
+
+const selectedDate = ref<string>("");
+const selectedHour = ref<number | undefined>(undefined);
+const isMobile = ref(false);
+const showTimeSideMenu = ref(false);
+const isTimeSideMenuEditMode = ref(false);
+
+// TimeSideMenu関連の状態
+const timeSideMenuData = ref({
+  selectedDate: "",
+  year: 0,
+  month: 0,
+  day: 0,
+  existingTime: {},
+  isCopyMode: false,
+  allowOtherEdit: false,
+  initialHour: undefined as number | undefined,
+});
 
 // 表示方法の管理
 const viewModeState = useViewMode("month");
@@ -139,7 +273,11 @@ const updateIsCopyMode = (value: boolean) => {
 };
 
 const closeCopyMode = () => {
+  // コピーモードを終了するだけで、ペーストされたデータは保持する
   isCopyMode.value = false;
+  copiedTimeData.value = null;
+  pastedDates.value.clear();
+  copiedFromDate.value = null;
 };
 
 const handleNextMonth = () => {
@@ -208,10 +346,6 @@ const deleteTime = (data: {
   }
 };
 
-const handleCancelCopyMode = () => {
-  isCopyMode.value = false;
-};
-
 const toggleSideMenu = () => {
   showSideMenu.value = !showSideMenu.value;
 };
@@ -247,4 +381,70 @@ const handleGoToSpecificDate = (date: string) => {
   currentDay.value = selectedDate.getDate();
   calendarDays.value = getCalendarDays(currentYear.value, currentMonth.value);
 };
+
+// フォーム関連のハンドラー
+const closeForm = () => {
+  showModal.value = false;
+  selectedHour.value = undefined;
+};
+
+const handleCopy = (selectedDate: string) => {
+  // コピーロジックを使用してコピーモードを開始
+  copyLogic(selectedDate, timeData.value.events);
+};
+
+const handleOpenTimeSideMenu = (data: any) => {
+  // TimeSideMenuを開く処理
+  timeSideMenuData.value = {
+    selectedDate: data.selectedDate,
+    year: data.year,
+    month: data.month,
+    day: data.day,
+    existingTime: data.existingTime,
+    isCopyMode: data.isCopyMode,
+    allowOtherEdit: data.allowOtherEdit,
+    initialHour: data.initialHour,
+  };
+  showTimeSideMenu.value = true;
+  showModal.value = false;
+};
+
+const closeTimeSideMenu = () => {
+  showTimeSideMenu.value = false;
+  isTimeSideMenuEditMode.value = false;
+};
+
+const handleTimeSideMenuEditModeChanged = (isEditMode: boolean) => {
+  isTimeSideMenuEditMode.value = isEditMode;
+};
+
+const handleCancelCopyMode = () => {
+  const result = cancelCopyLogic(timeData.value.events);
+  timeData.value = {
+    ...timeData.value,
+    events: result.timeData,
+  };
+};
+
+// レスポンシブ判定
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768; // md breakpoint
+};
+
+// カレンダーコンポーネントからのフォーム開要求を処理
+const handleOpenForm = (data: { date: string; hour?: number }) => {
+  selectedDate.value = data.date;
+  selectedHour.value = data.hour;
+  showModal.value = true;
+};
+
+// コンポーネントマウント時にモバイル判定を実行
+onMounted(() => {
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", checkMobile);
+});
 </script>

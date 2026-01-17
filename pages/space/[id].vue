@@ -247,9 +247,22 @@ onMounted(() => {
       />
 
       <!-- 通常のヘッダー -->
-      <component
+      <!-- コピーモード用ヘッダー -->
+      <CopyModeHeader
+        v-if="isCopyMode"
+        :current-year="currentYear"
+        :current-month="currentMonth"
+        :current-day="currentDay"
+        :current-week="currentWeek"
+        :time-data="timeData"
+        @next-month="handleNextMonth"
+        @prev-month="handlePrevMonth"
+        @close-copy-mode="closeCopyMode"
+      />
+
+      <!-- 通常のカレンダーヘッダー -->
+      <CalendarHeader
         v-else
-        :is="isCopyMode ? CopyModeHeader : CalendarHeader"
         :current-year="currentYear"
         :current-month="currentMonth"
         :current-day="currentDay"
@@ -266,7 +279,6 @@ onMounted(() => {
         @prev-week="handlePrevWeek"
         @view-mode-changed="handleViewModeChanged"
         @open-form="openForm"
-        @close-copy-mode="closeCopyMode"
         @cancel-copy-mode="handleCancelCopyMode"
         @toggleSideMenu="toggleSideMenu"
         @go-to-today="handleGoToToday"

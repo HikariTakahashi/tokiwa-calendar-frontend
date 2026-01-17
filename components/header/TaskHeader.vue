@@ -14,7 +14,7 @@
         class="flex flex-row items-center gap-x-2 order-2 flex-1 sm:flex-none sm:justify-start justify-center"
       >
         <Title />
-        <h2 class="text-sm sm:text-xl font-bold font-mono">予定調整モード</h2>
+        <h2 class="text-sm sm:text-xl font-bold font-mono">タスク管理モード</h2>
         <h2
           v-if="isSync"
           class="text-blue-500 text-sm sm:text-xl font-bold font-mono"
@@ -36,9 +36,9 @@
           @go-to-specific-date="handleGoToSpecificDate"
         />
       </div>
-      <buttons-circle @click="openForm">
+      <!-- <buttons-circle @click="openForm">
         <UIcon name="ic:baseline-file-upload" class="size-5" />
-      </buttons-circle>
+      </buttons-circle> -->
       <buttons-circle
         @click="
           props.viewMode === 'year'
@@ -81,7 +81,6 @@ import type { TimeSlot } from "@/utils/TimeUtils";
 import type { TimeData } from "@/composables/useAPI";
 import UploadForm from "@/components/forms/UploadForm.vue";
 import Title from "@/components/calendar/Title.vue";
-import Select from "@/components/buttons/Select.vue";
 
 const props = defineProps<{
   currentYear: number;
@@ -101,6 +100,7 @@ const handleViewModeChanged = (mode: "year" | "month" | "week") => {
 };
 
 const emit = defineEmits<{
+  (e: "openForm"): void;
   (e: "prevMonth"): void;
   (e: "nextMonth"): void;
   (e: "prevYear"): void;
@@ -117,6 +117,7 @@ const emit = defineEmits<{
 
 const openForm = () => {
   showModal.value = true;
+  emit("openForm");
 };
 
 const closeForm = () => {

@@ -34,32 +34,55 @@
   </div>
 
   <Teleport to="body">
-    <UploadForm v-if="showModal" @close="closeForm" :time-data="timeData" />
+    <UploadForm
+      v-if="showModal"
+      @close="closeForm"
+      :time-data="timeData"
+      :space-id="timeData.spaceId || ''"
+    />
   </Teleport>
 </template>
 
-<script setup>
-import { onMounted, onBeforeUnmount } from "vue";
+<script setup lang="ts">
+import { onMounted, onBeforeUnmount, ref } from "vue";
 import UploadForm from "@/components/forms/UploadForm.vue";
+import type { TimeData } from "@/composables/useAPI";
 
-defineProps({
-  currentYear: Number,
-  currentMonth: Number,
-  currentDay: Number,
-  currentWeek: Number,
-  timeData: {
-    type: Object,
-    default: () => ({}),
-  },
+interface Props {
+  currentYear: number;
+  currentMonth: number;
+  currentDay: number;
+  currentWeek: number;
+  timeData: TimeData;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  timeData: () => ({
+    events: {},
+    spaceId: "",
+    username: "",
+    userColor: "",
+  }),
 });
 
 const emit = defineEmits(["next-month", "prev-month", "close-copy-mode"]);
+
+// UploadForm関連の状態管理
+const showModal = ref(false);
+
+const openForm = () => {
+  showModal.value = true;
+};
+
+const closeForm = () => {
+  showModal.value = false;
+};
 
 const CloseCopyMode = () => {
   emit("close-copy-mode");
 };
 
-const handleKeyDown = (e) => {
+const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === "Enter") {
     CloseCopyMode();
   } else if (e.key === "ArrowRight") {

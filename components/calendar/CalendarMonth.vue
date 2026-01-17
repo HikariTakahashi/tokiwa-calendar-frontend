@@ -1,16 +1,17 @@
 <template>
   <div class="relative h-full flex flex-col z-10">
-    <SideMenu
+    <LeftSideMenu
       :show="props.showSideMenu"
       @toggleSideMenu="toggleSideMenu"
       @import-complete="handleImportComplete"
+      @google-calendar-sync="handleGoogleCalendarSync"
     />
 
     <div
       class="flex-1 flex flex-col transition-all duration-300 ease-in-out"
       :class="[
         props.showSideMenu && !isMobile ? 'ml-80' : 'ml-0',
-        showTimeSideMenu && !isMobile ? 'mr-96' : 'mr-0',
+        props.showTimeSideMenu && !isMobile ? 'mr-96' : 'mr-0',
       ]"
     >
       <CalendarWeek />
@@ -23,13 +24,15 @@
           class="flex flex-col items-center border rounded transition-transform duration-200 shadow-md"
           :class="[
             isCurrentMonth(date.date) ? '' : 'bg-gray-100',
-            props.isCopyMode ? 'cursor-pointer' : '',
-            props.isCopyMode && date.date === selectedDate
-              ? 'border-8 border-dashed border-blue-500'
+            props.isCopyMode && date.date !== props.copiedFromDate
+              ? 'cursor-pointer'
+              : '',
+            props.isCopyMode && date.date === props.copiedFromDate
+              ? 'border-4 border-dashed border-blue-500 cursor-not-allowed'
               : '',
             props.isCopyMode &&
-            props.timeData.events[date.date] === copiedTimeData
-              ? 'border-8 border-blue-500'
+            props.timeData.events[date.date] === effectiveCopiedTimeData
+              ? 'border-4 border-blue-500'
               : '',
             props.isCopyMode &&
             hasUsernameInDate(date.date) &&
@@ -54,109 +57,28 @@
           >
             {{ new Date(date.date).getDate() }}
           </div>
-          <div
-            v-if="props.timeData.events[date.date]"
-            class="text-center text-xs sm:text-sm font-bold w-full flex flex-col min-h-0"
-          >
-            <div
-              class="overflow-y-auto overflow-x-hidden whitespace-pre-line break-words w-full"
-            >
-              <template
-                v-for="(slot, index) in getTimeSlots(date.date)"
-                :key="index"
-              >
-                <div
-                  class="flex flex-col sm:flex-row justify-center items-center sm:gap-x-2"
-                >
-                  <div
-                    v-if="slot.username"
-                    class="text-xs mb-1 font-bold"
-                    :style="{ color: slot.userColor || '#3b82f6' }"
-                  >
-                    {{ slot.username }}
-                  </div>
-                  <div
-                    class="text-xs sm:text-sm"
-                    :style="{ color: slot.userColor || '#3b82f6' }"
-                  >
-                    {{ formatTimeForDisplay([slot]) }}
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
+          <!-- 予定調整モードの表示 -->
+          <TimeDisplay
+            v-if="props.displayMode === 'time'"
+            :date="date.date"
+            :time-data="props.timeData"
+          />
+
+          <!-- タスク管理モードの表示 -->
+          <TaskDisplay
+            v-if="props.displayMode === 'task'"
+            :date="date.date"
+            :time-data="props.timeData"
+            @edit-task="handleEditTask"
+          />
         </div>
       </div>
     </div>
-
-    <!-- デスクトップ用TimeForm -->
-    <TimeForm
-      v-if="
-        showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && !isMobile
-      "
-      :close="closeForm"
-      :selectedDate="selectedDate"
-      :year="year"
-      :month="month"
-      :existingTime="
-        selectedDate ? props.timeData.events[selectedDate] || {} : {}
-      "
-      :timeData="props.timeData"
-      :isCopyMode="props.isCopyMode"
-      :allowOtherEdit="props.timeData.allowOtherEdit || false"
-      :startDate="
-        props.timeData.startDate && props.timeData.startDate !== null
-          ? props.timeData.startDate
-          : undefined
-      "
-      :endDate="
-        props.timeData.endDate && props.timeData.endDate !== null
-          ? props.timeData.endDate
-          : undefined
-      "
-      @save="onSave"
-      @delete="onDelete"
-      @copy="handleCopy"
-      @cancel-copy-mode="handleCancelCopyMode"
-      @openTimeSideMenu="handleOpenTimeSideMenu"
-    />
-
-    <!-- モバイル用TimeForm -->
-    <MobileTimeForm
-      v-if="
-        showModal && !isTimeSideMenuEditMode && !showTimeSideMenu && isMobile
-      "
-      :show="showModal"
-      :selectedDate="selectedDate"
-      :year="year"
-      :month="month"
-      :existingTime="
-        selectedDate ? props.timeData.events[selectedDate] || {} : {}
-      "
-      :timeData="props.timeData"
-      :isCopyMode="props.isCopyMode"
-      :allowOtherEdit="props.timeData.allowOtherEdit || false"
-      :startDate="
-        props.timeData.startDate && props.timeData.startDate !== null
-          ? props.timeData.startDate
-          : undefined
-      "
-      :endDate="
-        props.timeData.endDate && props.timeData.endDate !== null
-          ? props.timeData.endDate
-          : undefined
-      "
-      @save="onSave"
-      @delete="onDelete"
-      @copy="handleCopy"
-      @preview="handlePreview"
-      @close="closeForm"
-    />
   </div>
 
-  <TimeSideMenu
-    v-if="showTimeSideMenu"
-    :show="showTimeSideMenu"
+  <RightSideMenu
+    v-if="props.showTimeSideMenu"
+    :show="props.showTimeSideMenu"
     :selectedDate="timeSideMenuData.selectedDate"
     :year="timeSideMenuData.year"
     :month="timeSideMenuData.month"
@@ -177,16 +99,16 @@
 </template>
 
 <script setup lang="ts">
-import TimeForm from "@/components/forms/TimeForm.vue";
-import MobileTimeForm from "@/components/forms/MobileTimeForm.vue";
-import TimeSideMenu from "@/components/sidemenu/TimeSideMenu.vue";
-import { ref, onMounted, onUnmounted, watch } from "vue";
-import { useTimeUtils } from "@/utils/TimeUtils";
+import RightSideMenu from "@/components/sidemenu/RightSideMenu.vue";
+import { ref, onMounted, onUnmounted, watch, computed } from "vue";
+import { type DisplayMode } from "@/utils/DisplayUtils";
 import { useCopyLogic } from "@/utils/CopyLogicUtils";
 import type { TimeSlot } from "@/utils/TimeUtils";
 import { useAPI, type TimeData } from "@/composables/useAPI";
 import CalendarWeek from "@/components/calendar/CalendarWeeks.vue";
-import SideMenu from "@/components/calendar/SideMenu.vue";
+import LeftSideMenu from "~/components/sidemenu/LeftSideMenu.vue";
+import TimeDisplay from "@/components/calendar/display/TimeDisplay.vue";
+import TaskDisplay from "@/components/calendar/display/TaskDisplay.vue";
 
 interface CalendarDay {
   date: string;
@@ -198,14 +120,23 @@ interface Props {
   year: number;
   month: number;
   isCopyMode: boolean;
+  copiedTimeData?: any;
+  pastedDates?: Set<string>;
+  copiedFromDate?: string | null;
+  pasteHandler?: (date: string, timeData: Record<string, any>) => any;
   spaceId?: string;
   timeData: TimeData;
   showSideMenu?: boolean;
+  showTimeSideMenu?: boolean;
+  displayMode?: DisplayMode;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showSideMenu: false,
+  showTimeSideMenu: false,
+  displayMode: "time",
 });
+
 const emit = defineEmits<{
   (e: "save", data: { date: string; timeSlots: TimeSlot[] }): void;
   (e: "delete", data: { date: string }): void;
@@ -214,13 +145,17 @@ const emit = defineEmits<{
   (e: "cancel-copy-mode"): void;
   (e: "toggleSideMenu"): void;
   (e: "import-complete", data: any[]): void;
+  (
+    e: "openForm",
+    data: { date: string; hour?: number; taskIndex?: number; editMode?: string }
+  ): void;
+  (e: "openTimeSideMenu", data: any): void;
+  (e: "closeTimeSideMenu"): void;
 }>();
 
-const { formatTimeForDisplay } = useTimeUtils();
 const showModal = ref(false);
 const selectedDate = ref<string>("");
 const isMobile = ref(false);
-const showTimeSideMenu = ref(false);
 const isTimeSideMenuEditMode = ref(false);
 const timeSideMenuData = ref({
   selectedDate: "",
@@ -248,13 +183,18 @@ onUnmounted(() => {
   window.removeEventListener("resize", checkMobile);
 });
 
-const {
-  copiedTimeData,
-  handleCopy: copyLogic,
-  handlePaste,
-  handleCancelCopyMode: cancelCopyLogic,
-  pastedDates,
-} = useCopyLogic();
+// 親コンポーネントからコピーデータを受け取る場合は、それを使用
+// そうでなければ独自のuseCopyLogicを使用
+const localCopyLogic = useCopyLogic();
+const effectiveCopiedTimeData = computed(
+  () => props.copiedTimeData || localCopyLogic.copiedTimeData.value
+);
+const effectivePastedDates = computed(
+  () => props.pastedDates || localCopyLogic.pastedDates.value
+);
+const effectiveHandlePaste = props.pasteHandler || localCopyLogic.handlePaste;
+
+// effectiveCopiedTimeDataの変更を監視
 
 const { fetchSpaceData, syncTimeData } = useAPI();
 
@@ -289,6 +229,43 @@ const handleImportComplete = (importedData: any[]) => {
   emit("update:time-data", updatedTimeData);
 };
 
+// Googleカレンダー同期処理
+const handleGoogleCalendarSync = (tasks: any[]) => {
+  const updatedEvents = { ...props.timeData.events };
+
+  tasks.forEach((task) => {
+    // イベントの日付を使用（convertToTokiwaTaskで設定されたeventDate）
+    const eventDate = task.eventDate || new Date().toISOString().split("T")[0];
+
+    // タスクをTokiwaの形式に変換
+    const tokiwaTask = {
+      taskName: task.taskName,
+      description: task.description,
+      start: task.start,
+      end: task.end,
+      userColor: task.userColor || "#3b82f6",
+      order: task.order || 1,
+      googleEventId: task.googleEventId,
+      location: task.location || "",
+      isAllDay: task.isAllDay || false, // 終日フラグを追加
+    };
+
+    // 既存のタスクがある場合は追加、ない場合は新規作成
+    if (updatedEvents[eventDate]) {
+      updatedEvents[eventDate].push(tokiwaTask);
+    } else {
+      updatedEvents[eventDate] = [tokiwaTask];
+    }
+  });
+
+  const updatedTimeData = {
+    ...props.timeData,
+    events: updatedEvents,
+  };
+
+  emit("update:time-data", updatedTimeData);
+};
+
 const isCurrentMonth = (dateString: string): boolean => {
   const d = new Date(dateString);
   return d.getFullYear() === props.year && d.getMonth() + 1 === props.month;
@@ -299,8 +276,13 @@ const openForm = (date: string) => {
     return;
   }
 
+  // コピーモードでコピー元の日付をクリックした場合は何もしない
+  if (props.isCopyMode && date === props.copiedFromDate) {
+    return;
+  }
+
   if (props.isCopyMode) {
-    const result = handlePaste(date, props.timeData.events);
+    const result = effectiveHandlePaste(date, props.timeData.events);
     if (result.isPasted) {
       const updatedTimeData = {
         ...props.timeData,
@@ -310,60 +292,61 @@ const openForm = (date: string) => {
     }
   } else {
     // TimeSideMenuが開いている場合は、TimeSideMenuの日付を更新
-    if (showTimeSideMenu.value) {
+    if (props.showTimeSideMenu) {
       timeSideMenuData.value.selectedDate = date;
       // 既存の時間データを更新
       timeSideMenuData.value.existingTime = props.timeData.events[date] || {};
       return;
     }
 
-    // TimeFormが開いている場合は、TimeFormの日付を更新
-    if (showModal.value) {
-      selectedDate.value = date;
-      return;
-    }
-
-    // どちらも開いていない場合は、TimeFormを開く
-    selectedDate.value = date;
-    showModal.value = true;
+    // 親コンポーネントにフォームを開くイベントを送信
+    emit("openForm", { date });
   }
 };
 
-const closeForm = () => {
-  showModal.value = false;
+// タスク編集時のハンドラー
+const handleEditTask = (data: {
+  date: string;
+  taskIndex: number;
+  task: any;
+}) => {
+  // 親コンポーネントにタスク編集イベントを送信
+  emit("openForm", {
+    date: data.date,
+    taskIndex: data.taskIndex,
+    editMode: "edit",
+  });
 };
 
 const handleCopy = () => {
   if (!selectedDate.value) return;
-  const result = copyLogic(selectedDate.value, props.timeData.events);
-  emit("update:is-copy-mode", result.isCopyMode);
-  showModal.value = false;
-};
-
-const handleCancelCopyMode = () => {
-  const result = cancelCopyLogic(props.timeData.events);
-  const updatedTimeData = {
-    ...props.timeData,
-    events: result.timeData,
-  };
-  emit("update:time-data", updatedTimeData);
+  const result = localCopyLogic.handleCopy(
+    selectedDate.value,
+    props.timeData.events
+  );
   emit("update:is-copy-mode", result.isCopyMode);
 };
 
-const getTimeSlots = (date: string): TimeSlot[] => {
-  const slots = props.timeData.events[date];
+// getTimeSlots関数は各表示コンポーネントで実装するため削除
+// const getTimeSlots = (date: string): TimeSlot[] | TaskSlot[] => {
+//   const slots = props.timeData.events[date];
 
-  if (!slots) return [];
+//   if (!slots) return [];
 
-  const convertedSlots = Array.isArray(slots) ? slots : [slots];
-  return convertedSlots.map((slot) => ({
-    start: (slot as any).Start || (slot as any).start,
-    end: (slot as any).End || (slot as any).end,
-    order: (slot as any).Order || (slot as any).order || 1,
-    username: (slot as any).Username || (slot as any).username,
-    userColor: (slot as any).UserColor || (slot as any).userColor,
-  }));
-};
+//   const convertedSlots = Array.isArray(slots) ? slots : [slots];
+//   return convertedSlots.map((slot) => ({
+//     start: (slot as any).Start || (slot as any).start,
+//     end: (slot as any).End || (slot as any).end,
+//     order: (slot as any).Order || (slot as any).order || 1,
+//     username: (slot as any).Username || (slot as any).username,
+//     userColor: (slot as any).UserColor || (slot as any).userColor,
+//     // タスク管理モード用のフィールド
+//     taskName: (slot as any).taskName || (slot as any).TaskName || "",
+//     description: (slot as any).description || (slot as any).Description || "",
+//     priority: (slot as any).priority || (slot as any).Priority || "medium",
+//     status: (slot as any).status || (slot as any).Status || "pending",
+//   }));
+// };
 
 const hasUsernameInDate = (date: string): boolean => {
   const timeSlot = props.timeData.events[date];
@@ -376,7 +359,11 @@ const hasUsernameInDate = (date: string): boolean => {
 };
 
 const isPastedDate = (date: string): boolean => {
-  return pastedDates.value.has(date);
+  if (effectivePastedDates instanceof Set) {
+    return effectivePastedDates.has(date);
+  } else {
+    return effectivePastedDates.value.has(date);
+  }
 };
 
 const isToday = (dateString: string): boolean => {
@@ -431,14 +418,15 @@ const handleOpenTimeSideMenu = (data: any) => {
     allowOtherEdit: data.allowOtherEdit,
     initialHour: data.initialHour,
   };
-  showTimeSideMenu.value = true;
+
+  emit("openTimeSideMenu", timeSideMenuData.value);
 
   // TimeFormを閉じる
   showModal.value = false;
 };
 
 const closeTimeSideMenu = () => {
-  showTimeSideMenu.value = false;
+  emit("closeTimeSideMenu");
 };
 
 const handleTimeSideMenuEditModeChanged = (isEditMode: boolean) => {
@@ -452,7 +440,6 @@ const handleTimeSideMenuEditModeChanged = (isEditMode: boolean) => {
 
 const handlePreview = (data: { date: string; timeSlots: TimeSlot[] }) => {
   // プレビュー処理を実装（必要に応じて）
-  console.log("Preview:", data);
 };
 
 // TimeSideMenuの編集モードを検証する関数
@@ -462,7 +449,7 @@ const isTimeSideMenuInEditMode = () => {
 
 // TimeSideMenuが開かれた時にshowModalを確実にfalseにする
 watch(
-  () => showTimeSideMenu.value,
+  () => props.showTimeSideMenu,
   (newShow) => {
     if (newShow) {
       showModal.value = false;

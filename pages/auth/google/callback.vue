@@ -118,10 +118,45 @@ onMounted(async () => {
       successMessage.value = "Googleアカウントが正常にリンクされました。";
     }
 
-    // リンクUIDを取得（stateパラメータから）
+    // stateパラメータを取得
     const urlParams = new URLSearchParams(window.location.search);
     const state = urlParams.get("state");
     let linkUID = null;
+
+    console.log("Google認証コールバック - 取得したstate:", state);
+
+    // カレンダー同期用のstateの場合は特別な処理
+    if (state === "calendar_sync") {
+      console.log("カレンダー同期用の認証を開始します");
+
+      // 既存のユーザーがログインしている場合は、そのUIDでアカウントリンクを行う
+      let linkUID = null;
+      if (isAuthenticated.value && user.value) {
+        linkUID = user.value.uid;
+        console.log("既存ユーザーのUIDでアカウントリンク:", linkUID);
+      }
+
+      // カレンダー同期用の認証でも、バックエンドでトークンを保存する必要がある
+      const result = await authenticateWithGoogle(
+        code,
+        redirectUri,
+        linkUID || undefined
+      );
+
+      if (result.success) {
+        console.log("カレンダー権限の認証が成功しました");
+        successMessage.value =
+          "Googleカレンダーの読み取り権限が許可されました。";
+        success.value = true;
+        setTimeout(() => {
+          navigateTo("/task");
+        }, 3000);
+      } else {
+        console.error("カレンダー権限の認証に失敗:", result.error);
+        error.value = result.error || "カレンダー権限の取得に失敗しました。";
+      }
+      return;
+    }
 
     if (state) {
       // stateパラメータからlinkUIDを抽出
@@ -129,7 +164,6 @@ onMounted(async () => {
       linkUID = stateParams.get("linkUID");
     }
 
-    console.log("Google認証コールバック - 取得したstate:", state);
     console.log("Google認証コールバック - 取得したlinkUID:", linkUID);
 
     // Google認証を実行

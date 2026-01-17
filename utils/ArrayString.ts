@@ -46,7 +46,7 @@ export const validateUsername = (username: string): {
 
   // 1文字以上、40文字以内のチェック
   if (!username || username.length === 0) {
-    errors.push('ユーザーネームは1文字以上入力してください');
+    errors.push('1文字以上入力してください');
   } 
 
   // 禁止文字のチェック

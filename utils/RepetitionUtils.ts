@@ -1,14 +1,5 @@
 import type { TimeSlot } from "@/utils/TimeUtils";
-
-export interface TimeData {
-  events: Record<string, TimeSlot[] | TimeSlot>;
-  spaceId?: string;
-  username?: string;
-  userColor?: string;
-  startDate?: string | null;
-  endDate?: string | null;
-  allowOtherEdit?: boolean;
-}
+import type { TimeData } from "@/composables/useAPI";
 
 export interface RepetitionValidationResult {
   isValid: boolean;
